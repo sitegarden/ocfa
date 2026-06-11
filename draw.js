@@ -273,4 +273,10 @@ onAuthStateChanged(auth, () => {
   });
 });
 
+const opacityValue = document.getElementById("opacityValue");
+
+penOpacity.addEventListener("input", () => {
+  opacityValue.textContent = `${penOpacity.value}%`;
+});
+
 initCanvas();
