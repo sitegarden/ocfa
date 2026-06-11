@@ -35,7 +35,7 @@ if (siteHeader) {
   siteHeader.className = "site-header";
 
   siteHeader.innerHTML = `
-    <a class="logo" href="${rootPath}index.html">OCFA v2</a>
+    <a class="logo" href="${rootPath}index.html">OCFA</a>
 
     <nav class="nav">
       <a href="${rootPath}characters/">キャラ一覧</a>
