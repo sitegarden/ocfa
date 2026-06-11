@@ -29,6 +29,7 @@ const drawingList = document.getElementById("drawingList");
 const penModeBtn = document.getElementById("penModeBtn");
 const eraserModeBtn = document.getElementById("eraserModeBtn");
 const eraserSize = document.getElementById("eraserSize");
+const penOpacity = document.getElementById("penOpacity");
 
 let drawing = false;
 let lastX = 0;
@@ -92,9 +93,11 @@ function draw(e) {
   const point = getPoint(e);
 
   if (currentTool === "eraser") {
+  ctx.globalAlpha = 1;
   ctx.strokeStyle = "#fffdf8";
   ctx.lineWidth = Number(eraserSize.value);
 } else {
+  ctx.globalAlpha = Number(penOpacity.value) / 100;
   ctx.strokeStyle = penColor.value;
   ctx.lineWidth = Number(penSize.value);
 }
@@ -103,6 +106,7 @@ function draw(e) {
   ctx.moveTo(lastX, lastY);
   ctx.lineTo(point.x, point.y);
   ctx.stroke();
+  ctx.globalAlpha = 1;
 
   lastX = point.x;
   lastY = point.y;
