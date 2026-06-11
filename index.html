@@ -1,17 +1,68 @@
 <!doctype html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OCFA v2</title>
-    <meta
-      name="description"
-      content="OCFA v2は、オリジナルキャラクターを描いて登録し、イベントでファンアートを描き合えるサイトです。"
-    />
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+  <title>OCFA v2</title>
+  <meta name="description" content="OCFA v2は、オリジナルキャラクターを描いて登録し、イベントでファンアートを描き合えるサイトです。" />
+
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+  <header class="site-header">
+    <a class="logo" href="./index.html">OCFA v2</a>
+
+    <nav class="nav">
+      <a href="./pages/characters.html">キャラ一覧</a>
+      <a href="./pages/character-new.html">キャラ作成</a>
+    </nav>
+
+    <div class="auth-box">
+      <span id="userName">確認中...</span>
+      <button id="loginBtn">ログイン</button>
+      <button id="logoutBtn" hidden>ログアウト</button>
+    </div>
+  </header>
+
+  <main class="home">
+    <section class="hero">
+      <p class="eyebrow">Original Character Fan Art</p>
+      <h1>
+        描いて、参加して、<br />
+        うちの子を広げる。
+      </h1>
+
+      <p class="lead">
+        OCFA v2は、画像URLではなくサイト内で描いたイラストを使って、
+        オリジナルキャラクターを登録できるサイトです。
+      </p>
+
+      <div class="actions">
+        <a class="primary-btn" href="./pages/character-new.html">キャラを描いて登録</a>
+        <a class="ghost-btn" href="./pages/characters.html">キャラを見る</a>
+      </div>
+    </section>
+
+    <section class="cards">
+      <article class="card">
+        <h2>その場で描く</h2>
+        <p>外部画像URLやアップロードを使わず、サイト内キャンバスで描いた絵を登録します。</p>
+      </article>
+
+      <article class="card">
+        <h2>OC専用</h2>
+        <p>二次創作ではなく、オリジナルキャラクターを中心にした場所にします。</p>
+      </article>
+
+      <article class="card">
+        <h2>イベント型</h2>
+        <p>今後はイベントに参加して、ファンアートを描き合える形にしていきます。</p>
+      </article>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
 </html>
