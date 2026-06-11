@@ -1117,3 +1117,62 @@ textarea {
     flex: 1;
   }
 }
+
+.canvas-tools {
+  display: grid;
+  grid-template-columns: auto auto 1fr 1fr 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.canvas-tools label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.canvas-tools input[type="range"] {
+  width: 100%;
+  min-width: 120px;
+}
+
+.canvas-tools input[type="color"] {
+  width: 46px;
+  height: 38px;
+  padding: 2px;
+}
+
+.tool-mode {
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .canvas-tools {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tool-mode {
+    grid-column: 1 / -1;
+  }
+
+  .tool-mode button {
+    flex: 1;
+  }
+
+  .canvas-tools label {
+    width: 100%;
+  }
+
+  .canvas-tools input[type="range"] {
+    min-width: 0;
+  }
+
+  .canvas-tools > button {
+    width: 100%;
+  }
+}
