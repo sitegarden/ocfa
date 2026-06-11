@@ -1,4 +1,4 @@
-import { auth, db, googleProvider } from "./firebase.js";
+import { auth, db, googleProvider } from "/firebase.js";
 
 import {
   signInWithPopup,
@@ -15,31 +15,15 @@ import {
 
 const siteHeader = document.getElementById("siteHeader");
 
-function getRootPath() {
-  const path = location.pathname;
-
-  if (path.includes("/characters/new/")) {
-    return "../../";
-  }
-
-  if (path.includes("/characters/")) {
-    return "../";
-  }
-
-  return "./";
-}
-
-const rootPath = getRootPath();
-
 if (siteHeader) {
   siteHeader.className = "site-header";
 
   siteHeader.innerHTML = `
-    <a class="logo" href="${rootPath}index.html">OCFA</a>
+    <a class="logo" href="/">OCFA</a>
 
     <nav class="nav">
-      <a href="${rootPath}characters/">キャラ一覧</a>
-      <a href="${rootPath}characters/new/">キャラ作成</a>
+      <a href="/characters/">キャラ一覧</a>
+      <a href="/characters/new/">キャラ作成</a>
     </nav>
 
     <div class="auth-box">
