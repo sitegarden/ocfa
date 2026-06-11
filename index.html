@@ -4,8 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>OCFA v2</title>
-  <meta name="description" content="OCFA v2は、オリジナルキャラクターを描いて登録し、イベントでファンアートを描き合えるサイトです。" />
+  <title>OCFA</title>
+  <meta
+    name="description"
+    content="OCFAは、オリジナルキャラクターを描いて登録し、イベントでファンアートを描き合えるOC専用サイトです。"
+  />
 
   <link rel="stylesheet" href="./style.css" />
 </head>
@@ -13,40 +16,119 @@
 <body>
   <header id="siteHeader"></header>
 
-  <main class="home">
-    <section class="hero">
-      <p class="eyebrow">Original Character Fan Art</p>
-      <h1>
-        描いて、参加して、<br />
-        うちの子を広げる。
-      </h1>
+  <main class="home cute-home">
+    <div class="floating-deco deco-star">✦</div>
+    <div class="floating-deco deco-heart">♡</div>
+    <div class="floating-deco deco-dot">●</div>
+    <div class="floating-deco deco-pen">✎</div>
 
-      <p class="lead">
-        OCFA v2は、画像URLではなくサイト内で描いたイラストを使って、
-        オリジナルキャラクターを登録できるサイトです。
-      </p>
+    <section class="cute-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Original Character Fan Art</p>
 
-      <div class="actions">
-        <a class="primary-btn" href="./pages/character-new.html">キャラを描いて登録</a>
-        <a class="ghost-btn" href="./pages/characters.html">キャラを見る</a>
+        <h1>
+          うちの子を描いて、<br />
+          だれかの子も描ける場所。
+        </h1>
+
+        <p class="lead">
+          OCFAは、オリジナルキャラクターをその場で描いて登録し、
+          イベントを通してファンアートを描き合えるOC専用サイトです。
+        </p>
+
+        <div class="actions">
+          <a class="primary-btn" href="./characters/new/">キャラを描く</a>
+          <a class="ghost-btn" href="./characters/">みんなの子を見る</a>
+        </div>
+
+        <div class="mini-tags">
+          <span>OC only</span>
+          <span>Draw</span>
+          <span>Fan Art</span>
+          <span>Event</span>
+        </div>
+      </div>
+
+      <div class="hero-art" aria-hidden="true">
+        <div class="paper-card paper-back">
+          <span>REQUEST</span>
+        </div>
+
+        <div class="paper-card main-paper">
+          <div class="paper-top">
+            <span>OC FILE</span>
+            <b>★</b>
+          </div>
+
+          <div class="fake-canvas">
+            <div class="fake-face">
+              <div class="fake-hair"></div>
+              <div class="fake-eyes">
+                <span></span>
+                <span></span>
+              </div>
+              <div class="fake-mouth"></div>
+            </div>
+
+            <div class="spark spark-1">✦</div>
+            <div class="spark spark-2">✧</div>
+            <div class="spark spark-3">♡</div>
+          </div>
+
+          <div class="fake-lines">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          <div class="paper-tags">
+            <span>kawaii</span>
+            <span>magic</span>
+          </div>
+        </div>
+
+        <div class="sticker sticker-a">🎀</div>
+        <div class="sticker sticker-b">🖊️</div>
+        <div class="sticker sticker-c">☁️</div>
       </div>
     </section>
 
-    <section class="cards">
-      <article class="card">
-        <h2>その場で描く</h2>
-        <p>外部画像URLやアップロードを使わず、サイト内キャンバスで描いた絵を登録します。</p>
+    <section class="cute-feature-grid">
+      <article class="cute-feature pink">
+        <div class="feature-mark">✎</div>
+        <h2>サイト内で描く</h2>
+        <p>
+          画像URLやアップロードではなく、キャンバスで描いたイラストをそのまま登録。
+        </p>
       </article>
 
-      <article class="card">
-        <h2>OC専用</h2>
-        <p>二次創作ではなく、オリジナルキャラクターを中心にした場所にします。</p>
+      <article class="cute-feature blue">
+        <div class="feature-mark">♡</div>
+        <h2>うちの子を出せる</h2>
+        <p>
+          自分のOCを登録して、イベントに参加できる形を目指します。
+        </p>
       </article>
 
-      <article class="card">
-        <h2>イベント型</h2>
-        <p>今後はイベントに参加して、ファンアートを描き合える形にしていきます。</p>
+      <article class="cute-feature yellow">
+        <div class="feature-mark">★</div>
+        <h2>ゆるく描き合う</h2>
+        <p>
+          深すぎる交流ではなく、いいねや短文コメント中心で気軽に楽しめます。
+        </p>
       </article>
+    </section>
+
+    <section class="cute-notice">
+      <div>
+        <p class="eyebrow">Concept</p>
+        <h2>上手さより、描いてくれたことが嬉しい場所。</h2>
+      </div>
+
+      <p>
+        OCFAは、ランキングや画力勝負よりも、
+        「描きたい」「描いてもらえた」を大事にする場所として作っています。
+      </p>
     </section>
   </main>
 
