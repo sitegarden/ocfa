@@ -1002,3 +1002,23 @@ textarea {
   background: #fffdf8;
   box-shadow: var(--shadow-soft);
 }
+
+.canvas-wrap {
+  width: 100%;
+  display: grid;
+  place-items: center;
+}
+
+#drawCanvas {
+  display: block;
+  width: min(100%, 78vh);
+  max-width: 768px;
+  aspect-ratio: 1 / 1;
+  border: 2px dashed var(--line-dark);
+  border-radius: 20px;
+  background: #fffdf8;
+  touch-action: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8),
+    var(--shadow-soft);
+}
