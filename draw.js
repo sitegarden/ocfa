@@ -96,10 +96,24 @@ function draw(e) {
   ctx.globalAlpha = 1;
   ctx.strokeStyle = "#fffdf8";
   ctx.lineWidth = Number(eraserSize.value);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
 } else {
-  ctx.globalAlpha = Number(penOpacity.value) / 100;
+  const opacity = Number(penOpacity.value) / 100;
+
+  ctx.globalAlpha = opacity;
   ctx.strokeStyle = penColor.value;
   ctx.lineWidth = Number(penSize.value);
+
+  if (opacity < 1) {
+  ctx.lineCap = "butt";
+  ctx.lineWidth = Math.max(1, Number(penSize.value) * 0.9);
+} else {
+  ctx.lineCap = "round";
+  ctx.lineWidth = Number(penSize.value);
+}
+
+  ctx.lineJoin = "round";
 }
 
   ctx.beginPath();
