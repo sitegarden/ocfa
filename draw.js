@@ -42,7 +42,7 @@ function initCanvas() {
 }
 
 function saveHistory() {
-  history.push(canvas.toDataURL("image/jpeg", 0.75));
+  history.push(canvas.toDataURL("image/jpeg", 0.82));
 
   if (history.length > 20) {
     history.shift();
@@ -149,7 +149,7 @@ saveDrawingBtn.addEventListener("click", async () => {
   try {
     message.textContent = "保存中...";
 
-    const imageData = canvas.toDataURL("image/jpeg", 0.75);
+    const imageData = canvas.toDataURL("image/jpeg", 0.82);
 
     await addDoc(collection(db, "v2Drawings"), {
       userId: user.uid,
