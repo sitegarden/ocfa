@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>キャラ作成 - OCFA v2</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+
+<body>
+  <header class="site-header">
+    <a class="logo" href="../index.html">OCFA v2</a>
+
+    <nav class="nav">
+      <a href="./characters.html">キャラ一覧</a>
+      <a href="./character-new.html">キャラ作成</a>
+    </nav>
+
+    <div class="auth-box">
+      <span id="userName">確認中...</span>
+      <button id="loginBtn">ログイン</button>
+      <button id="logoutBtn" hidden>ログアウト</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="page-head">
+      <p class="eyebrow">Character Create</p>
+      <h1>キャラを描いて登録する</h1>
+      <p>キャンバスで描いたイラストを、そのままキャラ画像として登録します。</p>
+    </section>
+
+    <form id="characterForm" class="form-grid">
+      <section class="panel">
+        <label>
+          キャラ名
+          <input id="charName" type="text" placeholder="例：星川ましろ" required />
+        </label>
+
+        <label>
+          プロフィール
+          <textarea id="charProfile" rows="6" placeholder="性格、設定、世界観など"></textarea>
+        </label>
+
+        <label>
+          タグ
+          <input id="charTags" type="text" placeholder="例：魔法 少女 ほのぼの" />
+        </label>
+
+        <label class="check-row">
+          <input id="faOk" type="checkbox" checked />
+          ファンアート歓迎
+        </label>
+
+        <label>
+          NG・注意事項
+          <textarea id="ngText" rows="4" placeholder="例：過度な改変NG、R指定NG"></textarea>
+        </label>
+
+        <button class="primary-btn" type="submit">登録する</button>
+        <p id="message" class="message"></p>
+      </section>
+
+      <section class="panel">
+        <h2>キャラ絵</h2>
+
+        <div class="canvas-tools">
+          <label>
+            色
+            <input id="penColor" type="color" value="#222222" />
+          </label>
+
+          <label>
+            太さ
+            <input id="penSize" type="range" min="1" max="30" value="6" />
+          </label>
+
+          <button id="clearBtn" type="button">全消し</button>
+        </div>
+
+        <canvas id="drawCanvas" width="600" height="600"></canvas>
+      </section>
+    </form>
+  </main>
+
+  <script type="module" src="../app.js"></script>
+  <script type="module" src="../character-new.js"></script>
+</body>
+</html>
