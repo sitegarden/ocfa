@@ -1056,3 +1056,23 @@ textarea {
     position: static;
   }
 }
+
+.tool-mode {
+  display: flex;
+  gap: 8px;
+}
+
+.tool-mode button {
+  background: #f7efe3;
+  color: var(--ink);
+}
+
+.tool-mode button.tool-active {
+  background: #e8b6ae;
+  color: #4d3832;
+  border-color: #c9968e;
+}
+
+.canvas-tools label {
+  white-space: nowrap;
+}
