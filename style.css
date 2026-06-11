@@ -1076,3 +1076,44 @@ textarea {
 .canvas-tools label {
   white-space: nowrap;
 }
+
+.canvas-tools label {
+  flex: 1 1 180px;
+  min-width: 160px;
+}
+
+.canvas-tools input[type="range"] {
+  width: 100%;
+  min-width: 0;
+}
+
+.canvas-tools input[type="color"] {
+  flex: 0 0 auto;
+  width: 46px;
+}
+
+.canvas-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.tool-mode {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 520px) {
+  .canvas-tools label {
+    flex: 1 1 100%;
+  }
+
+  .tool-mode {
+    width: 100%;
+  }
+
+  .tool-mode button {
+    flex: 1;
+  }
+}
