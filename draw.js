@@ -26,12 +26,16 @@ const undoBtn = document.getElementById("undoBtn");
 const saveDrawingBtn = document.getElementById("saveDrawingBtn");
 const message = document.getElementById("message");
 const drawingList = document.getElementById("drawingList");
+const penModeBtn = document.getElementById("penModeBtn");
+const eraserModeBtn = document.getElementById("eraserModeBtn");
+const eraserSize = document.getElementById("eraserSize");
 
 let drawing = false;
 let lastX = 0;
 let lastY = 0;
 let hasDrawn = false;
 let history = [];
+let currentTool = "pen";
 
 function initCanvas() {
   ctx.fillStyle = "#fffdf8";
@@ -87,8 +91,13 @@ function draw(e) {
 
   const point = getPoint(e);
 
+  if (currentTool === "eraser") {
+  ctx.strokeStyle = "#fffdf8";
+  ctx.lineWidth = Number(eraserSize.value);
+} else {
   ctx.strokeStyle = penColor.value;
   ctx.lineWidth = Number(penSize.value);
+}
 
   ctx.beginPath();
   ctx.moveTo(lastX, lastY);
@@ -115,6 +124,18 @@ canvas.addEventListener("mouseleave", stopDraw);
 canvas.addEventListener("touchstart", startDraw, { passive: false });
 canvas.addEventListener("touchmove", draw, { passive: false });
 canvas.addEventListener("touchend", stopDraw);
+
+penModeBtn.addEventListener("click", () => {
+  currentTool = "pen";
+  penModeBtn.classList.add("tool-active");
+  eraserModeBtn.classList.remove("tool-active");
+});
+
+eraserModeBtn.addEventListener("click", () => {
+  currentTool = "eraser";
+  eraserModeBtn.classList.add("tool-active");
+  penModeBtn.classList.remove("tool-active");
+});
 
 clearBtn.addEventListener("click", () => {
   if (!confirm("キャンバスを全消しする？")) return;
