@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>キャラ一覧 - OCFA v2</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+
+<body>
+  <header class="site-header">
+    <a class="logo" href="../index.html">OCFA v2</a>
+
+    <nav class="nav">
+      <a href="./characters.html">キャラ一覧</a>
+      <a href="./character-new.html">キャラ作成</a>
+    </nav>
+
+    <div class="auth-box">
+      <span id="userName">確認中...</span>
+      <button id="loginBtn">ログイン</button>
+      <button id="logoutBtn" hidden>ログアウト</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="page-head">
+      <p class="eyebrow">Characters</p>
+      <h1>キャラ一覧</h1>
+      <p>サイト内で描いて登録されたオリジナルキャラクターたち。</p>
+    </section>
+
+    <section id="characterList" class="character-list">
+      <p>読み込み中...</p>
+    </section>
+  </main>
+
+  <script type="module" src="../app.js"></script>
+  <script type="module" src="../characters.js"></script>
+</body>
+</html>
