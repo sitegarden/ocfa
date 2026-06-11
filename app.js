@@ -19,19 +19,19 @@ if (siteHeader) {
   siteHeader.className = "site-header";
 
   siteHeader.innerHTML = `
-    <a class="logo" href="/">OCFA</a>
+  <a class="logo" href="/">OCFA</a>
 
-    <nav class="nav">
-      <a href="/characters/">キャラ一覧</a>
-      <a href="/characters/new/">キャラ作成</a>
-    </nav>
+  <nav class="nav">
+    <a href="/characters/">キャラ一覧</a>
+    <a href="/draw/">描く</a>
+  </nav>
 
-    <div class="auth-box">
-      <span id="userName">確認中...</span>
-      <button id="loginBtn" type="button">ログイン</button>
-      <button id="logoutBtn" type="button" hidden>ログアウト</button>
-    </div>
-  `;
+  <div class="auth-box">
+    <span id="userName">確認中...</span>
+    <button id="loginBtn" type="button">ログイン</button>
+    <button id="logoutBtn" type="button" hidden>ログアウト</button>
+  </div>
+`;
 }
 
 const loginBtn = document.getElementById("loginBtn");
