@@ -31,19 +31,29 @@
         <h2>キャンバス</h2>
 
         <div class="canvas-tools">
-          <label>
-            色
-            <input id="penColor" type="color" value="#3c342e">
-          </label>
+  <div class="tool-mode">
+    <button id="penModeBtn" class="tool-active" type="button">ペン</button>
+    <button id="eraserModeBtn" type="button">消しゴム</button>
+  </div>
 
-          <label>
-            太さ
-            <input id="penSize" type="range" min="1" max="30" value="6">
-          </label>
+  <label>
+    色
+    <input id="penColor" type="color" value="#3c342e">
+  </label>
 
-          <button id="undoBtn" type="button">戻す</button>
-          <button id="clearBtn" type="button">全消し</button>
-        </div>
+  <label>
+    ペン太さ
+    <input id="penSize" type="range" min="1" max="30" value="6">
+  </label>
+
+  <label>
+    消しゴム太さ
+    <input id="eraserSize" type="range" min="4" max="80" value="24">
+  </label>
+
+  <button id="undoBtn" type="button">戻す</button>
+  <button id="clearBtn" type="button">全消し</button>
+</div>
 
         <div class="canvas-wrap">
   <canvas id="drawCanvas" width="768" height="768"></canvas>
