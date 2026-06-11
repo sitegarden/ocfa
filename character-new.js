@@ -1,91 +1,82 @@
-import { auth, db } from "./firebase.js";
+import { auth, db } from "/firebase.js";
 
 import {
   addDoc,
   collection,
-  serverTimestamp
+  doc,
+  getDoc,
+  serverTimestamp,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-const canvas = document.getElementById("drawCanvas");
-const ctx = canvas.getContext("2d");
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-const penColor = document.getElementById("penColor");
-const penSize = document.getElementById("penSize");
-const clearBtn = document.getElementById("clearBtn");
+const params = new URLSearchParams(location.search);
+const drawingId = params.get("drawing");
+
 const form = document.getElementById("characterForm");
 const message = document.getElementById("message");
+const selectedDrawing = document.getElementById("selectedDrawing");
 
-let drawing = false;
-let lastX = 0;
-let lastY = 0;
-let hasDrawn = false;
+let drawingData = null;
 
-function initCanvas() {
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+async function loadDrawing() {
+  if (!drawingId) {
+    selectedDrawing.innerHTML = `
+      <p>キャラ登録する絵が選ばれてないぞ。</p>
+      <a class="primary-btn" href="/draw/">絵を描きに行く</a>
+    `;
+    form.hidden = true;
+    return;
+  }
 
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
+  const user = auth.currentUser;
+
+  if (!user) {
+    selectedDrawing.innerHTML = `<p>ログインしてから登録してくれ。</p>`;
+    return;
+  }
+
+  const drawingRef = doc(db, "v2Drawings", drawingId);
+  const snap = await getDoc(drawingRef);
+
+  if (!snap.exists()) {
+    selectedDrawing.innerHTML = `<p>選んだ絵が見つからなかった。</p>`;
+    form.hidden = true;
+    return;
+  }
+
+  const data = snap.data();
+
+  if (data.userId !== user.uid) {
+    selectedDrawing.innerHTML = `<p>この絵は自分の下書きじゃないぞ。</p>`;
+    form.hidden = true;
+    return;
+  }
+
+  if (data.isDeleted === true) {
+    selectedDrawing.innerHTML = `<p>この絵は削除済みだぞ。</p>`;
+    form.hidden = true;
+    return;
+  }
+
+  if (data.status === "adopted") {
+    selectedDrawing.innerHTML = `<p>この絵はすでにキャラ登録済みだぞ。</p>`;
+    form.hidden = true;
+    return;
+  }
+
+  drawingData = data;
+
+  selectedDrawing.innerHTML = `
+    <img class="selected-drawing-img" src="${data.imageData}" alt="選んだ絵">
+    <p class="mini-info">この絵をキャラクターとして登録します。</p>
+  `;
+
+  form.hidden = false;
 }
-
-initCanvas();
-
-function getPoint(e) {
-  const rect = canvas.getBoundingClientRect();
-  const touch = e.touches ? e.touches[0] : e;
-
-  return {
-    x: ((touch.clientX - rect.left) / rect.width) * canvas.width,
-    y: ((touch.clientY - rect.top) / rect.height) * canvas.height
-  };
-}
-
-function startDraw(e) {
-  e.preventDefault();
-
-  const point = getPoint(e);
-  drawing = true;
-  lastX = point.x;
-  lastY = point.y;
-}
-
-function draw(e) {
-  if (!drawing) return;
-
-  e.preventDefault();
-
-  const point = getPoint(e);
-
-  ctx.strokeStyle = penColor.value;
-  ctx.lineWidth = Number(penSize.value);
-
-  ctx.beginPath();
-  ctx.moveTo(lastX, lastY);
-  ctx.lineTo(point.x, point.y);
-  ctx.stroke();
-
-  lastX = point.x;
-  lastY = point.y;
-  hasDrawn = true;
-}
-
-function stopDraw() {
-  drawing = false;
-}
-
-canvas.addEventListener("mousedown", startDraw);
-canvas.addEventListener("mousemove", draw);
-canvas.addEventListener("mouseup", stopDraw);
-canvas.addEventListener("mouseleave", stopDraw);
-
-canvas.addEventListener("touchstart", startDraw, { passive: false });
-canvas.addEventListener("touchmove", draw, { passive: false });
-canvas.addEventListener("touchend", stopDraw);
-
-clearBtn.addEventListener("click", () => {
-  initCanvas();
-  hasDrawn = false;
-});
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -94,6 +85,11 @@ form.addEventListener("submit", async (e) => {
 
   if (!user) {
     message.textContent = "ログインしてから登録してくれ。";
+    return;
+  }
+
+  if (!drawingId || !drawingData) {
+    message.textContent = "登録する絵がないぞ。";
     return;
   }
 
@@ -108,17 +104,10 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  if (!hasDrawn) {
-    message.textContent = "キャラ絵を描いてから登録してくれ。";
-    return;
-  }
-
   const tags = tagsText
     .split(/[,\s、]+/)
     .map((tag) => tag.trim())
     .filter(Boolean);
-
-  const imageData = canvas.toDataURL("image/jpeg", 0.75);
 
   try {
     message.textContent = "登録中...";
@@ -127,24 +116,38 @@ form.addEventListener("submit", async (e) => {
       userId: user.uid,
       ownerName: user.displayName || "",
       ownerPhotoURL: user.photoURL || "",
+      drawingId,
       name,
       profile,
       tags,
       faOk,
       ngText,
-      imageData,
+      imageData: drawingData.imageData,
       isPublic: true,
       isDeleted: false,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
 
-    message.textContent = "登録できた。いいじゃん。";
-    form.reset();
-    initCanvas();
-    hasDrawn = false;
+    await updateDoc(doc(db, "v2Drawings", drawingId), {
+      status: "adopted",
+      updatedAt: serverTimestamp()
+    });
+
+    message.textContent = "キャラ登録できた。いいじゃん。";
+
+    setTimeout(() => {
+      location.href = "/characters/";
+    }, 800);
   } catch (error) {
     console.error(error);
-    message.textContent = "登録に失敗した。Firestoreルールか容量が怪しい。";
+    message.textContent = "登録に失敗した。Firestoreルールを確認してくれ。";
   }
+});
+
+onAuthStateChanged(auth, () => {
+  loadDrawing().catch((error) => {
+    console.error(error);
+    selectedDrawing.innerHTML = `<p>絵の読み込みに失敗した。</p>`;
+  });
 });
