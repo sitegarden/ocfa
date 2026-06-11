@@ -1,0 +1,304 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: #493745;
+  background:
+    radial-gradient(circle at top left, #ffe2f1 0, transparent 32%),
+    radial-gradient(circle at top right, #def3ff 0, transparent 28%),
+    #fffafd;
+}
+
+a {
+  color: inherit;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid #f0d8e8;
+  backdrop-filter: blur(12px);
+}
+
+.logo {
+  color: #ff68aa;
+  font-weight: 900;
+  text-decoration: none;
+  font-size: 20px;
+}
+
+.nav {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.nav a {
+  text-decoration: none;
+  font-weight: 800;
+  color: #5b4655;
+}
+
+.auth-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button,
+.primary-btn,
+.ghost-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 900;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+button,
+.primary-btn {
+  background: #ff75b7;
+  color: white;
+}
+
+.ghost-btn {
+  background: white;
+  color: #ff65aa;
+  border: 1px solid #ffc7e3;
+}
+
+.home,
+.page {
+  width: min(1100px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 34px 0 70px;
+}
+
+.hero {
+  padding: 46px 24px;
+  border-radius: 32px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(255, 238, 248, 0.95));
+  border: 1px solid #f5d6e8;
+  box-shadow: 0 18px 45px rgba(255, 117, 183, 0.15);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: #ff65aa;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 16px;
+  font-size: clamp(32px, 8vw, 64px);
+  line-height: 1.05;
+  color: #3f2d3a;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+.lead {
+  max-width: 650px;
+  font-size: 17px;
+  line-height: 1.9;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.card,
+.panel,
+.character-card {
+  background: white;
+  border: 1px solid #f2d7e7;
+  border-radius: 24px;
+  box-shadow: 0 14px 32px rgba(255, 117, 183, 0.12);
+}
+
+.card {
+  padding: 20px;
+}
+
+.page-head {
+  margin-bottom: 22px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 20px;
+}
+
+.panel {
+  padding: 18px;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 14px;
+  font-weight: 900;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid #ecd2e3;
+  border-radius: 14px;
+  padding: 11px 12px;
+  background: #fffafd;
+  color: #493745;
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.check-row input {
+  width: auto;
+}
+
+.canvas-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.canvas-tools label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.canvas-tools input[type="color"] {
+  width: 46px;
+  height: 38px;
+  padding: 2px;
+}
+
+.canvas-tools input[type="range"] {
+  width: 120px;
+}
+
+#drawCanvas {
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  aspect-ratio: 1 / 1;
+  background: white;
+  border: 2px solid #f0cfe2;
+  border-radius: 22px;
+  touch-action: none;
+}
+
+.message {
+  color: #ff4fa0;
+  font-weight: 900;
+}
+
+.character-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.character-card {
+  overflow: hidden;
+}
+
+.character-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: white;
+  display: block;
+}
+
+.character-body {
+  padding: 14px;
+}
+
+.character-body h2 {
+  margin: 0 0 8px;
+}
+
+.character-body p {
+  line-height: 1.7;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-list span {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #fff0f7;
+  color: #ff5fa8;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.mini-info {
+  color: #8b6b7e;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+@media (max-width: 800px) {
+  .site-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cards,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
