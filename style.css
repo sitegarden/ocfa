@@ -1022,3 +1022,37 @@ textarea {
     inset 0 0 0 1px rgba(255, 255, 255, 0.8),
     var(--shadow-soft);
 }
+
+.draw-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+.draw-layout .panel:first-child {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .draw-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.draw-layout .canvas-tools {
+  position: sticky;
+  top: 82px;
+  z-index: 5;
+  padding: 10px;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 250, 242, 0.94);
+  box-shadow: var(--shadow-soft);
+}
+
+@media (max-width: 900px) {
+  .draw-layout .canvas-tools {
+    position: static;
+  }
+}
