@@ -23,6 +23,21 @@ function escapeHtml(text) {
     .replaceAll("'", "&#039;");
 }
 
+function nl2br(text) {
+  return escapeHtml(text).replaceAll("\n", "<br>");
+}
+
+function isSafeHttpsUrl(url) {
+  if (!url) return false;
+
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 async function getUserData() {
   const userRef = doc(db, "users", userId);
   const snap = await getDoc(userRef);
@@ -141,13 +156,17 @@ async function renderUserPage() {
 
   const displayName = userData.displayName || "名前未設定";
   const photoURL = userData.photoURL || "";
+  const profileText = userData.profileText || "";
+  const genreText = userData.genreText || "";
+  const linkUrl = userData.linkUrl || "";
+  const hasProfileInfo = profileText || genreText || isSafeHttpsUrl(linkUrl);
 
   userPageContent.innerHTML = `
     <section class="user-public-hero panel">
       <div class="mypage-user">
         ${
           photoURL
-            ? `<img class="mypage-avatar" src="${photoURL}" alt="">`
+            ? `<img class="mypage-avatar" src="${escapeHtml(photoURL)}" alt="">`
             : `<div class="mypage-avatar placeholder">OC</div>`
         }
 
@@ -157,6 +176,45 @@ async function renderUserPage() {
           <p class="mini-info">${characters.length}件のキャラを公開中</p>
         </div>
       </div>
+
+      ${
+        hasProfileInfo
+          ? `
+            <div class="user-profile-box">
+              ${
+                profileText
+                  ? `<p>${nl2br(profileText)}</p>`
+                  : ""
+              }
+
+              ${
+                genreText
+                  ? `<p class="mini-info">好きな創作：${escapeHtml(genreText)}</p>`
+                  : ""
+              }
+
+              ${
+                isSafeHttpsUrl(linkUrl)
+                  ? `
+                    <a
+                      class="text-link"
+                      href="${escapeHtml(linkUrl)}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      リンクを見る
+                    </a>
+                  `
+                  : ""
+              }
+            </div>
+          `
+          : `
+            <div class="user-profile-box">
+              <p>紹介文はまだありません。</p>
+            </div>
+          `
+      }
     </section>
 
     <section class="page-head user-characters-head">
