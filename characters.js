@@ -57,7 +57,7 @@ async function loadCharacters() {
       : "";
 
     card.innerHTML = `
-      <a class="character-card-link" href="/characters/detail/?id=${characterId}">
+      <a class="character-card-link" href="/characters/file/?id=${characterId}">
         <img src="${character.imageData}" alt="${escapeHtml(character.name)}">
 
         <div class="character-body">
