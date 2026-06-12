@@ -1,14 +1,20 @@
-import { db } from "/firebase.js";
+import { auth, db } from "/firebase.js";
 
 import {
   doc,
   getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
 const characterFile = document.getElementById("characterFile");
 
 const params = new URLSearchParams(location.search);
 const characterId = params.get("id");
+
+let currentUser = null;
 
 function escapeHtml(text) {
   return String(text)
@@ -23,156 +29,178 @@ function nl2br(text) {
   return escapeHtml(text).replaceAll("\n", "<br>");
 }
 
-async function loadCharacterFile() {
-  if (!characterId) {
-    characterFile.innerHTML = `
-      <section class="panel">
-        <h1>キャラが選ばれていません</h1>
-        <p>キャラ一覧から見たいキャラクターを選んでください。</p>
+async function getCharacter() {
+  const characterRef = doc(db, "v2Characters", characterId);
+  const snap = await getDoc(characterRef);
 
+  if (!snap.exists()) return null;
+
+  return {
+    id: snap.id,
+    data: snap.data()
+  };
+}
+
+function renderNotFound() {
+  characterFile.innerHTML = `
+    <div class="panel">
+      <h1>キャラが見つかりませんでした</h1>
+      <p>削除されたか、URLが変わっている可能性があります。</p>
+      <div class="actions">
+        <a class="ghost-btn" href="/characters/">キャラ一覧へ</a>
+      </div>
+    </div>
+  `;
+}
+
+function renderCharacter(character) {
+  const data = character.data;
+
+  if (data.isDeleted === true) {
+    renderNotFound();
+    return;
+  }
+
+  if (data.isPublic !== true && data.userId !== currentUser?.uid) {
+    characterFile.innerHTML = `
+      <div class="panel">
+        <h1>このキャラは非公開です</h1>
+        <p>公開されていないキャラクターです。</p>
         <div class="actions">
-          <a class="primary-btn" href="/characters/">キャラ一覧へ</a>
+          <a class="ghost-btn" href="/characters/">キャラ一覧へ</a>
         </div>
-      </section>
+      </div>
     `;
     return;
   }
 
-  const ref = doc(db, "v2Characters", characterId);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    characterFile.innerHTML = `
-      <section class="panel">
-        <h1>キャラが見つかりませんでした</h1>
-        <p>削除されたか、URLが変わっている可能性があります。</p>
-
-        <div class="actions">
-          <a class="primary-btn" href="/characters/">キャラ一覧へ</a>
-        </div>
-      </section>
-    `;
-    return;
-  }
-
-  const character = snap.data();
-
-  if (character.isDeleted === true || character.isPublic !== true) {
-    characterFile.innerHTML = `
-      <section class="panel">
-        <h1>このキャラは表示できません</h1>
-        <p>非公開、または削除済みの可能性があります。</p>
-
-        <div class="actions">
-          <a class="primary-btn" href="/characters/">キャラ一覧へ</a>
-        </div>
-      </section>
-    `;
-    return;
-  }
-
-  const tags = Array.isArray(character.tags)
-    ? character.tags
+  const tags = Array.isArray(data.tags)
+    ? data.tags
         .map((tag) => `<span>${escapeHtml(tag)}</span>`)
         .join("")
     : "";
 
+  const isOwner = currentUser && currentUser.uid === data.userId;
+
   characterFile.innerHTML = `
-    <section class="character-detail-layout">
-      <div class="character-detail-visual panel">
-        <img
-          class="character-detail-img"
-          src="${character.imageData}"
-          alt="${escapeHtml(character.name)}"
-        >
-      </div>
-
-      <div class="character-detail-info panel">
-        <p class="eyebrow">Character File</p>
-
-        <h1>${escapeHtml(character.name)}</h1>
-
-        ${
-          character.kana
-            ? `<p class="character-kana">${escapeHtml(character.kana)}</p>`
-            : ""
-        }
-
-        <div class="character-status-row">
-          <span class="status-badge">
-            ${character.faOk ? "ファンアート歓迎" : "ファンアートは要確認"}
-          </span>
+    <article class="character-detail panel">
+      <div class="character-detail-grid">
+        <div class="character-detail-image">
+          <img src="${data.imageData}" alt="${escapeHtml(data.name)}">
         </div>
 
-        <section class="detail-section">
-          <h2>プロフィール</h2>
-          <p>
-            ${
-              character.profile
-                ? nl2br(character.profile)
-                : "プロフィールはまだありません。"
-            }
+        <div class="character-detail-info">
+          <p class="eyebrow">Character File</p>
+
+          <h1>${escapeHtml(data.name || "名前未設定")}</h1>
+
+          ${
+            data.kana
+              ? `<p class="mini-info">${escapeHtml(data.kana)}</p>`
+              : ""
+          }
+
+          <p class="status-pill">
+            ${data.faOk ? "ファンアート歓迎" : "ファンアートは要確認"}
           </p>
-        </section>
 
-        ${
-          tags
-            ? `
-              <section class="detail-section">
-                <h2>タグ</h2>
-                <div class="tag-list">
-                  ${tags}
-                </div>
-              </section>
-            `
-            : ""
-        }
+          ${
+            data.isPublic === false
+              ? `<p class="status-pill muted-pill">非公開</p>`
+              : ""
+          }
 
-        ${
-          character.ngText
-            ? `
-              <section class="detail-section caution-box">
-                <h2>NG・注意事項</h2>
-                <p>${nl2br(character.ngText)}</p>
-              </section>
-            `
-            : ""
-        }
+          <div class="tag-list">
+            ${tags}
+          </div>
 
-        <section class="detail-section">
-  <h2>作者</h2>
-  <p>
-    <a class="text-link" href="/users/?id=${encodeURIComponent(character.userId)}">
-      ${escapeHtml(character.ownerName || "作者名未設定")}
-    </a>
-  </p>
-</section>
+          <div class="actions">
+            ${
+              isOwner
+                ? `
+                  <a class="primary-btn" href="/characters/edit/?id=${encodeURIComponent(character.id)}">
+                    編集する
+                  </a>
+                `
+                : ""
+            }
 
-        <section class="detail-section">
-          <h2>ファンアート</h2>
-          <p>この子のファンアート機能は、イベント機能と一緒に追加予定です。</p>
-        </section>
-
-        <div class="actions">
-          <a class="ghost-btn" href="/characters/">一覧へ戻る</a>
-          <a class="primary-btn" href="/draw/">絵を描く</a>
+            <a class="ghost-btn" href="/characters/">一覧へ戻る</a>
+            <a class="ghost-btn" href="/draw/">絵を描く</a>
+          </div>
         </div>
       </div>
-    </section>
+
+      <section class="detail-section">
+        <h2>プロフィール</h2>
+        ${
+          data.profile
+            ? `<p>${nl2br(data.profile)}</p>`
+            : `<p>プロフィールはまだありません。</p>`
+        }
+      </section>
+
+      <section class="detail-section">
+        <h2>NG・注意事項</h2>
+        ${
+          data.ngText
+            ? `<p>${nl2br(data.ngText)}</p>`
+            : `<p>特に記載はありません。</p>`
+        }
+      </section>
+
+      <section class="detail-section">
+        <h2>作者</h2>
+        <p>
+          <a class="text-link" href="/users/?id=${encodeURIComponent(data.userId)}">
+            ${escapeHtml(data.ownerName || "作者名未設定")}
+          </a>
+        </p>
+      </section>
+
+      <section class="detail-section">
+        <h2>ファンアート</h2>
+        <p>ファンアート機能は、イベント機能と一緒に追加予定です。</p>
+      </section>
+    </article>
   `;
 }
 
-loadCharacterFile().catch((error) => {
-  console.error(error);
-
-  characterFile.innerHTML = `
-    <section class="panel">
-      <h1>読み込みに失敗しました</h1>
-      <p>ページを再読み込みしてみてください。</p>
-
-      <div class="actions">
-        <a class="primary-btn" href="/characters/">キャラ一覧へ</a>
+async function init() {
+  if (!characterId) {
+    characterFile.innerHTML = `
+      <div class="panel">
+        <h1>キャラが選ばれていません</h1>
+        <p>URLが正しいか確認してください。</p>
+        <div class="actions">
+          <a class="ghost-btn" href="/characters/">キャラ一覧へ</a>
+        </div>
       </div>
-    </section>
-  `;
+    `;
+    return;
+  }
+
+  const character = await getCharacter();
+
+  if (!character) {
+    renderNotFound();
+    return;
+  }
+
+  renderCharacter(character);
+}
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+
+  init().catch((error) => {
+    console.error(error);
+
+    characterFile.innerHTML = `
+      <div class="panel">
+        <h1>読み込みに失敗しました</h1>
+        <p>ページを再読み込みしてみてください。</p>
+      </div>
+    `;
+  });
 });
