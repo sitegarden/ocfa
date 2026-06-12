@@ -1853,3 +1853,20 @@ textarea {
     flex-direction: column;
   }
 }
+
+.event-entry-form {
+  display: grid;
+  gap: 12px;
+}
+
+.event-entry-form select {
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper-2);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+}
