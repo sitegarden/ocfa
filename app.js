@@ -4,6 +4,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -30,7 +31,23 @@ async function getOcfaUserData(user) {
   const snap = await getDoc(userRef);
 
   if (snap.exists()) {
-    return snap.data();
+    const data = snap.data();
+
+    const latestPhotoURL = user.photoURL || "";
+
+    if ((data.photoURL || "") !== latestPhotoURL) {
+      await updateDoc(userRef, {
+        photoURL: latestPhotoURL,
+        updatedAt: serverTimestamp()
+      });
+
+      return {
+        ...data,
+        photoURL: latestPhotoURL
+      };
+    }
+
+    return data;
   }
 
   const initialData = {
@@ -174,7 +191,7 @@ onAuthStateChanged(auth, async (user) => {
     const userData = await getOcfaUserData(user);
     const displayName = userData.displayName || user.displayName || "ログイン中";
 
-    userName.textContent = escapeHtml(displayName);
+    userName.textContent = displayName;
     loginBtn.hidden = true;
     logoutBtn.hidden = false;
   } catch (error) {
@@ -184,4 +201,4 @@ onAuthStateChanged(auth, async (user) => {
     loginBtn.hidden = true;
     logoutBtn.hidden = false;
   }
-})
+});
