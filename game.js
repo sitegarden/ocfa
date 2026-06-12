@@ -1,0 +1,124 @@
+import { auth, db } from "/firebase.js";
+
+import {
+  addDoc,
+  collection,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+const roomCreateForm = document.getElementById("roomCreateForm");
+const roomTitle = document.getElementById("roomTitle");
+const turnSeconds = document.getElementById("turnSeconds");
+const maxPlayers = document.getElementById("maxPlayers");
+const gameMessage = document.getElementById("gameMessage");
+const createRoomBtn = document.getElementById("createRoomBtn");
+
+let currentUser = null;
+
+function setMessage(text) {
+  if (!gameMessage) return;
+  gameMessage.textContent = text;
+}
+
+function getOwnerName(user) {
+  if (!user) return "オーナー";
+
+  return (
+    user.displayName ||
+    user.email?.split("@")[0] ||
+    "オーナー"
+  );
+}
+
+function setFormState() {
+  if (!createRoomBtn) return;
+
+  if (!currentUser) {
+    createRoomBtn.disabled = true;
+    setMessage("部屋を作るにはログインしてください。");
+    return;
+  }
+
+  createRoomBtn.disabled = false;
+  setMessage("部屋を作成できます。");
+}
+
+async function createRoom() {
+  if (!currentUser) {
+    setMessage("部屋を作るにはログインしてください。");
+    return;
+  }
+
+  const title = roomTitle.value.trim();
+
+  if (!title) {
+    setMessage("部屋名を入力してください。");
+    return;
+  }
+
+  const selectedTurnSeconds = Number(turnSeconds.value || 120);
+  const selectedMaxPlayers = Number(maxPlayers.value || 4);
+
+  if (selectedTurnSeconds < 30 || selectedTurnSeconds > 600) {
+    setMessage("1ターンの時間が正しくありません。");
+    return;
+  }
+
+  if (selectedMaxPlayers < 2 || selectedMaxPlayers > 10) {
+    setMessage("最大人数が正しくありません。");
+    return;
+  }
+
+  try {
+    createRoomBtn.disabled = true;
+    setMessage("部屋を作成しています...");
+
+    const roomRef = await addDoc(collection(db, "ocGameRooms"), {
+      ownerId: currentUser.uid,
+      ownerName: getOwnerName(currentUser),
+      title,
+      status: "waiting",
+      turnSeconds: selectedTurnSeconds,
+      maxPlayers: selectedMaxPlayers,
+      isDeleted: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    await addDoc(collection(db, "ocGamePlayers"), {
+      roomId: roomRef.id,
+      userId: currentUser.uid,
+      guestId: "",
+      name: getOwnerName(currentUser),
+      isGuest: false,
+      isOwner: true,
+      order: 0,
+      isLeft: false,
+      joinedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    location.href = `/games/room/?id=${encodeURIComponent(roomRef.id)}`;
+  } catch (error) {
+    console.error(error);
+
+    createRoomBtn.disabled = false;
+    setMessage("部屋の作成に失敗しました。少し時間を置いてもう一度お試しください。");
+  }
+}
+
+if (roomCreateForm) {
+  roomCreateForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await createRoom();
+  });
+}
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  setFormState();
+});
