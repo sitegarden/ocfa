@@ -10,7 +10,8 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
-  where
+  where,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 import {
@@ -86,8 +87,13 @@ function saveUndo() {
 function setTool(tool) {
   currentTool = tool;
 
-  document.getElementById("penModeBtn")?.classList.toggle("tool-active", tool === "pen");
-  document.getElementById("eraserModeBtn")?.classList.toggle("tool-active", tool === "eraser");
+  document
+    .getElementById("penModeBtn")
+    ?.classList.toggle("tool-active", tool === "pen");
+
+  document
+    .getElementById("eraserModeBtn")
+    ?.classList.toggle("tool-active", tool === "eraser");
 }
 
 function startDraw(e) {
@@ -189,8 +195,13 @@ function setupCanvas() {
   canvas.addEventListener("touchmove", draw, { passive: false });
   window.addEventListener("touchend", endDraw);
 
-  document.getElementById("penModeBtn").addEventListener("click", () => setTool("pen"));
-  document.getElementById("eraserModeBtn").addEventListener("click", () => setTool("eraser"));
+  document.getElementById("penModeBtn").addEventListener("click", () => {
+    setTool("pen");
+  });
+
+  document.getElementById("eraserModeBtn").addEventListener("click", () => {
+    setTool("eraser");
+  });
 
   document.getElementById("undoBtn").addEventListener("click", undoCanvas);
   document.getElementById("clearBtn").addEventListener("click", clearCanvas);
@@ -275,28 +286,18 @@ async function getMyClaims() {
   return claims;
 }
 
-async function getMyFanarts() {
-  if (!currentUser) return [];
+async function getExistingClaim() {
+  if (!currentUser) return null;
 
-  const q = query(
-    collection(db, "v2EventFanarts"),
-    where("eventId", "==", eventId),
-    where("userId", "==", currentUser.uid),
-    where("isDeleted", "==", false)
-  );
+  const claimRef = doc(db, "v2EventFanartClaims", getClaimId());
+  const snap = await getDoc(claimRef);
 
-  const snap = await getDocs(q);
+  if (!snap.exists()) return null;
 
-  const fanarts = [];
-
-  snap.forEach((docSnap) => {
-    fanarts.push({
-      id: docSnap.id,
-      data: docSnap.data()
-    });
-  });
-
-  return fanarts;
+  return {
+    id: snap.id,
+    data: snap.data()
+  };
 }
 
 async function getExistingFanartForCharacter() {
@@ -314,20 +315,6 @@ async function getExistingFanartForCharacter() {
   return {
     id: snap.id,
     data
-  };
-}
-
-async function getExistingClaim() {
-  if (!currentUser) return null;
-
-  const claimRef = doc(db, "v2EventFanartClaims", getClaimId());
-  const snap = await getDoc(claimRef);
-
-  if (!snap.exists()) return null;
-
-  return {
-    id: snap.id,
-    data: snap.data()
   };
 }
 
@@ -364,7 +351,9 @@ async function ensureClaim(myClaims) {
   const claimId = getClaimId();
   const entryId = getEntryId();
 
-  await setDoc(doc(db, "v2EventFanartClaims", claimId), {
+  const batch = writeBatch(db);
+
+  batch.set(doc(db, "v2EventFanartClaims", claimId), {
     eventId,
     targetCharacterId: characterId,
     targetCharacterOwnerId: currentCharacter.data.userId || "",
@@ -375,10 +364,12 @@ async function ensureClaim(myClaims) {
     updatedAt: serverTimestamp()
   });
 
-  await updateDoc(doc(db, "v2EventEntries", entryId), {
+  batch.update(doc(db, "v2EventEntries", entryId), {
     progressCount: increment(1),
     updatedAt: serverTimestamp()
   });
+
+  await batch.commit();
 
   currentClaim = {
     id: claimId,
@@ -415,6 +406,10 @@ function renderFanartPage(myClaims) {
   const eventData = currentEvent.data;
   const charData = currentCharacter.data;
 
+  const activeClaimCount = myClaims.filter((claim) => {
+    return claim.data.isDeleted !== true;
+  }).length;
+
   fanartContent.innerHTML = `
     <section class="fanart-layout">
       <div class="panel fanart-draw-panel">
@@ -425,14 +420,14 @@ function renderFanartPage(myClaims) {
           </div>
 
           <p class="mini-info">
-            このイベントで描く予定：${myClaims.filter((claim) => claim.data.isDeleted !== true).length} / ${FANART_LIMIT}
+            このイベントで描く予定：${activeClaimCount} / ${FANART_LIMIT}
           </p>
         </div>
 
         <div class="panel-soft">
           <p>
             このページを開いた時点で「描く予定」として保存されています。
-            やめる場合は、下の「描くのを取り下げる」を押してください。
+            やめる場合は「描くのを取り下げる」を押してください。
           </p>
         </div>
 
@@ -502,7 +497,7 @@ function renderFanartPage(myClaims) {
         }
 
         <p class="status-pill">
-          ${charData.faOk ? "ファンアート歓迎" : "ファンアートは要確認"}
+          ファンアート歓迎
         </p>
 
         <section class="reference-mini-section">
@@ -532,6 +527,7 @@ function renderFanartPage(myClaims) {
           <a class="ghost-btn" href="/events/file/?id=${encodeURIComponent(eventId)}">
             イベントへ戻る
           </a>
+
           <a class="ghost-btn" href="/characters/file/?id=${encodeURIComponent(characterId)}">
             キャラ詳細
           </a>
@@ -571,11 +567,14 @@ function setupSaveFanart() {
       fillCanvasBase();
 
       const imageData = canvas.toDataURL("image/png");
+
       const fanartId = getFanartId();
       const claimId = getClaimId();
       const entryId = getEntryId();
 
-      await setDoc(doc(db, "v2EventFanarts", fanartId), {
+      const batch = writeBatch(db);
+
+      batch.set(doc(db, "v2EventFanarts", fanartId), {
         eventId,
         targetCharacterId: characterId,
         targetCharacterOwnerId: currentCharacter.data.userId || "",
@@ -586,16 +585,18 @@ function setupSaveFanart() {
         updatedAt: serverTimestamp()
       });
 
-      await updateDoc(doc(db, "v2EventFanartClaims", claimId), {
+      batch.update(doc(db, "v2EventFanartClaims", claimId), {
         status: "posted",
         updatedAt: serverTimestamp()
       });
 
-      await updateDoc(doc(db, "v2EventEntries", entryId), {
+      batch.update(doc(db, "v2EventEntries", entryId), {
         progressCount: increment(-1),
         fanartCount: increment(1),
         updatedAt: serverTimestamp()
       });
+
+      await batch.commit();
 
       message.textContent = "ファンアートを保存しました。";
 
@@ -631,16 +632,20 @@ function setupCancelClaim() {
       const claimId = getClaimId();
       const entryId = getEntryId();
 
-      await updateDoc(doc(db, "v2EventFanartClaims", claimId), {
+      const batch = writeBatch(db);
+
+      batch.update(doc(db, "v2EventFanartClaims", claimId), {
         status: "cancelled",
         isDeleted: true,
         updatedAt: serverTimestamp()
       });
 
-      await updateDoc(doc(db, "v2EventEntries", entryId), {
+      batch.update(doc(db, "v2EventEntries", entryId), {
         progressCount: increment(-1),
         updatedAt: serverTimestamp()
       });
+
+      await batch.commit();
 
       message.textContent = "描く予定を取り下げました。";
 
@@ -675,12 +680,18 @@ async function init() {
   ]);
 
   if (!event) {
-    renderError("イベントが見つかりません", "イベントが削除されたか、URLが変わっている可能性があります。");
+    renderError(
+      "イベントが見つかりません",
+      "イベントが削除されたか、URLが変わっている可能性があります。"
+    );
     return;
   }
 
   if (!character) {
-    renderError("キャラが見つかりません", "キャラクターが削除されたか、URLが変わっている可能性があります。");
+    renderError(
+      "キャラが見つかりません",
+      "キャラクターが削除されたか、URLが変わっている可能性があります。"
+    );
     return;
   }
 
@@ -693,7 +704,10 @@ async function init() {
   }
 
   if (event.data.status !== "open") {
-    renderError("受付中ではありません", "このイベントは現在ファンアートを受け付けていません。");
+    renderError(
+      "受付中ではありません",
+      "このイベントは現在ファンアートを受け付けていません。"
+    );
     return;
   }
 
@@ -703,14 +717,20 @@ async function init() {
   }
 
   if (character.data.faOk !== true) {
-  renderError("このキャラは描けません", "このキャラクターは現在、ファンアートを受け付けていません。");
-  return;
-}
+    renderError(
+      "このキャラは描けません",
+      "このキャラクターは現在、ファンアートを受け付けていません。"
+    );
+    return;
+  }
 
   const entry = await getEventEntryForCharacter();
 
   if (!entry) {
-    renderError("参加キャラではありません", "このキャラはイベントに参加していません。");
+    renderError(
+      "参加キャラではありません",
+      "このキャラはイベントに参加していません。"
+    );
     return;
   }
 
