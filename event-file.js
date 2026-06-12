@@ -439,65 +439,7 @@ async function renderEvent(event) {
   setupEntryActions(myEntry);
 }
 
-function setupEntryActions(myEntry) {
-  const form = document.getElementById("eventEntryForm");
-  const cancelBtn = document.getElementById("cancelEntryBtn");
 
-  if (form) {
-    const message = document.getElementById("entryMessage");
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const checkedCharacter = document.querySelector(
-    'input[name="entryCharacterId"]:checked'
-  );
-
-  if (!checkedCharacter) {
-    message.textContent = "参加させるキャラを選んでください。";
-    return;
-  }
-
-  const characterId = checkedCharacter.value;
-
-  if (!currentUser) return;
-
-  const entryId = `${eventId}_${currentUser.uid}`;
-
-
-      
-      if (!currentUser) return;
-
-      const entryId = `${eventId}_${currentUser.uid}`;
-
-      try {
-        message.textContent = "参加登録しています...";
-
-        await setDoc(doc(db, "v2EventEntries", entryId), {
-          eventId,
-          characterId,
-          userId: currentUser.uid,
-          isDeleted: false,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-
-        message.textContent = "イベントに参加しました。";
-
-        setTimeout(() => {
-          location.reload();
-        }, 700);
-      } catch (error) {
-        console.error(error);
-        message.textContent =
-          "参加登録に失敗しました。少し時間を置いて、もう一度お試しください。";
-      }
-    });
-  }
 
   if (cancelBtn && myEntry) {
     cancelBtn.addEventListener("click", async () => {
