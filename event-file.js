@@ -85,6 +85,7 @@ async function getMyCharacters() {
     const data = docSnap.data();
 
     if (data.isPublic !== true) return;
+    if (data.faOk !== true) return;
 
     characters.push({
       id: docSnap.id,
@@ -292,7 +293,7 @@ function renderJoinForm(myCharacters, myEntry) {
   if (myCharacters.length === 0) {
     return `
       <div class="panel-soft">
-        <p>参加できる公開キャラがまだありません。</p>
+        <p>参加できるキャラがまだありません。公開中で、ファンアート歓迎のキャラだけ参加できます。</p>
 
         <div class="actions">
           <a class="primary-btn" href="/draw/">キャラを作る</a>
