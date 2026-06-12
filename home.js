@@ -4,9 +4,7 @@ import {
   collection,
   getDocs,
   query,
-  where,
-  orderBy,
-  limit
+  where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 import {
@@ -107,9 +105,7 @@ async function loadHomeNotices() {
     const q = query(
       collection(db, "v2Notices"),
       where("isDeleted", "==", false),
-      where("isPublic", "==", true),
-      orderBy("createdAt", "desc"),
-      limit(3)
+      where("isPublic", "==", true)
     );
 
     const snap = await getDocs(q);
@@ -132,15 +128,29 @@ async function loadHomeNotices() {
       });
     });
 
-    homeNoticeList.innerHTML = notices
+    notices.sort((a, b) => {
+      const aTime = a.data.createdAt?.seconds || 0;
+      const bTime = b.data.createdAt?.seconds || 0;
+      return bTime - aTime;
+    });
+
+    const latestNotices = notices.slice(0, 3);
+
+    homeNoticeList.innerHTML = latestNotices
       .map(({ id, data }) => {
+        const body = data.body || "";
+        const shortBody =
+          body.length > 80
+            ? `${body.slice(0, 80)}...`
+            : body;
+
         return `
           <article class="home-notice-card">
-            <a href="/news/file/?id=${encodeURIComponent(id)}" class="home-notice-link">
+            <a href="/news/" class="home-notice-link">
               <div class="home-notice-body">
                 <p class="mini-info">${data.isImportant ? "重要" : "お知らせ"}</p>
                 <h3>${escapeHtml(data.title || "無題")}</h3>
-                <p>${nl2br(data.body || "").slice(0, 120)}...</p>
+                <p>${nl2br(shortBody)}</p>
               </div>
             </a>
           </article>
@@ -157,14 +167,5 @@ async function loadHomeNotices() {
     `;
   }
 }
-
-onAuthStateChanged(auth, async (user) => {
-  try {
-    await loadMyRandomCharacter(user);
-  } catch (error) {
-    console.error(error);
-    showHomeCharacterFallback();
-  }
-});
 
 loadHomeNotices();
