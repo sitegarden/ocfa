@@ -1,8 +1,15 @@
 import { auth, db } from "/firebase.js";
 
 import {
+  collection,
   doc,
-  getDoc
+  getDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 import {
@@ -15,6 +22,8 @@ const params = new URLSearchParams(location.search);
 const eventId = params.get("id");
 
 let currentUser = null;
+let currentEvent = null;
+let isCurrentAdmin = false;
 
 function escapeHtml(text) {
   return String(text)
@@ -36,15 +45,15 @@ function statusLabel(status) {
   return "準備中";
 }
 
-async function isAdminUser(user) {
-  if (!user) return false;
+async function getUserData(user) {
+  if (!user) return null;
 
   const userRef = doc(db, "users", user.uid);
   const snap = await getDoc(userRef);
 
-  if (!snap.exists()) return false;
+  if (!snap.exists()) return null;
 
-  return snap.data().role === "admin";
+  return snap.data();
 }
 
 async function getEvent() {
@@ -57,6 +66,97 @@ async function getEvent() {
     id: snap.id,
     data: snap.data()
   };
+}
+
+async function getMyCharacters() {
+  if (!currentUser) return [];
+
+  const q = query(
+    collection(db, "v2Characters"),
+    where("userId", "==", currentUser.uid),
+    where("isDeleted", "==", false)
+  );
+
+  const snap = await getDocs(q);
+
+  const characters = [];
+
+  snap.forEach((docSnap) => {
+    const data = docSnap.data();
+
+    if (data.isPublic !== true) return;
+
+    characters.push({
+      id: docSnap.id,
+      data
+    });
+  });
+
+  characters.sort((a, b) => {
+    const aTime = a.data.createdAt?.seconds || 0;
+    const bTime = b.data.createdAt?.seconds || 0;
+    return bTime - aTime;
+  });
+
+  return characters;
+}
+
+async function getEventEntries() {
+  const q = query(
+    collection(db, "v2EventEntries"),
+    where("eventId", "==", eventId),
+    where("isDeleted", "==", false)
+  );
+
+  const snap = await getDocs(q);
+
+  const entries = [];
+
+  snap.forEach((docSnap) => {
+    entries.push({
+      id: docSnap.id,
+      data: docSnap.data()
+    });
+  });
+
+  entries.sort((a, b) => {
+    const aTime = a.data.createdAt?.seconds || 0;
+    const bTime = b.data.createdAt?.seconds || 0;
+    return bTime - aTime;
+  });
+
+  return entries;
+}
+
+async function getCharacterById(characterId) {
+  const characterRef = doc(db, "v2Characters", characterId);
+  const snap = await getDoc(characterRef);
+
+  if (!snap.exists()) return null;
+
+  return {
+    id: snap.id,
+    data: snap.data()
+  };
+}
+
+async function getEntryCharacters(entries) {
+  const results = [];
+
+  for (const entry of entries) {
+    const character = await getCharacterById(entry.data.characterId);
+
+    if (!character) continue;
+    if (character.data.isDeleted === true) continue;
+    if (character.data.isPublic !== true && !isCurrentAdmin) continue;
+
+    results.push({
+      entry,
+      character
+    });
+  }
+
+  return results;
 }
 
 function renderNoEventId() {
@@ -98,19 +198,161 @@ function renderPrivateEvent() {
   `;
 }
 
+function renderEntryCharacters(entryCharacters) {
+  if (entryCharacters.length === 0) {
+    return `
+      <div class="panel-soft">
+        <p>参加キャラはまだいません。</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="character-list">
+      ${entryCharacters
+        .map(({ character }) => {
+          const data = character.data;
+
+          const tags = Array.isArray(data.tags)
+            ? data.tags
+                .map((tag) => `<span>${escapeHtml(tag)}</span>`)
+                .join("")
+            : "";
+
+          return `
+            <article class="character-card">
+              <a class="character-card-link" href="/characters/file/?id=${encodeURIComponent(character.id)}">
+                <img src="${data.imageData}" alt="${escapeHtml(data.name || "キャラ")}">
+
+                <div class="character-body">
+                  <h2>${escapeHtml(data.name || "名前未設定")}</h2>
+
+                  ${
+                    data.kana
+                      ? `<p class="mini-info">${escapeHtml(data.kana)}</p>`
+                      : ""
+                  }
+
+                  <div class="tag-list">
+                    ${tags}
+                  </div>
+
+                  <p class="mini-info">
+                    ${data.faOk ? "ファンアート歓迎" : "ファンアートは要確認"}
+                  </p>
+                </div>
+              </a>
+            </article>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+function renderJoinForm(myCharacters, myEntry) {
+  if (!currentUser) {
+    return `
+      <div class="panel-soft">
+        <p>イベントに参加するにはログインしてください。</p>
+      </div>
+    `;
+  }
+
+  if (currentEvent.data.status !== "open") {
+    return `
+      <div class="panel-soft">
+        <p>このイベントは現在、参加受付中ではありません。</p>
+      </div>
+    `;
+  }
+
+  if (currentEvent.data.isPublic === false) {
+    return `
+      <div class="panel-soft">
+        <p>非公開イベントのため、参加受付は表示されません。</p>
+      </div>
+    `;
+  }
+
+  if (myEntry) {
+    return `
+      <div class="panel-soft">
+        <p>このイベントにはすでに参加しています。</p>
+
+        <div class="actions">
+          <button id="cancelEntryBtn" class="ghost-btn" type="button">
+            参加を取り消す
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (myCharacters.length === 0) {
+    return `
+      <div class="panel-soft">
+        <p>参加できる公開キャラがまだありません。</p>
+
+        <div class="actions">
+          <a class="primary-btn" href="/draw/">キャラを作る</a>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <form id="eventEntryForm" class="event-entry-form">
+      <label>
+        参加させるキャラ
+        <select id="entryCharacterId" required>
+          ${myCharacters
+            .map((character) => {
+              return `
+                <option value="${character.id}">
+                  ${escapeHtml(character.data.name || "名前未設定")}
+                </option>
+              `;
+            })
+            .join("")}
+        </select>
+      </label>
+
+      <p class="mini-info">
+        ひとつのイベントにつき、参加できるキャラはひとり1体までです。
+      </p>
+
+      <button class="primary-btn" type="submit">このキャラで参加する</button>
+      <p id="entryMessage" class="message"></p>
+    </form>
+  `;
+}
+
 async function renderEvent(event) {
+  currentEvent = event;
+
   const data = event.data;
-  const isAdmin = await isAdminUser(currentUser);
 
   if (data.isDeleted === true) {
     renderNotFound();
     return;
   }
 
-  if (data.isPublic === false && !isAdmin) {
+  if (data.isPublic === false && !isCurrentAdmin) {
     renderPrivateEvent();
     return;
   }
+
+  const entries = await getEventEntries();
+  const entryCharacters = await getEntryCharacters(entries);
+
+  const myEntry = currentUser
+    ? entries.find((entry) => entry.data.userId === currentUser.uid)
+    : null;
+
+  const myCharacters = currentUser && !myEntry
+    ? await getMyCharacters()
+    : [];
 
   eventFile.innerHTML = `
     <article class="event-detail panel">
@@ -130,7 +372,7 @@ async function renderEvent(event) {
         </div>
 
         ${
-          isAdmin
+          isCurrentAdmin
             ? `
               <div class="actions">
                 <a class="primary-btn" href="/events/edit/?id=${encodeURIComponent(event.id)}">
@@ -152,11 +394,14 @@ async function renderEvent(event) {
       </section>
 
       <section class="detail-section">
+        <h2>イベントに参加する</h2>
+        ${renderJoinForm(myCharacters, myEntry)}
+      </section>
+
+      <section class="detail-section">
         <h2>参加キャラ</h2>
-        <p>
-          参加キャラ機能はこのあと追加します。
-          まずはイベント本体の表示までできています。
-        </p>
+        <p class="mini-info">${entryCharacters.length}体のキャラが参加中です。</p>
+        ${renderEntryCharacters(entryCharacters)}
       </section>
 
       <section class="detail-section">
@@ -172,6 +417,71 @@ async function renderEvent(event) {
       </div>
     </article>
   `;
+
+  setupEntryActions(myEntry);
+}
+
+function setupEntryActions(myEntry) {
+  const form = document.getElementById("eventEntryForm");
+  const cancelBtn = document.getElementById("cancelEntryBtn");
+
+  if (form) {
+    const message = document.getElementById("entryMessage");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const characterId = document.getElementById("entryCharacterId").value;
+
+      if (!currentUser) return;
+
+      const entryId = `${eventId}_${currentUser.uid}`;
+
+      try {
+        message.textContent = "参加登録しています...";
+
+        await setDoc(doc(db, "v2EventEntries", entryId), {
+          eventId,
+          characterId,
+          userId: currentUser.uid,
+          isDeleted: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+
+        message.textContent = "イベントに参加しました。";
+
+        setTimeout(() => {
+          location.reload();
+        }, 700);
+      } catch (error) {
+        console.error(error);
+        message.textContent =
+          "参加登録に失敗しました。少し時間を置いて、もう一度お試しください。";
+      }
+    });
+  }
+
+  if (cancelBtn && myEntry) {
+    cancelBtn.addEventListener("click", async () => {
+      try {
+        cancelBtn.disabled = true;
+        cancelBtn.textContent = "取り消しています...";
+
+        await updateDoc(doc(db, "v2EventEntries", myEntry.id), {
+          isDeleted: true,
+          updatedAt: serverTimestamp()
+        });
+
+        location.reload();
+      } catch (error) {
+        console.error(error);
+        cancelBtn.disabled = false;
+        cancelBtn.textContent = "参加を取り消す";
+        alert("参加の取り消しに失敗しました。");
+      }
+    });
+  }
 }
 
 async function init() {
@@ -194,6 +504,9 @@ onAuthStateChanged(auth, async (user) => {
   currentUser = user;
 
   try {
+    const userData = await getUserData(user);
+    isCurrentAdmin = userData?.role === "admin";
+
     await init();
   } catch (error) {
     console.error(error);
