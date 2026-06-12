@@ -6,6 +6,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   serverTimestamp,
   updateDoc,
@@ -24,6 +25,10 @@ const roomId = params.get("id");
 let currentUser = null;
 let currentRoom = null;
 let currentPlayers = [];
+
+let unsubscribeRoom = null;
+let unsubscribePlayers = null;
+let hasStartedListening = false;
 
 function escapeHtml(text) {
   return String(text)
@@ -171,7 +176,7 @@ async function joinAsGuest() {
 
     if (message) message.textContent = "参加しました。";
 
-    await reloadRoom();
+    // await reloadRoom();
   } catch (error) {
     console.error(error);
     if (message) message.textContent = "参加に失敗しました。";
@@ -221,7 +226,7 @@ async function joinAsLoginUser() {
 
     if (message) message.textContent = "参加しました。";
 
-    await reloadRoom();
+    // await reloadRoom();
   } catch (error) {
     console.error(error);
     if (message) message.textContent = "参加に失敗しました。";
@@ -527,7 +532,97 @@ async function reloadRoom() {
   }
 }
 
+function startRealtimeListeners() {
+  if (!roomId || hasStartedListening) return;
+
+  hasStartedListening = true;
+
+  const roomRef = doc(db, "ocGameRooms", roomId);
+
+  unsubscribeRoom = onSnapshot(
+    roomRef,
+    async (snap) => {
+      if (!snap.exists()) {
+        renderNotFound();
+        return;
+      }
+
+      const data = snap.data();
+
+      if (data.isDeleted === true) {
+        renderNotFound();
+        return;
+      }
+
+      currentRoom = {
+        id: snap.id,
+        data
+      };
+
+      if (currentPlayers) {
+        renderRoom();
+      }
+    },
+    (error) => {
+      renderError(error);
+    }
+  );
+
+  const playersQuery = query(
+    collection(db, "ocGamePlayers"),
+    where("roomId", "==", roomId),
+    where("isLeft", "==", false)
+  );
+
+  unsubscribePlayers = onSnapshot(
+    playersQuery,
+    (snap) => {
+      const players = [];
+
+      snap.forEach((docSnap) => {
+        players.push({
+          id: docSnap.id,
+          data: docSnap.data()
+        });
+      });
+
+      players.sort((a, b) => {
+        const aOrder = typeof a.data.order === "number" ? a.data.order : 999;
+        const bOrder = typeof b.data.order === "number" ? b.data.order : 999;
+
+        if (aOrder !== bOrder) return aOrder - bOrder;
+
+        const aTime = a.data.joinedAt?.seconds || 0;
+        const bTime = b.data.joinedAt?.seconds || 0;
+
+        return aTime - bTime;
+      });
+
+      currentPlayers = players;
+
+      if (currentRoom) {
+        renderRoom();
+      }
+    },
+    (error) => {
+      renderError(error);
+    }
+  );
+}
+
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
-  await reloadRoom();
+
+  if (!roomId) {
+    renderNoRoomId();
+    return;
+  }
+
+  gameRoomContent.innerHTML = `
+    <section class="panel">
+      <p>部屋を読み込んでいます...</p>
+    </section>
+  `;
+
+  startRealtimeListeners();
 });
