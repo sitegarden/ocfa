@@ -3213,3 +3213,45 @@ textarea {
     flex-direction: column;
   }
 }
+
+.game-draw-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.game-canvas {
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 1 / 1;
+  justify-self: center;
+  border: 2px solid var(--line);
+  border-radius: 24px;
+  background: #fffdf8;
+  box-shadow: var(--shadow-soft);
+  touch-action: none;
+}
+
+.submitted-oc-preview {
+  display: grid;
+  justify-items: center;
+  margin-top: 16px;
+}
+
+.submitted-oc-preview img {
+  width: min(100%, 420px);
+  border: 2px solid var(--line);
+  border-radius: 24px;
+  background: #fffdf8;
+  box-shadow: var(--shadow-soft);
+}
+
+@media (max-width: 640px) {
+  .game-canvas {
+    max-width: 100%;
+    border-radius: 18px;
+  }
+
+  .submitted-oc-preview img {
+    border-radius: 18px;
+  }
+}
