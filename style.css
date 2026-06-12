@@ -3310,3 +3310,46 @@ textarea {
 .game-timer-meter span.is-danger {
   background: #e96b6b;
 }
+
+.game-layer-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.game-layer-tools button {
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.game-layer-tools button.is-active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.game-layer-tools button.is-hidden-layer {
+  opacity: 0.45;
+}
+
+.game-layer-tools .danger-btn {
+  background: #fff3f3;
+  color: #b84343;
+}
+
+@media (max-width: 640px) {
+  .game-layer-tools {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .game-layer-tools button {
+    width: 100%;
+  }
+}
