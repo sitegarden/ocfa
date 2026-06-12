@@ -303,20 +303,38 @@ function renderJoinForm(myCharacters, myEntry) {
 
   return `
     <form id="eventEntryForm" class="event-entry-form">
-      <label>
-        参加させるキャラ
-        <select id="entryCharacterId" required>
-          ${myCharacters
-            .map((character) => {
-              return `
-                <option value="${character.id}">
-                  ${escapeHtml(character.data.name || "名前未設定")}
-                </option>
-              `;
-            })
-            .join("")}
-        </select>
-      </label>
+      <p class="form-label">参加させるキャラ</p>
+
+      <div class="entry-character-options">
+        ${myCharacters
+          .map((character, index) => {
+            const data = character.data;
+
+            return `
+              <label class="entry-character-card">
+                <input
+                  type="radio"
+                  name="entryCharacterId"
+                  value="${character.id}"
+                  ${index === 0 ? "checked" : ""}
+                >
+
+                <span>
+                  <img src="${data.imageData}" alt="${escapeHtml(data.name || "キャラ")}">
+
+                  <strong>${escapeHtml(data.name || "名前未設定")}</strong>
+
+                  ${
+                    data.kana
+                      ? `<small>${escapeHtml(data.kana)}</small>`
+                      : `<small>参加キャラ</small>`
+                  }
+                </span>
+              </label>
+            `;
+          })
+          .join("")}
+      </div>
 
       <p class="mini-info">
         ひとつのイベントにつき、参加できるキャラはひとり1体までです。
@@ -431,8 +449,27 @@ function setupEntryActions(myEntry) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const characterId = document.getElementById("entryCharacterId").value;
 
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const checkedCharacter = document.querySelector(
+    'input[name="entryCharacterId"]:checked'
+  );
+
+  if (!checkedCharacter) {
+    message.textContent = "参加させるキャラを選んでください。";
+    return;
+  }
+
+  const characterId = checkedCharacter.value;
+
+  if (!currentUser) return;
+
+  const entryId = `${eventId}_${currentUser.uid}`;
+
+
+      
       if (!currentUser) return;
 
       const entryId = `${eventId}_${currentUser.uid}`;
