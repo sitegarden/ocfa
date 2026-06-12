@@ -508,6 +508,13 @@ function renderOwnerArea() {
 
 function renderLayerTools() {
   return `
+    <div class="game-draw-tools">
+      <label class="game-color-tool">
+        色
+        <input id="gamePenColor" type="color" value="#2b2430">
+      </label>
+    </div>
+
     <div class="game-layer-tools">
       <button id="layerBtn0" type="button" class="layer-btn is-active">
         レイヤー1
@@ -1143,12 +1150,13 @@ function drawGameCanvas(e) {
 
   const point = getGamePoint(e);
   const targetCtx = getActiveLayerCtx();
+  const gamePenColor = document.getElementById("gamePenColor");
 
   if (!targetCtx) return;
 
   targetCtx.lineCap = "round";
   targetCtx.lineJoin = "round";
-  targetCtx.strokeStyle = "#2b2430";
+  targetCtx.strokeStyle = gamePenColor?.value || "#2b2430";
   targetCtx.lineWidth = 5;
 
   targetCtx.beginPath();
