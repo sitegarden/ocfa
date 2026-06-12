@@ -243,6 +243,21 @@ function renderEntryCharacters(entryCharacters) {
                   </p>
                 </div>
               </a>
+
+              ${
+                data.faOk
+                  ? `
+                    <div class="actions">
+                      <a
+                        class="primary-btn small-btn"
+                        href="/events/fanart/?event=${encodeURIComponent(eventId)}&character=${encodeURIComponent(character.id)}"
+                      >
+                        この子を描く
+                      </a>
+                    </div>
+                  `
+                  : ""
+              }
             </article>
           `;
         })
