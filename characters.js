@@ -20,9 +20,10 @@ function escapeHtml(text) {
 
 async function loadCharacters() {
   const q = query(
-    collection(db, "v2Characters"),
-    where("isDeleted", "==", false)
-  );
+  collection(db, "v2Characters"),
+  where("isDeleted", "==", false),
+  where("isPublic", "==", true)
+);
 
   const snap = await getDocs(q);
 
