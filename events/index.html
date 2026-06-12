@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>イベント - OCFA</title>
+  <meta name="description" content="OCFAのイベント一覧ページです。">
+
+  <link rel="stylesheet" href="/style.css">
+
+  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/favicon.png">
+</head>
+
+<body>
+  <header id="siteHeader"></header>
+
+  <main class="page">
+    <section class="page-head">
+      <p class="eyebrow">Events</p>
+      <h1>イベント</h1>
+      <p>
+        オリジナルキャラクターを通して、ゆるく描き合うためのイベントです。
+      </p>
+
+      <div id="eventAdminActions" class="actions" hidden>
+        <a class="primary-btn" href="/events/new/">イベントを作る</a>
+      </div>
+    </section>
+
+    <section id="eventList" class="event-list">
+      <div class="panel">
+        <p>読み込み中...</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/app.js"></script>
+  <script type="module" src="/events.js"></script>
+</body>
+</html>
