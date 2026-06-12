@@ -58,12 +58,13 @@ function renderHeader() {
     <a class="logo" href="/">OCFA</a>
 
     <nav class="nav">
-      <a href="/characters/">キャラ一覧</a>
-      <a href="/draw/">描く</a>
-      <a href="/events/">イベント</a>
-      <a href="/mypage/">マイページ</a>
-      <a href="/settings/">設定</a>
-    </nav>
+  <a href="/characters/">キャラ一覧</a>
+  <a href="/draw/">描く</a>
+  <a href="/events/">イベント</a>
+  <a href="/news/">お知らせ</a>
+  <a href="/mypage/">マイページ</a>
+  <a href="/settings/">設定</a>
+</nav>
 
     <div class="auth-box">
       <span id="userName">確認中...</span>
