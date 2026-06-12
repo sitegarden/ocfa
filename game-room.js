@@ -51,6 +51,7 @@ let layerVisible = [true, true];
 let originalTimerId = null;
 let submittingOriginal = false;
 let submittingFanart = false;
+let advancingRound = false;
 
 function escapeHtml(text) {
   return String(text)
@@ -253,6 +254,67 @@ async function checkAllOriginalsSubmitted() {
   } catch (error) {
     console.error(error);
     advancingToFa = false;
+  }
+}
+
+function getFanartsForCurrentRound() {
+  const round = Number(currentRoom?.data?.currentRound || 0);
+
+  return currentFanarts.filter((fanart) => {
+    return fanart.data.round === round
+      && fanart.data.isDeleted !== true;
+  });
+}
+
+function hasPlayerSubmittedFanartThisRound(player) {
+  const round = Number(currentRoom?.data?.currentRound || 0);
+
+  return currentFanarts.some((fanart) => {
+    return fanart.data.round === round
+      && fanart.data.artistPlayerId === player.id
+      && fanart.data.isDeleted !== true;
+  });
+}
+
+async function checkAllFanartsSubmitted() {
+  if (!currentRoom) return;
+  if (currentRoom.data.status !== "drawing_fa") return;
+  if (!isOwner()) return;
+  if (advancingRound) return;
+  if (currentPlayers.length < 2) return;
+
+  const allSubmitted = currentPlayers.every((player) => {
+    return hasPlayerSubmittedFanartThisRound(player);
+  });
+
+  if (!allSubmitted) return;
+
+  const currentRound = Number(currentRoom.data.currentRound || 0);
+  const nextRound = currentRound + 1;
+  const lastRoundIndex = currentPlayers.length - 1;
+
+  try {
+    advancingRound = true;
+
+    if (nextRound > lastRoundIndex) {
+      await updateDoc(doc(db, "ocGameRooms", roomId), {
+        status: "reveal",
+        revealedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      return;
+    }
+
+    await updateDoc(doc(db, "ocGameRooms", roomId), {
+      currentRound: nextRound,
+      updatedAt: serverTimestamp()
+    });
+
+    advancingRound = false;
+  } catch (error) {
+    console.error(error);
+    advancingRound = false;
   }
 }
 
@@ -550,6 +612,19 @@ async function renderGameStageArea() {
     return "";
   }
 
+  if (currentRoom.data.status === "reveal") {
+    return `
+      <section class="panel">
+        <p class="eyebrow">Result</p>
+        <h2>結果発表</h2>
+        <p>
+          全ラウンドが終了しました。
+          次はキャラごとに、みんなのFAを表示する結果画面を作ります。
+        </p>
+      </section>
+    `;
+  }
+
   if (currentRoom.data.status === "drawing_fa") {
     const myPlayer = getMyPlayer();
 
@@ -719,9 +794,19 @@ async function renderRoom() {
         1ターン ${Math.floor(room.turnSeconds / 60)}分
       </p>
 
-      <p class="mini-info">
+            <p class="mini-info">
         OC提出 ${currentOriginals.length} / ${currentPlayers.length}人
       </p>
+
+      ${
+        room.status === "drawing_fa"
+          ? `
+            <p class="mini-info">
+              現在のFA提出 ${getFanartsForCurrentRound().length} / ${currentPlayers.length}人
+            </p>
+          `
+          : ""
+      }
 
       <p class="mini-info">
         部屋URLを共有すると、ゲストも参加できます。
@@ -874,6 +959,7 @@ function startRealtimeListeners() {
       };
 
       await checkAllOriginalsSubmitted();
+      await checkAllFanartsSubmitted();
 
       await renderRoom();
     },
@@ -915,6 +1001,7 @@ function startRealtimeListeners() {
       currentPlayers = players;
 
       await checkAllOriginalsSubmitted();
+      await checkAllFanartsSubmitted();
 
       if (currentRoom) {
         await renderRoom();
@@ -946,6 +1033,7 @@ function startRealtimeListeners() {
       currentOriginals = originals;
 
       await checkAllOriginalsSubmitted();
+      await checkAllFanartsSubmitted();
 
       if (currentRoom) {
         await renderRoom();
@@ -975,6 +1063,8 @@ function startRealtimeListeners() {
       });
 
       currentFanarts = fanarts;
+
+      await checkAllFanartsSubmitted();
 
       if (currentRoom) {
         await renderRoom();
