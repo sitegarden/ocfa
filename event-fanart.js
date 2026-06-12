@@ -5,9 +5,11 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -24,6 +26,8 @@ const characterId = params.get("character");
 let currentUser = null;
 let currentEvent = null;
 let currentCharacter = null;
+let currentEntry = null;
+let currentClaim = null;
 
 let canvas = null;
 let ctx = null;
@@ -45,6 +49,18 @@ function escapeHtml(text) {
 
 function nl2br(text) {
   return escapeHtml(text).replaceAll("\n", "<br>");
+}
+
+function getClaimId() {
+  return `${eventId}_${characterId}_${currentUser.uid}`;
+}
+
+function getFanartId() {
+  return `${eventId}_${characterId}_${currentUser.uid}`;
+}
+
+function getEntryId() {
+  return `${eventId}_${currentCharacter.data.userId}`;
 }
 
 function getPointerPos(e) {
@@ -80,7 +96,6 @@ function startDraw(e) {
   if (!ctx) return;
 
   saveUndo();
-
   drawing = true;
 
   const pos = getPointerPos(e);
@@ -128,6 +143,14 @@ function endDraw() {
   ctx.globalAlpha = 1;
 }
 
+function fillCanvasBase() {
+  ctx.save();
+  ctx.globalCompositeOperation = "destination-over";
+  ctx.fillStyle = "#fffdf8";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+}
+
 function clearCanvas() {
   if (!ctx || !canvas) return;
 
@@ -147,14 +170,6 @@ function undoCanvas() {
   const imageData = undoStack.pop();
 
   ctx.putImageData(imageData, 0, 0);
-}
-
-function fillCanvasBase() {
-  ctx.save();
-  ctx.globalCompositeOperation = "destination-over";
-  ctx.fillStyle = "#fffdf8";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.restore();
 }
 
 function setupCanvas() {
@@ -214,6 +229,52 @@ async function getCharacter() {
   };
 }
 
+async function getEventEntryForCharacter() {
+  const q = query(
+    collection(db, "v2EventEntries"),
+    where("eventId", "==", eventId),
+    where("characterId", "==", characterId),
+    where("isDeleted", "==", false)
+  );
+
+  const snap = await getDocs(q);
+
+  let result = null;
+
+  snap.forEach((docSnap) => {
+    result = {
+      id: docSnap.id,
+      data: docSnap.data()
+    };
+  });
+
+  return result;
+}
+
+async function getMyClaims() {
+  if (!currentUser) return [];
+
+  const q = query(
+    collection(db, "v2EventFanartClaims"),
+    where("eventId", "==", eventId),
+    where("userId", "==", currentUser.uid),
+    where("isDeleted", "==", false)
+  );
+
+  const snap = await getDocs(q);
+
+  const claims = [];
+
+  snap.forEach((docSnap) => {
+    claims.push({
+      id: docSnap.id,
+      data: docSnap.data()
+    });
+  });
+
+  return claims;
+}
+
 async function getMyFanarts() {
   if (!currentUser) return [];
 
@@ -241,48 +302,97 @@ async function getMyFanarts() {
 async function getExistingFanartForCharacter() {
   if (!currentUser) return null;
 
-  const q = query(
-    collection(db, "v2EventFanarts"),
-    where("eventId", "==", eventId),
-    where("userId", "==", currentUser.uid),
-    where("targetCharacterId", "==", characterId),
-    where("isDeleted", "==", false)
-  );
+  const fanartRef = doc(db, "v2EventFanarts", getFanartId());
+  const snap = await getDoc(fanartRef);
 
-  const snap = await getDocs(q);
+  if (!snap.exists()) return null;
 
-  let result = null;
+  const data = snap.data();
 
-  snap.forEach((docSnap) => {
-    result = {
-      id: docSnap.id,
-      data: docSnap.data()
-    };
-  });
+  if (data.isDeleted === true) return null;
 
-  return result;
+  return {
+    id: snap.id,
+    data
+  };
 }
 
-async function getEventEntryForCharacter() {
-  const q = query(
-    collection(db, "v2EventEntries"),
-    where("eventId", "==", eventId),
-    where("characterId", "==", characterId),
-    where("isDeleted", "==", false)
-  );
+async function getExistingClaim() {
+  if (!currentUser) return null;
 
-  const snap = await getDocs(q);
+  const claimRef = doc(db, "v2EventFanartClaims", getClaimId());
+  const snap = await getDoc(claimRef);
 
-  let result = null;
+  if (!snap.exists()) return null;
 
-  snap.forEach((docSnap) => {
-    result = {
-      id: docSnap.id,
-      data: docSnap.data()
-    };
+  return {
+    id: snap.id,
+    data: snap.data()
+  };
+}
+
+async function ensureClaim(myClaims) {
+  const existingFanart = await getExistingFanartForCharacter();
+
+  if (existingFanart) {
+    renderError(
+      "すでに投稿済みです",
+      "このキャラへのファンアートはすでに保存されています。"
+    );
+    return false;
+  }
+
+  const existingClaim = await getExistingClaim();
+
+  if (existingClaim && existingClaim.data.isDeleted !== true) {
+    currentClaim = existingClaim;
+    return true;
+  }
+
+  const activeClaims = myClaims.filter((claim) => {
+    return claim.data.isDeleted !== true;
   });
 
-  return result;
+  if (activeClaims.length >= FANART_LIMIT) {
+    renderError(
+      "上限に達しています",
+      `このイベントで描けるファンアートは${FANART_LIMIT}キャラまでです。`
+    );
+    return false;
+  }
+
+  const claimId = getClaimId();
+  const entryId = getEntryId();
+
+  await setDoc(doc(db, "v2EventFanartClaims", claimId), {
+    eventId,
+    targetCharacterId: characterId,
+    targetCharacterOwnerId: currentCharacter.data.userId || "",
+    userId: currentUser.uid,
+    status: "drawing",
+    isDeleted: false,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+
+  await updateDoc(doc(db, "v2EventEntries", entryId), {
+    progressCount: increment(1),
+    updatedAt: serverTimestamp()
+  });
+
+  currentClaim = {
+    id: claimId,
+    data: {
+      eventId,
+      targetCharacterId: characterId,
+      targetCharacterOwnerId: currentCharacter.data.userId || "",
+      userId: currentUser.uid,
+      status: "drawing",
+      isDeleted: false
+    }
+  };
+
+  return true;
 }
 
 function renderError(title, text) {
@@ -292,13 +402,16 @@ function renderError(title, text) {
       <p>${escapeHtml(text)}</p>
 
       <div class="actions">
+        <a class="ghost-btn" href="/events/file/?id=${encodeURIComponent(eventId || "")}">
+          イベントへ戻る
+        </a>
         <a class="ghost-btn" href="/events/">イベント一覧へ</a>
       </div>
     </section>
   `;
 }
 
-function renderFanartPage(myFanarts) {
+function renderFanartPage(myClaims) {
   const eventData = currentEvent.data;
   const charData = currentCharacter.data;
 
@@ -312,7 +425,14 @@ function renderFanartPage(myFanarts) {
           </div>
 
           <p class="mini-info">
-            このイベントで保存済み：${myFanarts.length} / ${FANART_LIMIT}
+            このイベントで描く予定：${myClaims.filter((claim) => claim.data.isDeleted !== true).length} / ${FANART_LIMIT}
+          </p>
+        </div>
+
+        <div class="panel-soft">
+          <p>
+            このページを開いた時点で「描く予定」として保存されています。
+            やめる場合は、下の「描くのを取り下げる」を押してください。
           </p>
         </div>
 
@@ -353,6 +473,10 @@ function renderFanartPage(myFanarts) {
         <div class="draw-actions">
           <button id="saveFanartBtn" class="primary-btn" type="button">
             ファンアートを保存
+          </button>
+
+          <button id="cancelClaimBtn" class="ghost-btn" type="button">
+            描くのを取り下げる
           </button>
 
           <p id="fanartMessage" class="message"></p>
@@ -417,11 +541,13 @@ function renderFanartPage(myFanarts) {
   `;
 
   setupCanvas();
-  setupSaveFanart(myFanarts);
+  setupSaveFanart();
+  setupCancelClaim();
 }
 
-function setupSaveFanart(myFanarts) {
+function setupSaveFanart() {
   const saveBtn = document.getElementById("saveFanartBtn");
+  const cancelBtn = document.getElementById("cancelClaimBtn");
   const message = document.getElementById("fanartMessage");
 
   saveBtn.addEventListener("click", async () => {
@@ -437,19 +563,17 @@ function setupSaveFanart(myFanarts) {
       return;
     }
 
-    if (myFanarts.length >= FANART_LIMIT) {
-      message.textContent = `このイベントで描けるファンアートは${FANART_LIMIT}枚までです。`;
-      return;
-    }
-
     try {
       message.textContent = "ファンアートを保存しています...";
       saveBtn.disabled = true;
+      cancelBtn.disabled = true;
 
       fillCanvasBase();
 
       const imageData = canvas.toDataURL("image/png");
-      const fanartId = `${eventId}_${characterId}_${currentUser.uid}`;
+      const fanartId = getFanartId();
+      const claimId = getClaimId();
+      const entryId = getEntryId();
 
       await setDoc(doc(db, "v2EventFanarts", fanartId), {
         eventId,
@@ -462,6 +586,17 @@ function setupSaveFanart(myFanarts) {
         updatedAt: serverTimestamp()
       });
 
+      await updateDoc(doc(db, "v2EventFanartClaims", claimId), {
+        status: "posted",
+        updatedAt: serverTimestamp()
+      });
+
+      await updateDoc(doc(db, "v2EventEntries", entryId), {
+        progressCount: increment(-1),
+        fanartCount: increment(1),
+        updatedAt: serverTimestamp()
+      });
+
       message.textContent = "ファンアートを保存しました。";
 
       setTimeout(() => {
@@ -471,8 +606,54 @@ function setupSaveFanart(myFanarts) {
       console.error(error);
 
       saveBtn.disabled = false;
+      cancelBtn.disabled = false;
       message.textContent =
         "ファンアートの保存に失敗しました。少し時間を置いて、もう一度お試しください。";
+    }
+  });
+}
+
+function setupCancelClaim() {
+  const cancelBtn = document.getElementById("cancelClaimBtn");
+  const saveBtn = document.getElementById("saveFanartBtn");
+  const message = document.getElementById("fanartMessage");
+
+  cancelBtn.addEventListener("click", async () => {
+    const ok = confirm("このキャラを描くのを取り下げますか？");
+
+    if (!ok) return;
+
+    try {
+      cancelBtn.disabled = true;
+      saveBtn.disabled = true;
+      message.textContent = "取り下げています...";
+
+      const claimId = getClaimId();
+      const entryId = getEntryId();
+
+      await updateDoc(doc(db, "v2EventFanartClaims", claimId), {
+        status: "cancelled",
+        isDeleted: true,
+        updatedAt: serverTimestamp()
+      });
+
+      await updateDoc(doc(db, "v2EventEntries", entryId), {
+        progressCount: increment(-1),
+        updatedAt: serverTimestamp()
+      });
+
+      message.textContent = "描く予定を取り下げました。";
+
+      setTimeout(() => {
+        location.href = `/events/file/?id=${encodeURIComponent(eventId)}`;
+      }, 700);
+    } catch (error) {
+      console.error(error);
+
+      cancelBtn.disabled = false;
+      saveBtn.disabled = false;
+      message.textContent =
+        "取り下げに失敗しました。少し時間を置いて、もう一度お試しください。";
     }
   });
 }
@@ -528,9 +709,17 @@ async function init() {
     return;
   }
 
-  const myFanarts = await getMyFanarts();
+  currentEntry = entry;
 
-  renderFanartPage(myFanarts);
+  const myClaims = await getMyClaims();
+
+  const claimOk = await ensureClaim(myClaims);
+
+  if (!claimOk) return;
+
+  const updatedClaims = await getMyClaims();
+
+  renderFanartPage(updatedClaims);
 }
 
 onAuthStateChanged(auth, async (user) => {
