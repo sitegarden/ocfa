@@ -465,6 +465,8 @@ async function renderGameStageArea() {
         この絵が、ほかの参加者がファンアートを描く元になります。
       </p>
 
+      <p id="originalTimerText" class="game-timer">残り時間：--:--</p>
+
       <canvas
         id="gameCanvas"
         class="game-canvas"
@@ -564,9 +566,17 @@ async function renderRoom() {
   }
 
   if (submitOriginalBtn) {
-    initGameCanvas();
-    submitOriginalBtn.addEventListener("click", submitOriginalOc);
-  }
+  submittingOriginal = false;
+
+  initGameCanvas();
+  startOriginalAutoSubmitTimer();
+
+  submitOriginalBtn.addEventListener("click", () => {
+    submitOriginalOc(false);
+  });
+} else {
+  clearOriginalTimer();
+}
 }
 
 function renderNoRoomId() {
