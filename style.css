@@ -3417,3 +3417,95 @@ textarea {
   background: transparent;
   cursor: pointer;
 }
+
+.game-target-oc {
+  display: grid;
+  justify-items: center;
+  padding: 12px;
+  border: 2px solid var(--line);
+  border-radius: 22px;
+  background: var(--paper-2);
+  box-shadow: var(--shadow-soft);
+}
+
+.game-target-oc img {
+  width: min(100%, 260px);
+  max-height: 260px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 16px;
+  background: #fffdf8;
+}
+
+.game-draw-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.game-color-tool,
+.game-size-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.game-color-tool input[type="color"] {
+  width: 38px;
+  height: 28px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.game-size-tool input[type="range"] {
+  width: 110px;
+  accent-color: var(--accent);
+}
+
+#gamePenSizeText {
+  min-width: 18px;
+  color: var(--ink);
+  font-weight: 900;
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .game-target-oc {
+    padding: 10px;
+    border-radius: 18px;
+  }
+
+  .game-target-oc img {
+    width: min(100%, 220px);
+    max-height: 220px;
+    border-radius: 14px;
+  }
+
+  .game-draw-tools {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .game-color-tool,
+  .game-size-tool {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .game-size-tool input[type="range"] {
+    width: 140px;
+  }
+}
