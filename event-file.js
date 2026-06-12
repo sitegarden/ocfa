@@ -472,6 +472,8 @@ function setupEntryActions(myEntry) {
           characterId,
           userId: currentUser.uid,
           isDeleted: false,
+          progressCount: 0,
+          fanartCount: 0,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
@@ -491,6 +493,20 @@ function setupEntryActions(myEntry) {
 
   if (cancelBtn && myEntry) {
     cancelBtn.addEventListener("click", async () => {
+      const progressCount = myEntry.data.progressCount || 0;
+      const fanartCount = myEntry.data.fanartCount || 0;
+
+      if (progressCount > 0 || fanartCount > 0) {
+        alert(
+          "このキャラは現在イベント内で進行中のやりとりがあるため、参加を取り消せません。"
+        );
+        return;
+      }
+
+      const ok = confirm("このイベントへの参加を取り消しますか？");
+
+      if (!ok) return;
+
       try {
         cancelBtn.disabled = true;
         cancelBtn.textContent = "取り消しています...";
