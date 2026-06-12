@@ -1431,3 +1431,72 @@ textarea {
 .text-link:hover {
   color: #b9655c;
 }
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 20px;
+  align-items: start;
+}
+
+.profile-preview {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin: 18px 0;
+  padding: 14px;
+  border: 2px dashed var(--line);
+  border-radius: 20px;
+  background: rgba(255, 250, 242, 0.7);
+}
+
+.profile-preview h3 {
+  margin: 0 0 6px;
+}
+
+.profile-preview p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.user-profile-box {
+  margin-top: 18px;
+  padding: 16px;
+  border: 2px dashed var(--line);
+  border-radius: 20px;
+  background: rgba(255, 250, 242, 0.72);
+}
+
+.user-profile-box p {
+  margin-top: 0;
+}
+
+.user-public-hero {
+  margin-bottom: 22px;
+}
+
+.user-public-hero h1 {
+  margin-bottom: 4px;
+  font-size: clamp(30px, 5vw, 52px);
+}
+
+.user-characters-head {
+  margin-top: 22px;
+}
+
+.text-link {
+  color: var(--accent);
+  font-weight: 900;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.text-link:hover {
+  color: #b9655c;
+}
+
+@media (max-width: 850px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+}
