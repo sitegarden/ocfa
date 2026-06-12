@@ -2420,3 +2420,217 @@ textarea {
 .fanart-card-body .actions {
   margin-top: 12px;
 }
+
+/* =========================
+   Event detail mobile fix
+========================= */
+
+.event-detail,
+.panel,
+.detail-section,
+.panel-soft {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.event-detail {
+  overflow: hidden;
+}
+
+.detail-section p,
+.event-detail p,
+.panel-soft p {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.9;
+}
+
+@media (max-width: 640px) {
+  .page {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 14px;
+    padding-right: 14px;
+    overflow-x: hidden;
+  }
+
+  .event-detail {
+    width: 100%;
+    padding: 22px 18px;
+    border-radius: 22px;
+  }
+
+  .event-detail-head {
+    display: grid;
+    gap: 14px;
+  }
+
+  .event-detail h1 {
+    font-size: 28px;
+    line-height: 1.25;
+  }
+
+  .detail-section {
+    width: 100%;
+  }
+
+  .detail-section h2 {
+    font-size: 22px;
+  }
+
+  .detail-section p {
+    font-size: 16px;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+  }
+
+  .actions a,
+  .actions button {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .character-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .character-card {
+    min-width: 0;
+    border-radius: 18px;
+  }
+
+  .character-card-link {
+    display: block;
+  }
+
+  .character-card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+  }
+
+  .character-body {
+    padding: 10px;
+  }
+
+  .character-body h2 {
+    font-size: 15px;
+    line-height: 1.35;
+    margin-bottom: 4px;
+  }
+
+  .character-body .mini-info {
+    font-size: 12px;
+  }
+
+  .tag-list {
+    gap: 4px;
+  }
+
+  .tag-list span {
+    max-width: 100%;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .character-card .actions {
+    padding: 0 10px 10px;
+  }
+
+  .character-card .small-btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .character-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .character-card {
+    min-width: 0;
+    border-radius: 18px;
+  }
+
+  .character-card-link {
+    display: block;
+  }
+
+  .character-card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+  }
+
+  .character-body {
+    padding: 10px;
+  }
+
+  .character-body h2 {
+    font-size: 15px;
+    line-height: 1.35;
+    margin-bottom: 4px;
+  }
+
+  .character-body .mini-info {
+    font-size: 12px;
+  }
+
+  .tag-list {
+    gap: 4px;
+  }
+
+  .tag-list span {
+    max-width: 100%;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .character-card .actions {
+    padding: 0 10px 10px;
+  }
+
+  .character-card .small-btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .fanart-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .fanart-card {
+    border-radius: 18px;
+  }
+
+  .fanart-card-body {
+    padding: 10px;
+  }
+
+  .fanart-card-body h3 {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .fanart-card-body .mini-info {
+    font-size: 12px;
+  }
+}
