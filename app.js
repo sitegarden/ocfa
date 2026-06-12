@@ -9,6 +9,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   onAuthStateChanged
@@ -50,10 +52,12 @@ async function getOcfaUserData(user) {
     return data;
   }
 
+  const emailName = user.email ? user.email.split("@")[0] : "";
+
   const initialData = {
     uid: user.uid,
-    email: user.email,
-    displayName: user.displayName || "",
+    email: user.email || "",
+    displayName: user.displayName || emailName || "",
     photoURL: user.photoURL || "",
     role: "user",
     handle: "",
@@ -100,8 +104,34 @@ function renderHeader() {
 
         <div class="auth-box">
           <span id="userName">確認中...</span>
+
           <button id="loginBtn" type="button">ログイン</button>
           <button id="logoutBtn" type="button" hidden>ログアウト</button>
+
+          <div id="loginPanel" class="login-panel" hidden>
+            <button id="googleLoginBtn" type="button" class="google-login-btn">
+              Googleでログイン
+            </button>
+
+            <div class="login-divider">または</div>
+
+            <label>
+              メールアドレス
+              <input id="emailInput" type="email" autocomplete="email">
+            </label>
+
+            <label>
+              パスワード
+              <input id="passwordInput" type="password" autocomplete="current-password">
+            </label>
+
+            <div class="login-actions">
+              <button id="emailLoginBtn" type="button">メールでログイン</button>
+              <button id="emailRegisterBtn" type="button">新規登録</button>
+            </div>
+
+            <p id="loginMessage" class="login-message"></p>
+          </div>
         </div>
       </div>
     </div>
@@ -109,6 +139,14 @@ function renderHeader() {
 
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
+  const googleLoginBtn = document.getElementById("googleLoginBtn");
+  const emailLoginBtn = document.getElementById("emailLoginBtn");
+  const emailRegisterBtn = document.getElementById("emailRegisterBtn");
+  const emailInput = document.getElementById("emailInput");
+  const passwordInput = document.getElementById("passwordInput");
+  const loginPanel = document.getElementById("loginPanel");
+  const loginMessage = document.getElementById("loginMessage");
+
   const menuToggle = document.getElementById("menuToggle");
   const headerMenu = document.getElementById("headerMenu");
 
@@ -132,12 +170,69 @@ function renderHeader() {
     });
   });
 
-  loginBtn.addEventListener("click", async () => {
+  loginBtn.addEventListener("click", () => {
+    loginPanel.hidden = !loginPanel.hidden;
+
+    if (!loginPanel.hidden) {
+      loginMessage.textContent = "";
+    }
+  });
+
+  googleLoginBtn.addEventListener("click", async () => {
     try {
+      loginMessage.textContent = "Googleでログインしています...";
       await signInWithPopup(auth, googleProvider);
+      loginPanel.hidden = true;
     } catch (error) {
       console.error(error);
-      alert("ログインに失敗しました。");
+      loginMessage.textContent = "Googleログインに失敗しました。";
+    }
+  });
+
+  emailLoginBtn.addEventListener("click", async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!email || !password) {
+      loginMessage.textContent = "メールアドレスとパスワードを入力してください。";
+      return;
+    }
+
+    try {
+      loginMessage.textContent = "ログインしています...";
+      await signInWithEmailAndPassword(auth, email, password);
+      loginPanel.hidden = true;
+    } catch (error) {
+      console.error(error);
+      loginMessage.textContent = "メールログインに失敗しました。";
+    }
+  });
+
+  emailRegisterBtn.addEventListener("click", async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!email || !password) {
+      loginMessage.textContent = "メールアドレスとパスワードを入力してください。";
+      return;
+    }
+
+    if (password.length < 6) {
+      loginMessage.textContent = "パスワードは6文字以上にしてください。";
+      return;
+    }
+
+    try {
+      loginMessage.textContent = "新規登録しています...";
+      await createUserWithEmailAndPassword(auth, email, password);
+      loginPanel.hidden = true;
+
+      setTimeout(() => {
+        location.href = "/settings/";
+      }, 500);
+    } catch (error) {
+      console.error(error);
+      loginMessage.textContent = "新規登録に失敗しました。すでに登録済みの可能性があります。";
     }
   });
 
@@ -177,6 +272,7 @@ onAuthStateChanged(auth, async (user) => {
   const userName = document.getElementById("userName");
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
+  const loginPanel = document.getElementById("loginPanel");
 
   if (!userName || !loginBtn || !logoutBtn) return;
 
@@ -194,11 +290,19 @@ onAuthStateChanged(auth, async (user) => {
     userName.textContent = displayName;
     loginBtn.hidden = true;
     logoutBtn.hidden = false;
+
+    if (loginPanel) {
+      loginPanel.hidden = true;
+    }
   } catch (error) {
     console.error(error);
 
-    userName.textContent = user.displayName || "ログイン中";
+    userName.textContent = user.displayName || user.email || "ログイン中";
     loginBtn.hidden = true;
     logoutBtn.hidden = false;
+
+    if (loginPanel) {
+      loginPanel.hidden = true;
+    }
   }
 });
