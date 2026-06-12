@@ -1668,3 +1668,52 @@ textarea {
     flex-direction: column;
   }
 }
+
+.not-found-panel {
+  max-width: 760px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.not-found-panel h1 {
+  margin: 14px 0;
+  font-size: clamp(32px, 6vw, 58px);
+}
+
+.not-found-panel p {
+  color: var(--muted);
+}
+
+.not-found-panel .actions {
+  justify-content: center;
+  margin-top: 22px;
+}
+
+.not-found-sketch {
+  display: grid;
+  place-items: center;
+  width: 150px;
+  height: 150px;
+  margin: 18px auto;
+  border: 3px dashed var(--line-dark);
+  border-radius: 36px;
+  background:
+    linear-gradient(135deg, rgba(241, 199, 193, 0.45), rgba(201, 223, 233, 0.45)),
+    var(--paper-2);
+  box-shadow: var(--shadow-soft);
+  transform: rotate(-3deg);
+}
+
+.not-found-sketch span {
+  display: grid;
+  place-items: center;
+  width: 82px;
+  height: 82px;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  background: #fffaf2;
+  color: var(--accent);
+  font-size: 54px;
+  font-weight: 900;
+  line-height: 1;
+}
