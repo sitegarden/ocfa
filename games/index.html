@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>OC描き合いゲーム - OCFA</title>
+  <meta
+    name="description"
+    content="OCFAのOC描き合いゲームです。参加者同士でOCを描き、シャッフルしてファンアートを描き合えます。"
+  >
+
+  <link rel="stylesheet" href="/style.css?v=41">
+</head>
+
+<body>
+  <header id="siteHeader"></header>
+
+  <main class="page">
+    <section class="page-head">
+      <p class="eyebrow">OC Drawing Game</p>
+      <h1>OC描き合いゲーム</h1>
+      <p>
+        みんなで自分のOCを描いて、シャッフルして、ファンアートを描き合うゲームです。
+      </p>
+    </section>
+
+    <section class="panel game-intro">
+      <div class="game-intro-grid">
+        <div>
+          <p class="eyebrow">How to Play</p>
+          <h2>遊び方</h2>
+
+          <ol class="game-rule-list">
+            <li>オーナーが部屋を作ります。</li>
+            <li>参加者が集まったらゲーム開始。</li>
+            <li>まずは時間内に自分のOCを描きます。</li>
+            <li>その後、順番にほかの参加者のOCへファンアートを描きます。</li>
+            <li>全員分のターンが終わったら、作品をいっせいに公開します。</li>
+          </ol>
+        </div>
+
+        <div class="game-point-card">
+          <p class="eyebrow">Point</p>
+          <h3>3人なら9枚できる</h3>
+          <p>
+            3人で遊ぶ場合、それぞれのOCに対して3人分の絵が並びます。
+            自分のOCも、みんなのFAもまとめて見られます。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel game-create-panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Create Room</p>
+          <h2>部屋を作る</h2>
+        </div>
+      </div>
+
+      <p>
+        部屋作成はログイン中のユーザーのみできます。
+        ゲストは作成済みの部屋URLから参加できます。
+      </p>
+
+      <form id="roomCreateForm" class="form-area">
+        <label>
+          部屋名
+          <input
+            id="roomTitle"
+            type="text"
+            maxlength="40"
+            placeholder="例：ゆるくOC描き合い"
+            required
+          >
+        </label>
+
+        <label>
+          1ターンの時間
+          <select id="turnSeconds">
+            <option value="120" selected>2分</option>
+            <option value="180">3分</option>
+            <option value="300">5分</option>
+          </select>
+        </label>
+
+        <label>
+          最大人数
+          <select id="maxPlayers">
+            <option value="3">3人</option>
+            <option value="4" selected>4人</option>
+            <option value="5">5人</option>
+            <option value="6">6人</option>
+          </select>
+        </label>
+
+        <div class="actions">
+          <button id="createRoomBtn" class="primary-btn" type="submit">
+            部屋を作る
+          </button>
+        </div>
+
+        <p id="gameMessage" class="mini-info"></p>
+      </form>
+    </section>
+
+    <section class="panel-soft">
+      <p>
+        ゲームは現在制作中です。
+        まずは部屋作成・参加・待機画面から順番に実装していきます。
+      </p>
+    </section>
+  </main>
+
+  <footer id="siteFooter"></footer>
+
+  <script type="module" src="/app.js?v=41"></script>
+  <script type="module" src="/game.js?v=41"></script>
+</body>
+</html>
