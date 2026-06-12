@@ -1407,3 +1407,27 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+.user-public-hero {
+  margin-bottom: 22px;
+}
+
+.user-public-hero h1 {
+  margin-bottom: 4px;
+  font-size: clamp(30px, 5vw, 52px);
+}
+
+.user-characters-head {
+  margin-top: 22px;
+}
+
+.text-link {
+  color: var(--accent);
+  font-weight: 900;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.text-link:hover {
+  color: #b9655c;
+}
