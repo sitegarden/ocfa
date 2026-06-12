@@ -208,8 +208,6 @@ async function joinAsGuest() {
     });
 
     if (message) message.textContent = "参加しました。";
-
-    // await reloadRoom();
   } catch (error) {
     console.error(error);
     if (message) message.textContent = "参加に失敗しました。";
@@ -258,8 +256,6 @@ async function joinAsLoginUser() {
     });
 
     if (message) message.textContent = "参加しました。";
-
-    // await reloadRoom();
   } catch (error) {
     console.error(error);
     if (message) message.textContent = "参加に失敗しました。";
@@ -287,8 +283,6 @@ async function startGame() {
       startedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
-
-    await reloadRoom();
   } catch (error) {
     console.error(error);
     if (message) message.textContent = "ゲーム開始に失敗しました。";
@@ -428,7 +422,66 @@ function renderOwnerArea() {
   `;
 }
 
+async function renderGameStageArea() {
+  if (!currentRoom || currentRoom.data.status !== "drawing_oc") {
+    return "";
+  }
+
+  const myPlayer = getMyPlayer();
+
+  if (!myPlayer) {
+    return `
+      <section class="panel-soft">
+        <p>ゲームは開始されています。参加者のみ描画できます。</p>
+      </section>
+    `;
+  }
+
+  const submitted = await getMyOriginal(myPlayer.id);
+
+  if (submitted) {
+    return `
+      <section class="panel">
+        <p class="eyebrow">Your OC</p>
+        <h2>OC提出済み</h2>
+        <p>あなたのOCは提出済みです。全員の提出が終わるまで待ってください。</p>
+
+        <div class="submitted-oc-preview">
+          <img src="${submitted.data.imageData}" alt="提出したOC">
+        </div>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="panel game-draw-panel">
+      <p class="eyebrow">Draw Your OC</p>
+      <h2>自分のOCを描く</h2>
+
+      <p>
+        まずは自分のOCを描いて提出してください。
+        この絵が、ほかの参加者がファンアートを描く元になります。
+      </p>
+
+      <canvas
+        id="gameCanvas"
+        class="game-canvas"
+        width="768"
+        height="768"
+      ></canvas>
+
+      <div class="actions">
+        <button id="submitOriginalBtn" class="primary-btn" type="button">
+          OCを提出する
+        </button>
+      </div>
+    </section>
+  `;
+}
+
 async function renderRoom() {
+  if (!currentRoom) return;
+
   const room = currentRoom.data;
 
   gameRoomContent.innerHTML = `
@@ -481,6 +534,7 @@ async function renderRoom() {
   const guestJoinBtn = document.getElementById("guestJoinBtn");
   const loginJoinBtn = document.getElementById("loginJoinBtn");
   const startGameBtn = document.getElementById("startGameBtn");
+  const submitOriginalBtn = document.getElementById("submitOriginalBtn");
   const roomMessage = document.getElementById("roomMessage");
 
   if (copyRoomUrlBtn) {
@@ -507,16 +561,11 @@ async function renderRoom() {
     startGameBtn.addEventListener("click", startGame);
   }
 
-  const submitOriginalBtn = document.getElementById("submitOriginalBtn");
-
-if (submitOriginalBtn) {
-  initGameCanvas();
-
-  submitOriginalBtn.addEventListener("click", submitOriginalOc);
+  if (submitOriginalBtn) {
+    initGameCanvas();
+    submitOriginalBtn.addEventListener("click", submitOriginalOc);
+  }
 }
-}
-
-
 
 function renderNoRoomId() {
   gameRoomContent.innerHTML = `
@@ -571,7 +620,7 @@ async function reloadRoom() {
 
     currentPlayers = await getPlayers();
 
-    renderRoom();
+    await renderRoom();
   } catch (error) {
     renderError(error);
   }
@@ -604,9 +653,7 @@ function startRealtimeListeners() {
         data
       };
 
-      if (currentPlayers) {
-        renderRoom();
-      }
+      await renderRoom();
     },
     (error) => {
       renderError(error);
@@ -621,7 +668,7 @@ function startRealtimeListeners() {
 
   unsubscribePlayers = onSnapshot(
     playersQuery,
-    (snap) => {
+    async (snap) => {
       const players = [];
 
       snap.forEach((docSnap) => {
@@ -646,7 +693,7 @@ function startRealtimeListeners() {
       currentPlayers = players;
 
       if (currentRoom) {
-        renderRoom();
+        await renderRoom();
       }
     },
     (error) => {
@@ -654,23 +701,6 @@ function startRealtimeListeners() {
     }
   );
 }
-
-onAuthStateChanged(auth, async (user) => {
-  currentUser = user;
-
-  if (!roomId) {
-    renderNoRoomId();
-    return;
-  }
-
-  gameRoomContent.innerHTML = `
-    <section class="panel">
-      <p>部屋を読み込んでいます...</p>
-    </section>
-  `;
-
-  startRealtimeListeners();
-});
 
 function getGamePoint(e) {
   const rect = gameCanvas.getBoundingClientRect();
@@ -761,7 +791,6 @@ function getGameCanvasImageData() {
   return gameCanvas.toDataURL("image/jpeg", 0.82);
 }
 
-
 async function submitOriginalOc() {
   const message = document.getElementById("roomMessage");
   const myPlayer = getMyPlayer();
@@ -818,59 +847,19 @@ async function submitOriginalOc() {
   }
 }
 
-async function renderGameStageArea() {
-  if (!currentRoom || currentRoom.data.status !== "drawing_oc") {
-    return "";
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+
+  if (!roomId) {
+    renderNoRoomId();
+    return;
   }
 
-  const myPlayer = getMyPlayer();
-
-  if (!myPlayer) {
-    return `
-      <section class="panel-soft">
-        <p>ゲームは開始されています。参加者のみ描画できます。</p>
-      </section>
-    `;
-  }
-
-  const submitted = await getMyOriginal(myPlayer.id);
-
-  if (submitted) {
-    return `
-      <section class="panel">
-        <p class="eyebrow">Your OC</p>
-        <h2>OC提出済み</h2>
-        <p>あなたのOCは提出済みです。全員の提出が終わるまで待ってください。</p>
-
-        <div class="submitted-oc-preview">
-          <img src="${submitted.data.imageData}" alt="提出したOC">
-        </div>
-      </section>
-    `;
-  }
-
-  return `
-    <section class="panel game-draw-panel">
-      <p class="eyebrow">Draw Your OC</p>
-      <h2>自分のOCを描く</h2>
-
-      <p>
-        まずは自分のOCを描いて提出してください。
-        この絵が、ほかの参加者がファンアートを描く元になります。
-      </p>
-
-      <canvas
-        id="gameCanvas"
-        class="game-canvas"
-        width="768"
-        height="768"
-      ></canvas>
-
-      <div class="actions">
-        <button id="submitOriginalBtn" class="primary-btn" type="button">
-          OCを提出する
-        </button>
-      </div>
+  gameRoomContent.innerHTML = `
+    <section class="panel">
+      <p>部屋を読み込んでいます...</p>
     </section>
   `;
-}
+
+  startRealtimeListeners();
+});
