@@ -96,14 +96,35 @@ function renderForm(user, userData) {
           ></textarea>
         </label>
 
-        <label>
-          状態
-          <select id="eventStatus">
-            <option value="draft">下書き</option>
-            <option value="open" selected>受付中</option>
-            <option value="closed">終了</option>
-          </select>
-        </label>
+        <div class="event-status-field">
+  <p class="form-label">状態</p>
+
+  <div class="event-status-options">
+    <label class="event-status-card">
+      <input type="radio" name="eventStatus" value="draft">
+      <span>
+        <strong>下書き</strong>
+        <small>まだ公開前</small>
+      </span>
+    </label>
+
+    <label class="event-status-card">
+      <input type="radio" name="eventStatus" value="open" checked>
+      <span>
+        <strong>受付中</strong>
+        <small>参加できる状態</small>
+      </span>
+    </label>
+
+    <label class="event-status-card">
+      <input type="radio" name="eventStatus" value="closed">
+      <span>
+        <strong>終了</strong>
+        <small>受付を閉じる</small>
+      </span>
+    </label>
+  </div>
+</div>
 
         <label class="check-label">
           <input id="isPublic" type="checkbox" checked>
@@ -138,7 +159,7 @@ function renderForm(user, userData) {
 
     const title = document.getElementById("eventTitle").value.trim();
     const description = document.getElementById("eventDescription").value.trim();
-    const status = document.getElementById("eventStatus").value;
+    const status = document.querySelector('input[name="eventStatus"]:checked').value;
     const isPublic = document.getElementById("isPublic").checked;
 
     if (!title) {
