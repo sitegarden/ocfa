@@ -82,9 +82,9 @@ characters.forEach((item) => {
               : ""
           }
 
-          <p>
-            ${escapeHtml(character.profile || "プロフィールはまだありません。")}
-          </p>
+          <p class="character-card-desc">
+  ${escapeHtml(character.profile || "プロフィールはまだありません。")}
+</p>
 
           <div class="tag-list">
             ${tags}
