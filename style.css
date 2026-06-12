@@ -2718,3 +2718,35 @@ textarea {
     gap: 8px 12px;
   }
 }
+
+.home-oc-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 22px;
+}
+
+.fake-canvas {
+  position: relative;
+  overflow: hidden;
+}
+
+.fake-canvas .home-oc-image[hidden] {
+  display: none;
+}
+
+.fake-canvas .fake-face {
+  position: relative;
+  z-index: 1;
+}
+
+.fake-canvas .home-oc-image {
+  position: relative;
+  z-index: 1;
+}
+
+.fake-canvas .spark {
+  position: absolute;
+  z-index: 2;
+}
