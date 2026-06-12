@@ -3266,3 +3266,47 @@ textarea {
   font-size: 16px;
   font-weight: 900;
 }
+
+.game-timer-box {
+  display: grid;
+  gap: 8px;
+  width: min(100%, 420px);
+}
+
+.game-timer {
+  width: fit-content;
+  margin: 0;
+  padding: 8px 14px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.game-timer-meter {
+  width: 100%;
+  height: 16px;
+  overflow: hidden;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.game-timer-meter span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+
+.game-timer-meter span.is-warning {
+  background: #f3b84b;
+}
+
+.game-timer-meter span.is-danger {
+  background: #e96b6b;
+}
