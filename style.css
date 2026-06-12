@@ -3080,3 +3080,136 @@ textarea {
     max-width: 100%;
   }
 }
+
+.game-intro-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.game-rule-list {
+  margin: 16px 0 0;
+  padding-left: 1.4em;
+  color: var(--muted);
+  line-height: 1.9;
+  font-weight: 700;
+}
+
+.game-rule-list li {
+  margin: 6px 0;
+}
+
+.game-point-card {
+  padding: 18px;
+  border: 2px solid var(--line);
+  border-radius: 24px;
+  background: var(--paper-2);
+  box-shadow: var(--shadow-soft);
+}
+
+.game-point-card h3 {
+  margin: 6px 0 8px;
+  font-size: 22px;
+}
+
+.game-create-panel .form-area {
+  margin-top: 18px;
+}
+
+.game-create-panel label {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.game-create-panel input,
+.game-create-panel select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: #fffdf8;
+  color: var(--ink);
+  font: inherit;
+}
+
+.game-room-head {
+  display: grid;
+  gap: 10px;
+}
+
+.game-status-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 12px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.player-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.player-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper-2);
+}
+
+.player-card strong {
+  color: var(--ink);
+}
+
+.player-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.guest-join-box {
+  margin-top: 18px;
+}
+
+.guest-join-box label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.guest-join-box input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: #fffdf8;
+  color: var(--ink);
+  font: inherit;
+}
+
+@media (max-width: 640px) {
+  .game-intro-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .player-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
