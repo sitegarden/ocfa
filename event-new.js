@@ -23,15 +23,23 @@ function escapeHtml(text) {
     .replaceAll("'", "&#039;");
 }
 
-async function isAdminUser(user) {
-  if (!user) return false;
-
+async function getUserData(user) {
   const userRef = doc(db, "users", user.uid);
   const snap = await getDoc(userRef);
 
-  if (!snap.exists()) return false;
+  if (!snap.exists()) return null;
 
-  return snap.data().role === "admin";
+  return snap.data();
+}
+
+async function isAdminUser(user) {
+  if (!user) return false;
+
+  const userData = await getUserData(user);
+
+  if (!userData) return false;
+
+  return userData.role === "admin";
 }
 
 function renderLoginRequired() {
@@ -55,7 +63,13 @@ function renderNoPermission() {
   `;
 }
 
-function renderForm(user) {
+function renderForm(user, userData) {
+  const creatorName =
+    userData?.displayName ||
+    user.displayName ||
+    user.email ||
+    "管理者";
+
   eventNewContent.innerHTML = `
     <form id="eventForm" class="form-grid">
       <section class="panel">
@@ -109,7 +123,7 @@ function renderForm(user) {
 
         <div class="panel-soft">
           <p class="mini-info">
-            作成者：${escapeHtml(user.displayName || user.email || "管理者")}
+            作成者：${escapeHtml(creatorName)}
           </p>
         </div>
       </section>
@@ -142,6 +156,7 @@ function renderForm(user) {
         isPublic,
         isDeleted: false,
         createdBy: user.uid,
+        createdByName: creatorName,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -166,14 +181,15 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
-    const isAdmin = await isAdminUser(user);
+    const userData = await getUserData(user);
+    const isAdmin = userData?.role === "admin";
 
     if (!isAdmin) {
       renderNoPermission();
       return;
     }
 
-    renderForm(user);
+    renderForm(user, userData);
   } catch (error) {
     console.error(error);
 
