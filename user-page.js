@@ -27,27 +27,23 @@ function nl2br(text) {
   return escapeHtml(text).replaceAll("\n", "<br>");
 }
 
-function isSafeHttpsUrl(url) {
-  if (!url) return false;
-
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
 async function getUserData() {
+  if (!userId) return null;
+
   const userRef = doc(db, "users", userId);
   const snap = await getDoc(userRef);
 
   if (!snap.exists()) return null;
 
-  return snap.data();
+  return {
+    id: snap.id,
+    data: snap.data()
+  };
 }
 
-async function getUserCharacters() {
+async function getPublicCharacters() {
+  if (!userId) return [];
+
   const q = query(
     collection(db, "v2Characters"),
     where("userId", "==", userId),
@@ -78,11 +74,30 @@ async function getUserCharacters() {
   return characters;
 }
 
-function renderCharacters(characters) {
+function renderIcon(userData) {
+  const displayName = userData.displayName || "名無し";
+  const photoURL = userData.photoURL || "";
+
+  if (photoURL) {
+    return `
+      <div class="user-page-icon">
+        <img src="${escapeHtml(photoURL)}" alt="${escapeHtml(displayName)}">
+      </div>
+    `;
+  }
+
+  return `
+    <div class="user-page-icon">
+      <span>${escapeHtml(displayName.slice(0, 1))}</span>
+    </div>
+  `;
+}
+
+function renderCharacterCards(characters) {
   if (characters.length === 0) {
     return `
       <div class="panel-soft">
-        <p>公開されているキャラはまだありません。</p>
+        <p>公開キャラクターはまだありません。</p>
       </div>
     `;
   }
@@ -99,11 +114,14 @@ function renderCharacters(characters) {
 
           return `
             <article class="character-card">
-              <a class="character-card-link" href="/characters/file/?id=${id}">
-                <img src="${data.imageData}" alt="${escapeHtml(data.name)}">
+              <a class="character-card-link" href="/characters/file/?id=${encodeURIComponent(id)}">
+                <img
+                  src="${data.imageData}"
+                  alt="${escapeHtml(data.name || "キャラクター")}"
+                >
 
                 <div class="character-body">
-                  <h2>${escapeHtml(data.name)}</h2>
+                  <h2>${escapeHtml(data.name || "名前未設定")}</h2>
 
                   ${
                     data.kana
@@ -116,7 +134,7 @@ function renderCharacters(characters) {
                   </div>
 
                   <p class="mini-info">
-                    ${data.faOk ? "ファンアート歓迎" : "ファンアートは要確認"}
+                    ${data.faOk ? "ファンアート歓迎" : "ファンアート要確認"}
                   </p>
                 </div>
               </a>
@@ -128,106 +146,98 @@ function renderCharacters(characters) {
   `;
 }
 
-async function renderUserPage() {
-  if (!userId) {
-    userPageContent.innerHTML = `
-      <section class="panel">
-        <h1>ユーザーが選ばれていません</h1>
-        <p>公開ページのURLが正しいか確認してください。</p>
-      </section>
-    `;
-    return;
-  }
+function renderUserPage(user, characters) {
+  const data = user.data;
 
-  const [userData, characters] = await Promise.all([
-    getUserData(),
-    getUserCharacters()
-  ]);
-
-  if (!userData) {
-    userPageContent.innerHTML = `
-      <section class="panel">
-        <h1>ユーザーが見つかりませんでした</h1>
-        <p>削除されたか、URLが変わっている可能性があります。</p>
-      </section>
-    `;
-    return;
-  }
-
-  const displayName = userData.displayName || "名前未設定";
-  const photoURL = userData.photoURL || "";
-  const profileText = userData.profileText || "";
-  const genreText = userData.genreText || "";
-  const linkUrl = userData.linkUrl || "";
-  const hasProfileInfo = profileText || genreText || isSafeHttpsUrl(linkUrl);
+  const displayName = data.displayName || "名無し";
+  const profileText = data.profileText || "";
+  const genreText = data.genreText || "";
+  const linkUrl = data.linkUrl || "";
 
   userPageContent.innerHTML = `
-    <section class="user-public-hero panel">
-      <div class="mypage-user">
-        ${
-          photoURL
-            ? `<img class="mypage-avatar" src="${escapeHtml(photoURL)}" alt="">`
-            : `<div class="mypage-avatar placeholder">OC</div>`
-        }
+    <section class="user-profile-box panel">
+      <div class="user-profile-main">
+        ${renderIcon(data)}
 
-        <div>
-          <p class="eyebrow">Creator Page</p>
+        <div class="user-profile-body">
+          <p class="eyebrow">User Page</p>
           <h1>${escapeHtml(displayName)}</h1>
-          <p class="mini-info">${characters.length}件のキャラを公開中</p>
+
+          <p class="mini-info">
+            公開キャラ ${characters.length}体
+          </p>
+
+          ${
+            profileText
+              ? `<p class="user-profile-text">${nl2br(profileText)}</p>`
+              : `<p class="user-profile-text muted-text">プロフィールはまだありません。</p>`
+          }
+
+          ${
+            genreText
+              ? `
+                <div class="tag-list">
+                  <span>${escapeHtml(genreText)}</span>
+                </div>
+              `
+              : ""
+          }
+
+          ${
+            linkUrl && linkUrl.startsWith("https://")
+              ? `
+                <p class="mini-info">
+                  <a href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener">
+                    登録リンクを開く
+                  </a>
+                </p>
+              `
+              : ""
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Characters</p>
+          <h2>公開キャラクター</h2>
         </div>
       </div>
 
-      ${
-        hasProfileInfo
-          ? `
-            <div class="user-profile-box">
-              ${
-                profileText
-                  ? `<p>${nl2br(profileText)}</p>`
-                  : ""
-              }
-
-              ${
-                genreText
-                  ? `<p class="mini-info">好きな創作：${escapeHtml(genreText)}</p>`
-                  : ""
-              }
-
-              ${
-                isSafeHttpsUrl(linkUrl)
-                  ? `
-                    <a
-                      class="text-link"
-                      href="${escapeHtml(linkUrl)}"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      リンクを見る
-                    </a>
-                  `
-                  : ""
-              }
-            </div>
-          `
-          : `
-            <div class="user-profile-box">
-              <p>紹介文はまだありません。</p>
-            </div>
-          `
-      }
+      ${renderCharacterCards(characters)}
     </section>
-
-    <section class="page-head user-characters-head">
-      <p class="eyebrow">Characters</p>
-      <h1>公開キャラ</h1>
-      <p>${escapeHtml(displayName)}さんが公開しているキャラクターです。</p>
-    </section>
-
-    ${renderCharacters(characters)}
   `;
 }
 
-renderUserPage().catch((error) => {
+function renderNoUserId() {
+  userPageContent.innerHTML = `
+    <section class="panel">
+      <h1>ユーザーが選ばれていません</h1>
+      <p>URLが正しいか確認してください。</p>
+
+      <div class="actions">
+        <a class="ghost-btn" href="/">トップへ戻る</a>
+      </div>
+    </section>
+  `;
+}
+
+function renderNotFound() {
+  userPageContent.innerHTML = `
+    <section class="panel">
+      <h1>ユーザーが見つかりませんでした</h1>
+      <p>削除されたか、URLが変わっている可能性があります。</p>
+
+      <div class="actions">
+        <a class="ghost-btn" href="/">トップへ戻る</a>
+      </div>
+    </section>
+  `;
+}
+
+function renderError(error) {
   console.error(error);
 
   userPageContent.innerHTML = `
@@ -236,4 +246,34 @@ renderUserPage().catch((error) => {
       <p>ページを再読み込みしてみてください。</p>
     </section>
   `;
-});
+}
+
+async function init() {
+  if (!userId) {
+    renderNoUserId();
+    return;
+  }
+
+  userPageContent.innerHTML = `
+    <section class="panel">
+      <p>ユーザーページを読み込んでいます...</p>
+    </section>
+  `;
+
+  try {
+    const user = await getUserData();
+
+    if (!user) {
+      renderNotFound();
+      return;
+    }
+
+    const characters = await getPublicCharacters();
+
+    renderUserPage(user, characters);
+  } catch (error) {
+    renderError(error);
+  }
+}
+
+init();
