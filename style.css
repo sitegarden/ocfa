@@ -2872,3 +2872,49 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 720px) {
+  .header-menu {
+    max-height: calc(100dvh - 90px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 24px;
+  }
+
+  .auth-box {
+    width: 100%;
+  }
+
+  .login-panel {
+    position: static;
+    width: 100%;
+    max-width: 100%;
+    margin-top: 12px;
+    box-shadow: none;
+  }
+
+  .login-panel input {
+    font-size: 16px;
+  }
+
+  .login-actions {
+    grid-template-columns: 1fr;
+  }
+
+  #loginBtn,
+  #logoutBtn,
+  #googleLoginBtn,
+  #emailLoginBtn,
+  #emailRegisterBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+@media (max-width: 720px) {
+  .header-menu.is-open {
+    display: flex;
+    flex-direction: column;
+  }
+}
