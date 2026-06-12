@@ -583,27 +583,35 @@ function renderLayerTools() {
       </label>
     </div>
 
-    <div class="game-layer-tools">
-      <button id="layerBtn0" type="button" class="layer-btn is-active">
-        レイヤー1
-      </button>
+    <div class="game-layer-panel">
+      <p class="mini-info">レイヤーは「上」から順に表示されます。</p>
 
-      <button id="layerBtn1" type="button" class="layer-btn">
-        レイヤー2
-      </button>
+      <div class="game-layer-tools">
+        <button id="layerBtn1" type="button" class="layer-btn layer-top">
+          <span class="layer-order">上</span>
+          レイヤー2
+        </button>
 
-      <button id="toggleLayerBtn" type="button">
-        表示/非表示
-      </button>
+        <button id="layerBtn0" type="button" class="layer-btn layer-bottom is-active">
+          <span class="layer-order">下</span>
+          レイヤー1
+        </button>
+      </div>
 
-      <button id="clearLayerBtn" type="button" class="danger-btn">
-        このレイヤーを消す
-      </button>
+      <div class="game-layer-actions">
+        <button id="toggleLayerBtn" type="button">
+          選択中を表示/非表示
+        </button>
+
+        <button id="clearLayerBtn" type="button" class="danger-btn">
+          選択中を消す
+        </button>
+      </div>
+
+      <p id="layerStatusText" class="mini-info">
+        現在：レイヤー1（下・表示中）
+      </p>
     </div>
-
-    <p id="layerStatusText" class="mini-info">
-      現在：レイヤー1
-    </p>
   `;
 }
 
@@ -1222,6 +1230,11 @@ function updateLayerUi() {
   const layerBtn1 = document.getElementById("layerBtn1");
   const layerStatusText = document.getElementById("layerStatusText");
 
+  const layerNames = [
+    "レイヤー1（下）",
+    "レイヤー2（上）"
+  ];
+
   if (layerBtn0) {
     layerBtn0.classList.toggle("is-active", activeLayerIndex === 0);
     layerBtn0.classList.toggle("is-hidden-layer", layerVisible[0] === false);
@@ -1234,7 +1247,8 @@ function updateLayerUi() {
 
   if (layerStatusText) {
     const visibleText = layerVisible[activeLayerIndex] ? "表示中" : "非表示";
-    layerStatusText.textContent = `現在：レイヤー${activeLayerIndex + 1}（${visibleText}）`;
+    layerStatusText.textContent =
+      `現在：${layerNames[activeLayerIndex]}（${visibleText}）`;
   }
 }
 
