@@ -78,10 +78,10 @@ function renderIcon(userData) {
   const displayName = userData.displayName || "名無し";
   const photoURL = userData.photoURL || "";
 
-  if (photoURL) {
+  if (photoURL && photoURL.startsWith("https://")) {
     return `
       <div class="user-page-icon">
-        <img src="${escapeHtml(photoURL)}" alt="${escapeHtml(displayName)}">
+        <img src="${photoURL}" alt="${escapeHtml(displayName)}" referrerpolicy="no-referrer">
       </div>
     `;
   }
