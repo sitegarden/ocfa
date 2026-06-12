@@ -2173,3 +2173,109 @@ textarea {
     width: 100%;
   }
 }
+
+.fanart-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+.fanart-draw-panel {
+  min-width: 0;
+}
+
+.fanart-draw-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.fanart-draw-head h2 {
+  margin: 4px 0 0;
+  font-size: clamp(24px, 4vw, 38px);
+}
+
+#fanartCanvas {
+  display: block;
+  width: min(100%, 78vh);
+  max-width: 768px;
+  aspect-ratio: 1 / 1;
+  border: 2px dashed var(--line-dark);
+  border-radius: 20px;
+  background: #fffdf8;
+  touch-action: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8),
+    var(--shadow-soft);
+}
+
+.fanart-reference-panel {
+  position: sticky;
+  top: 88px;
+}
+
+.fanart-reference-panel h2 {
+  margin-top: 4px;
+}
+
+.fanart-reference-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  margin: 12px 0;
+  border: 2px solid var(--line);
+  border-radius: 22px;
+  background: #fffdf8;
+  box-shadow: var(--shadow-soft);
+}
+
+.fanart-reference-panel h3 {
+  margin: 8px 0 4px;
+  font-size: 24px;
+}
+
+.reference-mini-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 2px dashed var(--line);
+}
+
+.reference-mini-section h4 {
+  margin: 0 0 8px;
+}
+
+.reference-mini-section p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+  font-size: 14px;
+}
+
+.small-btn {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 920px) {
+  .fanart-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fanart-reference-panel {
+    position: static;
+    order: -1;
+  }
+
+  .fanart-reference-image {
+    max-width: 220px;
+  }
+
+  .fanart-draw-head {
+    flex-direction: column;
+  }
+}
