@@ -1717,3 +1717,54 @@ textarea {
   font-weight: 900;
   line-height: 1;
 }
+
+.notice-list {
+  margin-top: 20px;
+}
+
+.notice-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.notice-card {
+  position: relative;
+}
+
+.notice-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.notice-card h2 {
+  margin: 6px 0 0;
+  font-size: clamp(22px, 4vw, 34px);
+}
+
+.notice-date {
+  min-width: fit-content;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.notice-body {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 2px dashed var(--line);
+}
+
+.notice-body p {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.9;
+}
+
+@media (max-width: 640px) {
+  .notice-card-head {
+    flex-direction: column;
+  }
+}
