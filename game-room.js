@@ -429,7 +429,61 @@ function renderOwnerArea() {
 }
 
 async function renderGameStageArea() {
-  if (!currentRoom || currentRoom.data.status !== "drawing_oc") {
+  if (!currentRoom) {
+    return "";
+  }
+
+  if (currentRoom.data.status === "drawing_fa") {
+    const myPlayer = getMyPlayer();
+
+    if (!myPlayer) {
+      return `
+        <section class="panel-soft">
+          <p>FAターン中です。参加者のみ描画できます。</p>
+        </section>
+      `;
+    }
+
+    const targetPlayer = getTargetPlayerForCurrentRound(myPlayer);
+    const targetOriginal = targetPlayer
+      ? getOriginalByPlayerId(targetPlayer.id)
+      : null;
+
+    if (!targetPlayer || !targetOriginal) {
+      return `
+        <section class="panel">
+          <p class="eyebrow">Fan Art Turn</p>
+          <h2>FAターン準備中</h2>
+          <p>描く相手のOCを準備しています。</p>
+        </section>
+      `;
+    }
+
+    return `
+      <section class="panel game-fa-panel">
+        <p class="eyebrow">Fan Art Turn</p>
+        <h2>${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCを描く</h2>
+
+        <p class="mini-info">
+          Round ${Number(currentRoom.data.currentRound || 0) + 1} / ${currentPlayers.length}
+        </p>
+
+        <div class="game-target-oc">
+          <img
+            src="${targetOriginal.data.imageData}"
+            alt="${escapeHtml(targetPlayer.data.name || "OC")}のOC"
+          >
+        </div>
+
+        <p>
+          このOCを見ながら、ファンアートを描きます。
+          次の段階でここに描画キャンバスを追加します。
+        </p>
+      </section>
+    `;
+  }
+
+  if (currentRoom.data.status !== "drawing_oc") {
     return "";
   }
 
@@ -801,6 +855,52 @@ function startGameDraw(e) {
 }
 
 function getSubmittedOriginalByPlayerId(playerId) {
+  return currentOriginals.find((original) => {
+    return original.data.playerId === playerId;
+  });
+}
+
+function getTargetPlayerForCurrentRound(myPlayer) {
+  if (!myPlayer) return null;
+  if (!currentPlayers.length) return null;
+
+  const round = Number(currentRoom?.data?.currentRound || 0);
+
+  const myIndex = currentPlayers.findIndex((player) => {
+    return player.id === myPlayer.id;
+  });
+
+  if (myIndex < 0) return null;
+
+  const targetIndex = (myIndex + round) % currentPlayers.length;
+
+  return currentPlayers[targetIndex];
+}
+
+function getOriginalByPlayerId(playerId) {
+  return currentOriginals.find((original) => {
+    return original.data.playerId === playerId;
+  });
+}
+
+function getTargetPlayerForCurrentRound(myPlayer) {
+  if (!myPlayer) return null;
+  if (!currentPlayers.length) return null;
+
+  const round = Number(currentRoom?.data?.currentRound || 0);
+
+  const myIndex = currentPlayers.findIndex((player) => {
+    return player.id === myPlayer.id;
+  });
+
+  if (myIndex < 0) return null;
+
+  const targetIndex = (myIndex + round) % currentPlayers.length;
+
+  return currentPlayers[targetIndex];
+}
+
+function getOriginalByPlayerId(playerId) {
   return currentOriginals.find((original) => {
     return original.data.playerId === playerId;
   });
