@@ -2918,3 +2918,165 @@ textarea {
     flex-direction: column;
   }
 }
+
+/* =========================
+   Character file mobile fix
+========================= */
+
+.character-detail,
+.character-file,
+.character-profile,
+.character-detail-card,
+.character-file-card,
+.profile-panel,
+.character-main,
+.character-info,
+.character-text,
+.panel,
+.panel-soft {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.character-detail,
+.character-file,
+.character-profile {
+  overflow: hidden;
+}
+
+.character-detail p,
+.character-file p,
+.character-profile p,
+.character-info p,
+.character-text p,
+.panel p,
+.panel-soft p {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.9;
+}
+
+.character-detail img,
+.character-file img,
+.character-profile img {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 640px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 14px;
+    padding-right: 14px;
+    overflow-x: hidden;
+  }
+
+  .character-detail,
+  .character-file,
+  .character-profile,
+  .character-detail-card,
+  .character-file-card,
+  .profile-panel {
+    width: 100%;
+    padding: 20px 16px;
+    border-radius: 22px;
+  }
+
+  .character-main,
+  .character-profile-main,
+  .character-file-main,
+  .character-detail-main {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .character-image,
+  .character-profile-image,
+  .character-file-image,
+  .character-detail-image {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .character-image img,
+  .character-profile-image img,
+  .character-file-image img,
+  .character-detail-image img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    border-radius: 20px;
+  }
+
+  .character-info,
+  .character-text,
+  .character-profile-body,
+  .character-file-body,
+  .character-detail-body {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .character-info h1,
+  .character-profile-body h1,
+  .character-file-body h1,
+  .character-detail-body h1 {
+    font-size: 28px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .tag-list {
+    max-width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .tag-list span {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .actions {
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .actions a,
+  .actions button {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  main,
+  section,
+  article,
+  div {
+    min-width: 0;
+  }
+
+  pre,
+  code,
+  textarea,
+  input {
+    max-width: 100%;
+  }
+}
