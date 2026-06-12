@@ -794,6 +794,26 @@ onAuthStateChanged(auth, async (user) => {
     console.error(error);
 
     fanartContent.innerHTML = `
+  <div class="panel">
+    <p>JSは読み込まれました。ログイン状態を確認しています...</p>
+  </div>
+`;
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+
+  fanartContent.innerHTML = `
+    <div class="panel">
+      <p>ログイン確認まで来ました。データを読み込んでいます...</p>
+    </div>
+  `;
+
+  try {
+    await init();
+  } catch (error) {
+    console.error(error);
+
+    fanartContent.innerHTML = `
       <section class="panel">
         <h1>読み込みに失敗しました</h1>
         <p>${escapeHtml(error.message)}</p>
