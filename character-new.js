@@ -17,25 +17,58 @@ const params = new URLSearchParams(location.search);
 const drawingId = params.get("drawing");
 
 const form = document.getElementById("characterForm");
-const message = document.getElementById("message");
+const registerGuide = document.getElementById("registerGuide");
 const selectedDrawing = document.getElementById("selectedDrawing");
+const message = document.getElementById("message");
+
+const charName = document.getElementById("charName");
+const charKana = document.getElementById("charKana");
+const charProfile = document.getElementById("charProfile");
+const charTags = document.getElementById("charTags");
+const faOk = document.getElementById("faOk");
+const ngText = document.getElementById("ngText");
 
 let drawingData = null;
 
+function showGuide(html) {
+  registerGuide.hidden = false;
+  registerGuide.innerHTML = html;
+  form.hidden = true;
+}
+
+function showForm() {
+  registerGuide.hidden = true;
+  form.hidden = false;
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 async function loadDrawing() {
   if (!drawingId) {
-    selectedDrawing.innerHTML = `
-      <p>キャラ登録する絵が選ばれてないぞ。</p>
-      <a class="primary-btn" href="/draw/">絵を描きに行く</a>
-    `;
-    form.hidden = true;
+    showGuide(`
+      <h2>下書きが選ばれていません</h2>
+      <p>まずは絵を描いて、保存した下書きから「この絵をキャラにする」を選んでください。</p>
+      <div class="actions">
+        <a class="primary-btn" href="/draw/">絵を描きに行く</a>
+      </div>
+    `);
     return;
   }
 
   const user = auth.currentUser;
 
   if (!user) {
-    selectedDrawing.innerHTML = `<p>ログインしてから登録してくれ。</p>`;
+    showGuide(`
+      <h2>ログインが必要です</h2>
+      <p>キャラ登録するにはログインしてください。</p>
+    `);
     return;
   }
 
@@ -43,39 +76,57 @@ async function loadDrawing() {
   const snap = await getDoc(drawingRef);
 
   if (!snap.exists()) {
-    selectedDrawing.innerHTML = `<p>選んだ絵が見つからなかった。</p>`;
-    form.hidden = true;
+    showGuide(`
+      <h2>下書きが見つかりませんでした</h2>
+      <p>削除されたか、URLが変わっている可能性があります。</p>
+      <div class="actions">
+        <a class="primary-btn" href="/draw/">下書き一覧へ戻る</a>
+      </div>
+    `);
     return;
   }
 
   const data = snap.data();
 
   if (data.userId !== user.uid) {
-    selectedDrawing.innerHTML = `<p>この絵は自分の下書きじゃないぞ。</p>`;
-    form.hidden = true;
+    showGuide(`
+      <h2>この下書きは登録できません</h2>
+      <p>自分が保存した下書きだけ、キャラとして登録できます。</p>
+    `);
     return;
   }
 
   if (data.isDeleted === true) {
-    selectedDrawing.innerHTML = `<p>この絵は削除済みだぞ。</p>`;
-    form.hidden = true;
+    showGuide(`
+      <h2>この下書きは削除済みです</h2>
+      <p>別の下書きを選んでください。</p>
+      <div class="actions">
+        <a class="primary-btn" href="/draw/">下書き一覧へ戻る</a>
+      </div>
+    `);
     return;
   }
 
   if (data.status === "adopted") {
-    selectedDrawing.innerHTML = `<p>この絵はすでにキャラ登録済みだぞ。</p>`;
-    form.hidden = true;
+    showGuide(`
+      <h2>この下書きは登録済みです</h2>
+      <p>すでにキャラクターとして登録されています。</p>
+      <div class="actions">
+        <a class="primary-btn" href="/characters/">キャラ一覧を見る</a>
+        <a class="ghost-btn" href="/draw/">別の下書きを選ぶ</a>
+      </div>
+    `);
     return;
   }
 
   drawingData = data;
 
   selectedDrawing.innerHTML = `
-    <img class="selected-drawing-img" src="${data.imageData}" alt="選んだ絵">
-    <p class="mini-info">この絵をキャラクターとして登録します。</p>
+    <img class="selected-drawing-img" src="${data.imageData}" alt="選んだ下書き">
+    <p class="mini-info">この絵をキャラクター画像として登録します。</p>
   `;
 
-  form.hidden = false;
+  showForm();
 }
 
 form.addEventListener("submit", async (e) => {
@@ -84,23 +135,22 @@ form.addEventListener("submit", async (e) => {
   const user = auth.currentUser;
 
   if (!user) {
-    message.textContent = "ログインしてから登録してくれ。";
+    message.textContent = "キャラ登録するにはログインが必要です。";
     return;
   }
 
   if (!drawingId || !drawingData) {
-    message.textContent = "登録する絵がないぞ。";
+    message.textContent = "登録する下書きが見つかりません。";
     return;
   }
 
-  const name = document.getElementById("charName").value.trim();
-  const profile = document.getElementById("charProfile").value.trim();
-  const tagsText = document.getElementById("charTags").value.trim();
-  const faOk = document.getElementById("faOk").checked;
-  const ngText = document.getElementById("ngText").value.trim();
+  const name = charName.value.trim();
+  const kana = charKana.value.trim();
+  const profile = charProfile.value.trim();
+  const tagsText = charTags.value.trim();
 
   if (!name) {
-    message.textContent = "キャラ名は必要だぞ。";
+    message.textContent = "キャラ名を入力してください。";
     return;
   }
 
@@ -110,7 +160,7 @@ form.addEventListener("submit", async (e) => {
     .filter(Boolean);
 
   try {
-    message.textContent = "登録中...";
+    message.textContent = "キャラを登録しています...";
 
     await addDoc(collection(db, "v2Characters"), {
       userId: user.uid,
@@ -118,10 +168,11 @@ form.addEventListener("submit", async (e) => {
       ownerPhotoURL: user.photoURL || "",
       drawingId,
       name,
+      kana,
       profile,
       tags,
-      faOk,
-      ngText,
+      faOk: faOk.checked,
+      ngText: ngText.value.trim(),
       imageData: drawingData.imageData,
       isPublic: true,
       isDeleted: false,
@@ -134,20 +185,25 @@ form.addEventListener("submit", async (e) => {
       updatedAt: serverTimestamp()
     });
 
-    message.textContent = "キャラ登録できた。いいじゃん。";
+    message.textContent = "キャラ登録が完了しました。";
 
     setTimeout(() => {
       location.href = "/characters/";
-    }, 800);
+    }, 700);
   } catch (error) {
     console.error(error);
-    message.textContent = "登録に失敗した。Firestoreルールを確認してくれ。";
+    message.textContent =
+      "キャラ登録に失敗しました。少し時間を置いて、もう一度お試しください。";
   }
 });
 
 onAuthStateChanged(auth, () => {
   loadDrawing().catch((error) => {
     console.error(error);
-    selectedDrawing.innerHTML = `<p>絵の読み込みに失敗した。</p>`;
+
+    showGuide(`
+      <h2>読み込みに失敗しました</h2>
+      <p>ページを再読み込みしてみてください。</p>
+    `);
   });
 });
