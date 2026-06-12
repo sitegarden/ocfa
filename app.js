@@ -55,26 +55,64 @@ function renderHeader() {
   if (!siteHeader) return;
 
   siteHeader.innerHTML = `
-    <a class="logo" href="/">OCFA</a>
+    <div class="site-header-inner">
+      <a class="logo" href="/">OCFA</a>
 
-    <nav class="nav">
-  <a href="/characters/">キャラ一覧</a>
-  <a href="/draw/">描く</a>
-  <a href="/events/">イベント</a>
-  <a href="/news/">お知らせ</a>
-  <a href="/mypage/">マイページ</a>
-  <a href="/settings/">設定</a>
-</nav>
+      <button
+        id="menuToggle"
+        class="menu-toggle"
+        type="button"
+        aria-label="メニューを開く"
+        aria-expanded="false"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
 
-    <div class="auth-box">
-      <span id="userName">確認中...</span>
-      <button id="loginBtn" type="button">ログイン</button>
-      <button id="logoutBtn" type="button" hidden>ログアウト</button>
+      <div id="headerMenu" class="header-menu">
+        <nav class="nav">
+          <a href="/characters/">キャラ一覧</a>
+          <a href="/draw/">描く</a>
+          <a href="/events/">イベント</a>
+          <a href="/news/">お知らせ</a>
+          <a href="/mypage/">マイページ</a>
+          <a href="/settings/">設定</a>
+        </nav>
+
+        <div class="auth-box">
+          <span id="userName">確認中...</span>
+          <button id="loginBtn" type="button">ログイン</button>
+          <button id="logoutBtn" type="button" hidden>ログアウト</button>
+        </div>
+      </div>
     </div>
   `;
 
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
+  const menuToggle = document.getElementById("menuToggle");
+  const headerMenu = document.getElementById("headerMenu");
+
+  menuToggle.addEventListener("click", () => {
+    const isOpen = headerMenu.classList.toggle("is-open");
+
+    menuToggle.classList.toggle("is-open", isOpen);
+    menuToggle.setAttribute("aria-expanded", String(isOpen));
+    menuToggle.setAttribute(
+      "aria-label",
+      isOpen ? "メニューを閉じる" : "メニューを開く"
+    );
+  });
+
+  headerMenu.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      headerMenu.classList.remove("is-open");
+      menuToggle.classList.remove("is-open");
+      menuToggle.setAttribute("aria-expanded", "false");
+      menuToggle.setAttribute("aria-label", "メニューを開く");
+    });
+  });
 
   loginBtn.addEventListener("click", async () => {
     try {
