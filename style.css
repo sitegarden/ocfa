@@ -3679,3 +3679,20 @@ textarea {
     width: 100%;
   }
 }
+
+.character-grid,
+.characters-grid,
+.character-list {
+  align-items: start;
+}
+
+.character-card {
+  align-self: start;
+}
+
+.character-card-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
