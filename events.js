@@ -36,24 +36,30 @@ function statusLabel(status) {
   return "準備中";
 }
 
-async function isAdminUser(user) {
-  if (!user) return false;
+async function getUserData(user) {
+  if (!user) return null;
 
   const userRef = doc(db, "users", user.uid);
   const snap = await getDoc(userRef);
 
-  if (!snap.exists()) return false;
+  if (!snap.exists()) return null;
 
-  return snap.data().role === "admin";
+  return snap.data();
 }
 
-async function getEvents() {
-  const q = query(
-    collection(db, "v2Events"),
-    where("isDeleted", "==", false)
-  );
+async function getEvents(isAdmin) {
+  const eventQuery = isAdmin
+    ? query(
+        collection(db, "v2Events"),
+        where("isDeleted", "==", false)
+      )
+    : query(
+        collection(db, "v2Events"),
+        where("isDeleted", "==", false),
+        where("isPublic", "==", true)
+      );
 
-  const snap = await getDocs(q);
+  const snap = await getDocs(eventQuery);
 
   const events = [];
 
@@ -126,26 +132,26 @@ function renderEvents(events, isAdmin) {
 
 onAuthStateChanged(auth, async (user) => {
   try {
-    const isAdmin = await isAdminUser(user);
+    const userData = await getUserData(user);
+    const isAdmin = userData?.role === "admin";
 
-    if (isAdmin) {
+    if (isAdmin && eventAdminActions) {
       eventAdminActions.hidden = false;
     }
 
-    const events = await getEvents();
+    const events = await getEvents(isAdmin);
 
-    const visibleEvents = isAdmin
-      ? events
-      : events.filter((event) => event.data.isPublic !== false);
-
-    renderEvents(visibleEvents, isAdmin);
+    renderEvents(events, isAdmin);
   } catch (error) {
     console.error(error);
 
     eventList.innerHTML = `
       <div class="panel">
         <h2>読み込みに失敗しました</h2>
-        <p>ページを再読み込みしてみてください。</p>
+        <p>
+          イベントの読み込みに失敗しました。<br>
+          Firestoreルールか、イベントの公開設定を確認してください。
+        </p>
       </div>
     `;
   }
