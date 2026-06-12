@@ -1176,3 +1176,13 @@ textarea {
     width: 100%;
   }
 }
+
+.danger-btn {
+  background: #f4d4cf;
+  color: #70413b;
+  border-color: #d9aaa2;
+}
+
+.danger-btn:hover {
+  background: #edc4bd;
+}
