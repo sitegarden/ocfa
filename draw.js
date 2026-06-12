@@ -36,6 +36,8 @@ const message = document.getElementById("message");
 const drawingList = document.getElementById("drawingList");
 const opacityValue = document.getElementById("opacityValue");
 
+const MAX_DRAWINGS_PER_USER = 100;
+
 let drawing = false;
 let lastX = 0;
 let lastY = 0;
@@ -274,6 +276,16 @@ saveDrawingBtn.addEventListener("click", async () => {
   }
 
   try {
+    message.textContent = "保存できる下書き数を確認しています...";
+
+    const ok = await canSaveDrawing(user);
+
+    if (!ok) {
+      message.textContent =
+        `保存できるイラストは${MAX_DRAWINGS_PER_USER}件までです。不要な下書きを削除してください。`;
+      return;
+    }
+
     message.textContent = "下書きを保存しています...";
 
     const imageData = getCanvasImageData();
@@ -494,5 +506,31 @@ onAuthStateChanged(auth, () => {
     `;
   });
 });
+
+async function getMyDrawingCount(user) {
+  const q = query(
+    collection(db, "v2Drawings"),
+    where("userId", "==", user.uid),
+    where("isDeleted", "==", false)
+  );
+
+  const snap = await getDocs(q);
+
+  return snap.size;
+}
+
+async function canSaveDrawing(user) {
+  const count = await getMyDrawingCount(user);
+
+  if (count >= MAX_DRAWINGS_PER_USER) {
+    alert(
+      `保存できるイラストは${MAX_DRAWINGS_PER_USER}件までです。\n不要な下書きを削除してから、もう一度保存してください。`
+    );
+
+    return false;
+  }
+
+  return true;
+}
 
 initCanvas();
