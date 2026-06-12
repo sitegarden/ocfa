@@ -1555,3 +1555,88 @@ textarea {
 .event-card p {
   color: var(--muted);
 }
+
+.form-label {
+  display: block;
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.event-status-field {
+  margin: 16px 0;
+}
+
+.event-status-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+}
+
+.event-status-card {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.event-status-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.event-status-card span {
+  display: grid;
+  gap: 4px;
+  min-height: 82px;
+  padding: 14px 12px;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper-2);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.event-status-card strong {
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.event-status-card small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.event-status-card:hover span {
+  transform: translateY(-2px);
+  border-color: var(--accent-2);
+}
+
+.event-status-card input:checked + span {
+  border-color: var(--accent);
+  background:
+    linear-gradient(135deg, rgba(241, 199, 193, 0.6), rgba(255, 250, 242, 0.95));
+}
+
+.event-status-card input:checked + span::after {
+  content: "選択中";
+  width: fit-content;
+  margin-top: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fffaf2;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+@media (max-width: 560px) {
+  .event-status-options {
+    grid-template-columns: 1fr;
+  }
+}
