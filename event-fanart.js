@@ -289,33 +289,75 @@ async function getMyClaims() {
 async function getExistingClaim() {
   if (!currentUser) return null;
 
-  const claimRef = doc(db, "v2EventFanartClaims", getClaimId());
-  const snap = await getDoc(claimRef);
+  const q = query(
+    collection(db, "v2EventFanartClaims"),
+    where("eventId", "==", eventId),
+    where("targetCharacterId", "==", characterId),
+    where("userId", "==", currentUser.uid),
+    where("isDeleted", "==", false)
+  );
 
-  if (!snap.exists()) return null;
+  const snap = await getDocs(q);
 
-  return {
-    id: snap.id,
-    data: snap.data()
-  };
+  let result = null;
+
+  snap.forEach((docSnap) => {
+    result = {
+      id: docSnap.id,
+      data: docSnap.data()
+    };
+  });
+
+  return result;
 }
 
 async function getExistingFanartForCharacter() {
   if (!currentUser) return null;
 
-  const fanartRef = doc(db, "v2EventFanarts", getFanartId());
-  const snap = await getDoc(fanartRef);
+  const q = query(
+    collection(db, "v2EventFanarts"),
+    where("eventId", "==", eventId),
+    where("targetCharacterId", "==", characterId),
+    where("userId", "==", currentUser.uid),
+    where("isDeleted", "==", false)
+  );
 
-  if (!snap.exists()) return null;
+  const snap = await getDocs(q);
 
-  const data = snap.data();
+  let result = null;
 
-  if (data.isDeleted === true) return null;
+  snap.forEach((docSnap) => {
+    result = {
+      id: docSnap.id,
+      data: docSnap.data()
+    };
+  });
 
-  return {
-    id: snap.id,
-    data
-  };
+  return result;
+}
+async function getExistingFanartForCharacter() {
+  if (!currentUser) return null;
+
+  const q = query(
+    collection(db, "v2EventFanarts"),
+    where("eventId", "==", eventId),
+    where("targetCharacterId", "==", characterId),
+    where("userId", "==", currentUser.uid),
+    where("isDeleted", "==", false)
+  );
+
+  const snap = await getDocs(q);
+
+  let result = null;
+
+  snap.forEach((docSnap) => {
+    result = {
+      id: docSnap.id,
+      data: docSnap.data()
+    };
+  });
+
+  return result;
 }
 
 async function ensureClaim(myClaims) {
