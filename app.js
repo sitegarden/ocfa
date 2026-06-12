@@ -14,6 +14,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 const siteHeader = document.getElementById("siteHeader");
+const siteFooter = document.getElementById("siteFooter");
 
 function escapeHtml(text) {
   return String(text)
@@ -133,7 +134,27 @@ function renderHeader() {
   });
 }
 
+function renderFooter() {
+  if (!siteFooter) return;
+
+  siteFooter.innerHTML = `
+    <div class="site-footer-inner">
+      <p class="footer-brand">OCFA</p>
+
+      <nav class="footer-nav">
+        <a href="/terms/">利用規約</a>
+        <a href="/privacy/">プライバシーポリシー</a>
+      </nav>
+
+      <p class="footer-copy">
+        © OCFA
+      </p>
+    </div>
+  `;
+}
+
 renderHeader();
+renderFooter();
 
 onAuthStateChanged(auth, async (user) => {
   const userName = document.getElementById("userName");
