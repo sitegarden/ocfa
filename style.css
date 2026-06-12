@@ -3696,3 +3696,88 @@ textarea {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* イベント詳細ページ：FA画像を大きくしすぎない */
+.event-fanart-list,
+.fanart-list,
+.event-fanarts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.event-fanart-card,
+.fanart-card {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper-2);
+}
+
+.event-fanart-card img,
+.fanart-card img,
+.event-fanart-list img,
+.fanart-list img,
+.event-fanarts img {
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  justify-self: center;
+  border-radius: 14px;
+  background: #fffdf8;
+}
+
+@media (max-width: 640px) {
+  .event-fanart-list,
+  .fanart-list,
+  .event-fanarts {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .event-fanart-card,
+  .fanart-card {
+    padding: 8px;
+    border-radius: 16px;
+  }
+
+  .event-fanart-card img,
+  .fanart-card img,
+  .event-fanart-list img,
+  .fanart-list img,
+  .event-fanarts img {
+    max-width: 160px;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .event-fanart-list,
+  .fanart-list,
+  .event-fanarts {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .event-fanart-card,
+  .fanart-card {
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  .event-fanart-card img,
+  .fanart-card img,
+  .event-fanart-list img,
+  .fanart-list img,
+  .event-fanarts img {
+    width: 100%;
+    max-width: none;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    border-radius: 10px;
+  }
+}
