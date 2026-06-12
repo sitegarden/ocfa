@@ -39,6 +39,10 @@ let gameHasDrawn = false;
 let originalTimerId = null;
 let submittingOriginal = false;
 
+let currentOriginals = [];
+let unsubscribeOriginals = null;
+let advancingToFa = false;
+
 function escapeHtml(text) {
   return String(text)
     .replaceAll("&", "&amp;")
@@ -665,6 +669,8 @@ function startRealtimeListeners() {
         data
       };
 
+      await checkAllOriginalsSubmitted();
+
       await renderRoom();
     },
     (error) => {
@@ -703,6 +709,39 @@ function startRealtimeListeners() {
       });
 
       currentPlayers = players;
+
+      await checkAllOriginalsSubmitted();
+
+      if (currentRoom) {
+        await renderRoom();
+      }
+    },
+    (error) => {
+      renderError(error);
+    }
+  );
+
+  const originalsQuery = query(
+    collection(db, "ocGameOriginals"),
+    where("roomId", "==", roomId),
+    where("isDeleted", "==", false)
+  );
+
+  unsubscribeOriginals = onSnapshot(
+    originalsQuery,
+    async (snap) => {
+      const originals = [];
+
+      snap.forEach((docSnap) => {
+        originals.push({
+          id: docSnap.id,
+          data: docSnap.data()
+        });
+      });
+
+      currentOriginals = originals;
+
+      await checkAllOriginalsSubmitted();
 
       if (currentRoom) {
         await renderRoom();
@@ -759,6 +798,39 @@ function startGameDraw(e) {
   gameDrawing = true;
   gameLastX = point.x;
   gameLastY = point.y;
+}
+
+function getSubmittedOriginalByPlayerId(playerId) {
+  return currentOriginals.find((original) => {
+    return original.data.playerId === playerId;
+  });
+}
+
+async function checkAllOriginalsSubmitted() {
+  if (!currentRoom) return;
+  if (currentRoom.data.status !== "drawing_oc") return;
+  if (!isOwner()) return;
+  if (advancingToFa) return;
+  if (currentPlayers.length < 2) return;
+
+  const allSubmitted = currentPlayers.every((player) => {
+    return getSubmittedOriginalByPlayerId(player.id);
+  });
+
+  if (!allSubmitted) return;
+
+  try {
+    advancingToFa = true;
+
+    await updateDoc(doc(db, "ocGameRooms", roomId), {
+      status: "drawing_fa",
+      currentRound: 0,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error(error);
+    advancingToFa = false;
+  }
 }
 
 function drawGameCanvas(e) {
