@@ -36,6 +36,8 @@ let gameDrawing = false;
 let gameLastX = 0;
 let gameLastY = 0;
 let gameHasDrawn = false;
+let originalTimerId = null;
+let submittingOriginal = false;
 
 function escapeHtml(text) {
   return String(text)
@@ -791,21 +793,117 @@ function getGameCanvasImageData() {
   return gameCanvas.toDataURL("image/jpeg", 0.82);
 }
 
-async function submitOriginalOc() {
+function clearOriginalTimer() {
+  if (originalTimerId) {
+    clearInterval(originalTimerId);
+    originalTimerId = null;
+  }
+}
+
+function getRoomStartedMs() {
+  const startedAt = currentRoom?.data?.startedAt;
+
+  if (!startedAt) return Date.now();
+
+  if (typeof startedAt.toMillis === "function") {
+    return startedAt.toMillis();
+  }
+
+  if (startedAt.seconds) {
+    return startedAt.seconds * 1000;
+  }
+
+  return Date.now();
+}
+
+function getOriginalRemainingSeconds() {
+  const startedMs = getRoomStartedMs();
+  const turnSeconds = Number(currentRoom?.data?.turnSeconds || 120);
+  const endMs = startedMs + turnSeconds * 1000;
+
+  return Math.max(0, Math.ceil((endMs - Date.now()) / 1000));
+}
+
+function formatTimer(seconds) {
+  const min = Math.floor(seconds / 60);
+  const sec = seconds % 60;
+
+  return `${min}:${String(sec).padStart(2, "0")}`;
+}
+
+function drawTimeUpCard(name) {
+  if (!gameCtx || !gameCanvas) return;
+
+  gameCtx.save();
+
+  gameCtx.fillStyle = "#fffdf8";
+  gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+  gameCtx.fillStyle = "#2b2430";
+  gameCtx.textAlign = "center";
+  gameCtx.textBaseline = "middle";
+
+  gameCtx.font = "bold 46px sans-serif";
+  gameCtx.fillText("時間切れ", gameCanvas.width / 2, gameCanvas.height / 2 - 28);
+
+  gameCtx.font = "bold 24px sans-serif";
+  gameCtx.fillText(`${name || "匿名"} のOC`, gameCanvas.width / 2, gameCanvas.height / 2 + 28);
+
+  gameCtx.restore();
+}
+
+function startOriginalAutoSubmitTimer() {
+  clearOriginalTimer();
+
+  const timerText = document.getElementById("originalTimerText");
+
+  async function tick() {
+    const remaining = getOriginalRemainingSeconds();
+
+    if (timerText) {
+      timerText.textContent = `残り時間：${formatTimer(remaining)}`;
+    }
+
+    if (remaining <= 0) {
+      clearOriginalTimer();
+
+      if (!submittingOriginal) {
+        await submitOriginalOc(true);
+      }
+    }
+  }
+
+  tick();
+
+  originalTimerId = setInterval(() => {
+    tick();
+  }, 1000);
+}
+
+async function submitOriginalOc(isAutoSubmit = false) {
   const message = document.getElementById("roomMessage");
+  const submitOriginalBtn = document.getElementById("submitOriginalBtn");
   const myPlayer = getMyPlayer();
+
+  if (submittingOriginal) return;
 
   if (!myPlayer) {
     if (message) message.textContent = "参加してから提出してください。";
     return;
   }
 
-  if (!gameHasDrawn) {
+  if (!gameHasDrawn && !isAutoSubmit) {
     if (message) message.textContent = "提出する前にOCを描いてください。";
     return;
   }
 
   try {
+    submittingOriginal = true;
+
+    if (submitOriginalBtn) {
+      submitOriginalBtn.disabled = true;
+    }
+
     const alreadySubmitted = await getMyOriginal(myPlayer.id);
 
     if (alreadySubmitted) {
@@ -813,7 +911,15 @@ async function submitOriginalOc() {
       return;
     }
 
-    if (message) message.textContent = "OCを提出しています...";
+    if (message) {
+      message.textContent = isAutoSubmit
+        ? "時間になったため、自動提出しています..."
+        : "OCを提出しています...";
+    }
+
+    if (isAutoSubmit && !gameHasDrawn) {
+      drawTimeUpCard(myPlayer.data.name || "匿名");
+    }
 
     addWatermarkToGameCanvas(myPlayer.data.name || "匿名");
 
@@ -826,20 +932,30 @@ async function submitOriginalOc() {
       userId: myPlayer.data.userId || "",
       guestId: myPlayer.data.guestId || "",
       imageData,
-      hasDrawn: true,
+      hasDrawn: gameHasDrawn,
+      isAutoSubmit,
       isDeleted: false,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
 
+    clearOriginalTimer();
+
     if (message) {
-      message.textContent =
-        "OCを提出しました。全員の提出が終わるまで待ってください。";
+      message.textContent = isAutoSubmit
+        ? "時間切れのため、自動提出しました。"
+        : "OCを提出しました。全員の提出が終わるまで待ってください。";
     }
 
     await renderRoom();
   } catch (error) {
     console.error(error);
+
+    submittingOriginal = false;
+
+    if (submitOriginalBtn) {
+      submitOriginalBtn.disabled = false;
+    }
 
     if (message) {
       message.textContent = "OCの提出に失敗しました。";
