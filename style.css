@@ -3781,3 +3781,65 @@ textarea {
     border-radius: 12px;
   }
 }
+
+/* イベント詳細ページ：タブレットではFAを2列にする */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .event-fanart-list,
+  .fanart-list,
+  .event-fanarts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .event-fanart-card,
+  .fanart-card {
+    width: 100%;
+    max-width: none;
+    padding: 10px;
+    border-radius: 18px;
+  }
+
+  .event-fanart-card img,
+  .fanart-card img,
+  .event-fanart-list img,
+  .fanart-list img,
+  .event-fanarts img {
+    width: 100%;
+    max-width: none;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    border-radius: 14px;
+    background: #fffdf8;
+  }
+}
+
+/* イベント詳細ページ：スマホでも2列 */
+@media (max-width: 640px) {
+  .event-fanart-list,
+  .fanart-list,
+  .event-fanarts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .event-fanart-card,
+  .fanart-card {
+    padding: 8px;
+    border-radius: 16px;
+  }
+
+  .event-fanart-card img,
+  .fanart-card img,
+  .event-fanart-list img,
+  .fanart-list img,
+  .event-fanarts img {
+    width: 100%;
+    max-width: none;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    border-radius: 12px;
+    background: #fffdf8;
+  }
+}
