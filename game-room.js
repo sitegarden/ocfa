@@ -30,6 +30,13 @@ let unsubscribeRoom = null;
 let unsubscribePlayers = null;
 let hasStartedListening = false;
 
+let gameCanvas = null;
+let gameCtx = null;
+let gameDrawing = false;
+let gameLastX = 0;
+let gameLastY = 0;
+let gameHasDrawn = false;
+
 function escapeHtml(text) {
   return String(text)
     .replaceAll("&", "&amp;")
@@ -129,6 +136,32 @@ async function getPlayers() {
   });
 
   return players;
+}
+
+async function getMyOriginal(playerId) {
+  if (!roomId || !playerId) return null;
+
+  const q = query(
+    collection(db, "ocGameOriginals"),
+    where("roomId", "==", roomId),
+    where("playerId", "==", playerId),
+    where("isDeleted", "==", false)
+  );
+
+  const snap = await getDocs(q);
+
+  if (snap.empty) return null;
+
+  let result = null;
+
+  snap.forEach((docSnap) => {
+    result = {
+      id: docSnap.id,
+      data: docSnap.data()
+    };
+  });
+
+  return result;
 }
 
 function getAutoGuestName() {
@@ -395,7 +428,7 @@ function renderOwnerArea() {
   `;
 }
 
-function renderRoom() {
+async function renderRoom() {
   const room = currentRoom.data;
 
   gameRoomContent.innerHTML = `
@@ -435,6 +468,8 @@ function renderRoom() {
       ${renderPlayers()}
     </section>
 
+    ${await renderGameStageArea()}
+
     ${renderJoinArea()}
 
     ${renderOwnerArea()}
@@ -471,7 +506,17 @@ function renderRoom() {
   if (startGameBtn) {
     startGameBtn.addEventListener("click", startGame);
   }
+
+  const submitOriginalBtn = document.getElementById("submitOriginalBtn");
+
+if (submitOriginalBtn) {
+  initGameCanvas();
+
+  submitOriginalBtn.addEventListener("click", submitOriginalOc);
 }
+}
+
+
 
 function renderNoRoomId() {
   gameRoomContent.innerHTML = `
@@ -626,3 +671,206 @@ onAuthStateChanged(auth, async (user) => {
 
   startRealtimeListeners();
 });
+
+function getGamePoint(e) {
+  const rect = gameCanvas.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+
+  return {
+    x: ((touch.clientX - rect.left) / rect.width) * gameCanvas.width,
+    y: ((touch.clientY - rect.top) / rect.height) * gameCanvas.height
+  };
+}
+
+function initGameCanvas() {
+  gameCanvas = document.getElementById("gameCanvas");
+
+  if (!gameCanvas) return;
+
+  gameCtx = gameCanvas.getContext("2d");
+
+  gameCtx.fillStyle = "#fffdf8";
+  gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+  gameCtx.lineCap = "round";
+  gameCtx.lineJoin = "round";
+  gameCtx.strokeStyle = "#2b2430";
+  gameCtx.lineWidth = 5;
+
+  gameHasDrawn = false;
+
+  gameCanvas.addEventListener("mousedown", startGameDraw);
+  gameCanvas.addEventListener("mousemove", drawGameCanvas);
+  gameCanvas.addEventListener("mouseup", stopGameDraw);
+  gameCanvas.addEventListener("mouseleave", stopGameDraw);
+
+  gameCanvas.addEventListener("touchstart", startGameDraw, { passive: false });
+  gameCanvas.addEventListener("touchmove", drawGameCanvas, { passive: false });
+  gameCanvas.addEventListener("touchend", stopGameDraw);
+}
+
+function startGameDraw(e) {
+  e.preventDefault();
+
+  const point = getGamePoint(e);
+
+  gameDrawing = true;
+  gameLastX = point.x;
+  gameLastY = point.y;
+}
+
+function drawGameCanvas(e) {
+  if (!gameDrawing) return;
+
+  e.preventDefault();
+
+  const point = getGamePoint(e);
+
+  gameCtx.beginPath();
+  gameCtx.moveTo(gameLastX, gameLastY);
+  gameCtx.lineTo(point.x, point.y);
+  gameCtx.stroke();
+
+  gameLastX = point.x;
+  gameLastY = point.y;
+  gameHasDrawn = true;
+}
+
+function stopGameDraw() {
+  if (!gameDrawing) return;
+  gameDrawing = false;
+}
+
+function addWatermarkToGameCanvas(name) {
+  if (!gameCtx || !gameCanvas) return;
+
+  gameCtx.save();
+
+  gameCtx.globalAlpha = 0.72;
+  gameCtx.fillStyle = "#2b2430";
+  gameCtx.font = "bold 24px sans-serif";
+  gameCtx.textAlign = "right";
+  gameCtx.textBaseline = "bottom";
+
+  gameCtx.fillText(`by ${name}`, gameCanvas.width - 22, gameCanvas.height - 18);
+
+  gameCtx.restore();
+}
+
+function getGameCanvasImageData() {
+  return gameCanvas.toDataURL("image/jpeg", 0.82);
+}
+
+
+async function submitOriginalOc() {
+  const message = document.getElementById("roomMessage");
+  const myPlayer = getMyPlayer();
+
+  if (!myPlayer) {
+    if (message) message.textContent = "参加してから提出してください。";
+    return;
+  }
+
+  if (!gameHasDrawn) {
+    if (message) message.textContent = "提出する前にOCを描いてください。";
+    return;
+  }
+
+  try {
+    const alreadySubmitted = await getMyOriginal(myPlayer.id);
+
+    if (alreadySubmitted) {
+      if (message) message.textContent = "すでにOCを提出済みです。";
+      return;
+    }
+
+    if (message) message.textContent = "OCを提出しています...";
+
+    addWatermarkToGameCanvas(myPlayer.data.name || "匿名");
+
+    const imageData = getGameCanvasImageData();
+
+    await addDoc(collection(db, "ocGameOriginals"), {
+      roomId,
+      playerId: myPlayer.id,
+      playerName: myPlayer.data.name || "匿名",
+      userId: myPlayer.data.userId || "",
+      guestId: myPlayer.data.guestId || "",
+      imageData,
+      hasDrawn: true,
+      isDeleted: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    if (message) {
+      message.textContent =
+        "OCを提出しました。全員の提出が終わるまで待ってください。";
+    }
+
+    await renderRoom();
+  } catch (error) {
+    console.error(error);
+
+    if (message) {
+      message.textContent = "OCの提出に失敗しました。";
+    }
+  }
+}
+
+async function renderGameStageArea() {
+  if (!currentRoom || currentRoom.data.status !== "drawing_oc") {
+    return "";
+  }
+
+  const myPlayer = getMyPlayer();
+
+  if (!myPlayer) {
+    return `
+      <section class="panel-soft">
+        <p>ゲームは開始されています。参加者のみ描画できます。</p>
+      </section>
+    `;
+  }
+
+  const submitted = await getMyOriginal(myPlayer.id);
+
+  if (submitted) {
+    return `
+      <section class="panel">
+        <p class="eyebrow">Your OC</p>
+        <h2>OC提出済み</h2>
+        <p>あなたのOCは提出済みです。全員の提出が終わるまで待ってください。</p>
+
+        <div class="submitted-oc-preview">
+          <img src="${submitted.data.imageData}" alt="提出したOC">
+        </div>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="panel game-draw-panel">
+      <p class="eyebrow">Draw Your OC</p>
+      <h2>自分のOCを描く</h2>
+
+      <p>
+        まずは自分のOCを描いて提出してください。
+        この絵が、ほかの参加者がファンアートを描く元になります。
+      </p>
+
+      <canvas
+        id="gameCanvas"
+        class="game-canvas"
+        width="768"
+        height="768"
+      ></canvas>
+
+      <div class="actions">
+        <button id="submitOriginalBtn" class="primary-btn" type="button">
+          OCを提出する
+        </button>
+      </div>
+    </section>
+  `;
+}
