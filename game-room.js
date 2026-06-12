@@ -43,6 +43,11 @@ let gameLastX = 0;
 let gameLastY = 0;
 let gameHasDrawn = false;
 
+let layerCanvases = [];
+let layerContexts = [];
+let activeLayerIndex = 0;
+let layerVisible = [true, true];
+
 let originalTimerId = null;
 let submittingOriginal = false;
 let submittingFanart = false;
@@ -501,6 +506,32 @@ function renderOwnerArea() {
   `;
 }
 
+function renderLayerTools() {
+  return `
+    <div class="game-layer-tools">
+      <button id="layerBtn0" type="button" class="layer-btn is-active">
+        レイヤー1
+      </button>
+
+      <button id="layerBtn1" type="button" class="layer-btn">
+        レイヤー2
+      </button>
+
+      <button id="toggleLayerBtn" type="button">
+        表示/非表示
+      </button>
+
+      <button id="clearLayerBtn" type="button" class="danger-btn">
+        このレイヤーを消す
+      </button>
+    </div>
+
+    <p id="layerStatusText" class="mini-info">
+      現在：レイヤー1
+    </p>
+  `;
+}
+
 async function renderGameStageArea() {
   if (!currentRoom) {
     return "";
@@ -572,6 +603,8 @@ async function renderGameStageArea() {
           上のOCを見ながら、ファンアートを描いてください。
         </p>
 
+        ${renderLayerTools()}
+
         <canvas
           id="gameCanvas"
           class="game-canvas"
@@ -629,12 +662,14 @@ async function renderGameStageArea() {
       </p>
 
       <div class="game-timer-box">
-  <p id="originalTimerText" class="game-timer">残り時間：--:--</p>
+        <p id="originalTimerText" class="game-timer">残り時間：--:--</p>
 
-  <div class="game-timer-meter">
-    <span id="originalTimerBar"></span>
-  </div>
-</div>
+        <div class="game-timer-meter">
+          <span id="originalTimerBar"></span>
+        </div>
+      </div>
+
+      ${renderLayerTools()}
 
       <canvas
         id="gameCanvas"
@@ -798,28 +833,6 @@ function renderError(error) {
   `;
 }
 
-async function reloadRoom() {
-  if (!roomId) {
-    renderNoRoomId();
-    return;
-  }
-
-  try {
-    currentRoom = await getRoom();
-
-    if (!currentRoom) {
-      renderNotFound();
-      return;
-    }
-
-    currentPlayers = await getPlayers();
-
-    await renderRoom();
-  } catch (error) {
-    renderError(error);
-  }
-}
-
 function startRealtimeListeners() {
   if (!roomId || hasStartedListening) return;
 
@@ -970,6 +983,115 @@ function getGamePoint(e) {
   };
 }
 
+function createLayerCanvas() {
+  const layerCanvas = document.createElement("canvas");
+  layerCanvas.width = gameCanvas.width;
+  layerCanvas.height = gameCanvas.height;
+
+  const layerCtx = layerCanvas.getContext("2d");
+
+  return {
+    canvas: layerCanvas,
+    ctx: layerCtx
+  };
+}
+
+function initGameLayers() {
+  layerCanvases = [];
+  layerContexts = [];
+  activeLayerIndex = 0;
+  layerVisible = [true, true];
+
+  for (let i = 0; i < 2; i++) {
+    const layer = createLayerCanvas();
+    layerCanvases.push(layer.canvas);
+    layerContexts.push(layer.ctx);
+  }
+
+  redrawGameCanvas();
+  updateLayerUi();
+}
+
+function redrawGameCanvas() {
+  if (!gameCtx || !gameCanvas) return;
+
+  gameCtx.fillStyle = "#fffdf8";
+  gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+  layerCanvases.forEach((layerCanvas, index) => {
+    if (!layerVisible[index]) return;
+    gameCtx.drawImage(layerCanvas, 0, 0);
+  });
+}
+
+function getActiveLayerCtx() {
+  return layerContexts[activeLayerIndex] || null;
+}
+
+function updateLayerUi() {
+  const layerBtn0 = document.getElementById("layerBtn0");
+  const layerBtn1 = document.getElementById("layerBtn1");
+  const layerStatusText = document.getElementById("layerStatusText");
+
+  if (layerBtn0) {
+    layerBtn0.classList.toggle("is-active", activeLayerIndex === 0);
+    layerBtn0.classList.toggle("is-hidden-layer", layerVisible[0] === false);
+  }
+
+  if (layerBtn1) {
+    layerBtn1.classList.toggle("is-active", activeLayerIndex === 1);
+    layerBtn1.classList.toggle("is-hidden-layer", layerVisible[1] === false);
+  }
+
+  if (layerStatusText) {
+    const visibleText = layerVisible[activeLayerIndex] ? "表示中" : "非表示";
+    layerStatusText.textContent = `現在：レイヤー${activeLayerIndex + 1}（${visibleText}）`;
+  }
+}
+
+function setupLayerButtons() {
+  const layerBtn0 = document.getElementById("layerBtn0");
+  const layerBtn1 = document.getElementById("layerBtn1");
+  const toggleLayerBtn = document.getElementById("toggleLayerBtn");
+  const clearLayerBtn = document.getElementById("clearLayerBtn");
+
+  if (layerBtn0) {
+    layerBtn0.addEventListener("click", () => {
+      activeLayerIndex = 0;
+      updateLayerUi();
+    });
+  }
+
+  if (layerBtn1) {
+    layerBtn1.addEventListener("click", () => {
+      activeLayerIndex = 1;
+      updateLayerUi();
+    });
+  }
+
+  if (toggleLayerBtn) {
+    toggleLayerBtn.addEventListener("click", () => {
+      layerVisible[activeLayerIndex] = !layerVisible[activeLayerIndex];
+      redrawGameCanvas();
+      updateLayerUi();
+    });
+  }
+
+  if (clearLayerBtn) {
+    clearLayerBtn.addEventListener("click", () => {
+      if (!confirm(`レイヤー${activeLayerIndex + 1}を消しますか？`)) return;
+
+      const targetCtx = getActiveLayerCtx();
+
+      if (!targetCtx) return;
+
+      targetCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+      redrawGameCanvas();
+      updateLayerUi();
+    });
+  }
+}
+
 function initGameCanvas() {
   gameCanvas = document.getElementById("gameCanvas");
 
@@ -977,15 +1099,10 @@ function initGameCanvas() {
 
   gameCtx = gameCanvas.getContext("2d");
 
-  gameCtx.fillStyle = "#fffdf8";
-  gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-
-  gameCtx.lineCap = "round";
-  gameCtx.lineJoin = "round";
-  gameCtx.strokeStyle = "#2b2430";
-  gameCtx.lineWidth = 5;
-
+  gameDrawing = false;
   gameHasDrawn = false;
+
+  initGameLayers();
 
   gameCanvas.addEventListener("mousedown", startGameDraw);
   gameCanvas.addEventListener("mousemove", drawGameCanvas);
@@ -995,10 +1112,22 @@ function initGameCanvas() {
   gameCanvas.addEventListener("touchstart", startGameDraw, { passive: false });
   gameCanvas.addEventListener("touchmove", drawGameCanvas, { passive: false });
   gameCanvas.addEventListener("touchend", stopGameDraw);
+
+  setupLayerButtons();
 }
 
 function startGameDraw(e) {
   e.preventDefault();
+
+  if (!layerVisible[activeLayerIndex]) {
+    const roomMessage = document.getElementById("roomMessage");
+
+    if (roomMessage) {
+      roomMessage.textContent = "非表示中のレイヤーには描けません。";
+    }
+
+    return;
+  }
 
   const point = getGamePoint(e);
 
@@ -1013,15 +1142,25 @@ function drawGameCanvas(e) {
   e.preventDefault();
 
   const point = getGamePoint(e);
+  const targetCtx = getActiveLayerCtx();
 
-  gameCtx.beginPath();
-  gameCtx.moveTo(gameLastX, gameLastY);
-  gameCtx.lineTo(point.x, point.y);
-  gameCtx.stroke();
+  if (!targetCtx) return;
+
+  targetCtx.lineCap = "round";
+  targetCtx.lineJoin = "round";
+  targetCtx.strokeStyle = "#2b2430";
+  targetCtx.lineWidth = 5;
+
+  targetCtx.beginPath();
+  targetCtx.moveTo(gameLastX, gameLastY);
+  targetCtx.lineTo(point.x, point.y);
+  targetCtx.stroke();
 
   gameLastX = point.x;
   gameLastY = point.y;
   gameHasDrawn = true;
+
+  redrawGameCanvas();
 }
 
 function stopGameDraw() {
@@ -1089,6 +1228,13 @@ function formatTimer(seconds) {
 
 function drawTimeUpCard(name) {
   if (!gameCtx || !gameCanvas) return;
+
+  layerCanvases.forEach((layerCanvas) => {
+    const ctx = layerCanvas.getContext("2d");
+    ctx.clearRect(0, 0, layerCanvas.width, layerCanvas.height);
+  });
+
+  redrawGameCanvas();
 
   gameCtx.save();
 
@@ -1193,6 +1339,8 @@ async function submitOriginalOc(isAutoSubmit = false) {
 
     if (isAutoSubmit && !gameHasDrawn) {
       drawTimeUpCard(myPlayer.data.name || "匿名");
+    } else {
+      redrawGameCanvas();
     }
 
     addWatermarkToGameCanvas(myPlayer.data.name || "匿名");
@@ -1278,6 +1426,7 @@ async function submitFanart() {
 
     if (message) message.textContent = "FAを提出しています...";
 
+    redrawGameCanvas();
     addWatermarkToGameCanvas(myPlayer.data.name || "匿名");
 
     const imageData = getGameCanvasImageData();
