@@ -805,8 +805,16 @@ fanartContent.innerHTML = `
   </div>
 `;
 
-onAuthStateChanged(auth, async (user) => {
+let authChecked = false;
+
+async function startFanartPage(user) {
   currentUser = user;
+
+  fanartContent.innerHTML = `
+    <div class="panel">
+      <p>ログイン状態を確認しました。データを読み込んでいます...</p>
+    </div>
+  `;
 
   try {
     await init();
@@ -826,4 +834,28 @@ onAuthStateChanged(auth, async (user) => {
       </section>
     `;
   }
-});
+}
+
+try {
+  onAuthStateChanged(auth, async (user) => {
+    authChecked = true;
+    await startFanartPage(user);
+  });
+} catch (error) {
+  console.error(error);
+
+  fanartContent.innerHTML = `
+    <section class="panel">
+      <h1>ログイン確認で失敗しました</h1>
+      <p>${escapeHtml(error.message)}</p>
+    </section>
+  `;
+}
+
+setTimeout(async () => {
+  if (authChecked) return;
+
+  authChecked = true;
+
+  await startFanartPage(auth.currentUser);
+}, 1500);
