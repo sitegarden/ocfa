@@ -1,0 +1,533 @@
+import { auth, db } from "/firebase.js";
+
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+const gameRoomContent = document.getElementById("gameRoomContent");
+
+const params = new URLSearchParams(location.search);
+const roomId = params.get("id");
+
+let currentUser = null;
+let currentRoom = null;
+let currentPlayers = [];
+
+function escapeHtml(text) {
+  return String(text)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function getGuestId() {
+  const key = `ocfa_game_guest_${roomId}`;
+  let guestId = localStorage.getItem(key);
+
+  if (!guestId) {
+    guestId = crypto.randomUUID();
+    localStorage.setItem(key, guestId);
+  }
+
+  return guestId;
+}
+
+function getStatusLabel(status) {
+  if (status === "waiting") return "待機中";
+  if (status === "drawing_oc") return "OC作成中";
+  if (status === "drawing_fa") return "FA作成中";
+  if (status === "reveal") return "公開中";
+  if (status === "finished") return "終了";
+  return "不明";
+}
+
+function getMyPlayer() {
+  if (currentUser) {
+    return currentPlayers.find((player) => {
+      return player.data.userId === currentUser.uid && player.data.isLeft !== true;
+    });
+  }
+
+  const guestId = getGuestId();
+
+  return currentPlayers.find((player) => {
+    return player.data.guestId === guestId && player.data.isLeft !== true;
+  });
+}
+
+function isOwner() {
+  return currentUser && currentRoom?.data?.ownerId === currentUser.uid;
+}
+
+async function getRoom() {
+  if (!roomId) return null;
+
+  const roomRef = doc(db, "ocGameRooms", roomId);
+  const snap = await getDoc(roomRef);
+
+  if (!snap.exists()) return null;
+
+  const data = snap.data();
+
+  if (data.isDeleted === true) return null;
+
+  return {
+    id: snap.id,
+    data
+  };
+}
+
+async function getPlayers() {
+  if (!roomId) return [];
+
+  const q = query(
+    collection(db, "ocGamePlayers"),
+    where("roomId", "==", roomId),
+    where("isLeft", "==", false)
+  );
+
+  const snap = await getDocs(q);
+
+  const players = [];
+
+  snap.forEach((docSnap) => {
+    players.push({
+      id: docSnap.id,
+      data: docSnap.data()
+    });
+  });
+
+  players.sort((a, b) => {
+    const aOrder = typeof a.data.order === "number" ? a.data.order : 999;
+    const bOrder = typeof b.data.order === "number" ? b.data.order : 999;
+
+    if (aOrder !== bOrder) return aOrder - bOrder;
+
+    const aTime = a.data.joinedAt?.seconds || 0;
+    const bTime = b.data.joinedAt?.seconds || 0;
+
+    return aTime - bTime;
+  });
+
+  return players;
+}
+
+function getAutoGuestName() {
+  const guestCount = currentPlayers.filter((player) => {
+    return player.data.isGuest === true;
+  }).length + 1;
+
+  return `匿名${String(guestCount).padStart(3, "0")}`;
+}
+
+async function joinAsGuest() {
+  const nameInput = document.getElementById("guestName");
+  const message = document.getElementById("roomMessage");
+
+  const alreadyJoined = getMyPlayer();
+
+  if (alreadyJoined) {
+    if (message) message.textContent = "すでに参加しています。";
+    return;
+  }
+
+  if (currentPlayers.length >= currentRoom.data.maxPlayers) {
+    if (message) message.textContent = "この部屋は満員です。";
+    return;
+  }
+
+  const name = nameInput.value.trim() || getAutoGuestName();
+  const guestId = getGuestId();
+
+  try {
+    if (message) message.textContent = "参加しています...";
+
+    await addDoc(collection(db, "ocGamePlayers"), {
+      roomId,
+      userId: "",
+      guestId,
+      name,
+      isGuest: true,
+      isOwner: false,
+      order: currentPlayers.length,
+      isLeft: false,
+      joinedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    if (message) message.textContent = "参加しました。";
+
+    await reloadRoom();
+  } catch (error) {
+    console.error(error);
+    if (message) message.textContent = "参加に失敗しました。";
+  }
+}
+
+async function joinAsLoginUser() {
+  const message = document.getElementById("roomMessage");
+
+  if (!currentUser) {
+    if (message) message.textContent = "ログインしていません。";
+    return;
+  }
+
+  const alreadyJoined = getMyPlayer();
+
+  if (alreadyJoined) {
+    if (message) message.textContent = "すでに参加しています。";
+    return;
+  }
+
+  if (currentPlayers.length >= currentRoom.data.maxPlayers) {
+    if (message) message.textContent = "この部屋は満員です。";
+    return;
+  }
+
+  const name =
+    currentUser.displayName ||
+    currentUser.email?.split("@")[0] ||
+    "参加者";
+
+  try {
+    if (message) message.textContent = "参加しています...";
+
+    await addDoc(collection(db, "ocGamePlayers"), {
+      roomId,
+      userId: currentUser.uid,
+      guestId: "",
+      name,
+      isGuest: false,
+      isOwner: currentRoom.data.ownerId === currentUser.uid,
+      order: currentPlayers.length,
+      isLeft: false,
+      joinedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    if (message) message.textContent = "参加しました。";
+
+    await reloadRoom();
+  } catch (error) {
+    console.error(error);
+    if (message) message.textContent = "参加に失敗しました。";
+  }
+}
+
+async function startGame() {
+  const message = document.getElementById("roomMessage");
+
+  if (!isOwner()) {
+    if (message) message.textContent = "ゲーム開始はオーナーのみできます。";
+    return;
+  }
+
+  if (currentPlayers.length < 2) {
+    if (message) message.textContent = "2人以上集まると開始できます。";
+    return;
+  }
+
+  try {
+    if (message) message.textContent = "ゲームを開始しています...";
+
+    await updateDoc(doc(db, "ocGameRooms", roomId), {
+      status: "drawing_oc",
+      startedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    await reloadRoom();
+  } catch (error) {
+    console.error(error);
+    if (message) message.textContent = "ゲーム開始に失敗しました。";
+  }
+}
+
+function renderPlayers() {
+  if (currentPlayers.length === 0) {
+    return `
+      <div class="panel-soft">
+        <p>まだ参加者はいません。</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="player-list">
+      ${currentPlayers
+        .map((player) => {
+          const data = player.data;
+
+          return `
+            <article class="player-card">
+              <div>
+                <strong>${escapeHtml(data.name || "匿名")}</strong>
+                <p class="mini-info">
+                  ${
+                    data.isOwner
+                      ? "オーナー"
+                      : data.isGuest
+                        ? "ゲスト"
+                        : "ログイン参加"
+                  }
+                </p>
+              </div>
+
+              <span>#${Number(data.order || 0) + 1}</span>
+            </article>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+function renderJoinArea() {
+  const myPlayer = getMyPlayer();
+
+  if (currentRoom.data.status !== "waiting") {
+    return `
+      <section class="panel">
+        <h2>参加受付は終了しました</h2>
+        <p>この部屋はすでに開始されています。</p>
+      </section>
+    `;
+  }
+
+  if (myPlayer) {
+    return `
+      <section class="panel-soft">
+        <p>あなたはこの部屋に参加中です。</p>
+      </section>
+    `;
+  }
+
+  if (currentPlayers.length >= currentRoom.data.maxPlayers) {
+    return `
+      <section class="panel-soft">
+        <p>この部屋は満員です。</p>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="panel guest-join-box">
+      <p class="eyebrow">Join</p>
+      <h2>参加する</h2>
+
+      ${
+        currentUser
+          ? `
+            <p>ログイン中の名前で参加できます。</p>
+
+            <div class="actions">
+              <button id="loginJoinBtn" class="primary-btn" type="button">
+                ログイン名で参加する
+              </button>
+            </div>
+          `
+          : `
+            <p>ゲスト参加できます。名前なしの場合は匿名名になります。</p>
+
+            <label>
+              参加名
+              <input
+                id="guestName"
+                type="text"
+                maxlength="20"
+                placeholder="例：ゼロ"
+              >
+            </label>
+
+            <div class="actions">
+              <button id="guestJoinBtn" class="primary-btn" type="button">
+                ゲスト参加する
+              </button>
+            </div>
+          `
+      }
+    </section>
+  `;
+}
+
+function renderOwnerArea() {
+  if (!isOwner()) return "";
+
+  if (currentRoom.data.status !== "waiting") {
+    return `
+      <section class="panel-soft">
+        <p>ゲームは開始されています。</p>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="panel">
+      <p class="eyebrow">Owner</p>
+      <h2>オーナー操作</h2>
+      <p>参加者が集まったらゲームを開始できます。</p>
+
+      <div class="actions">
+        <button id="startGameBtn" class="primary-btn" type="button">
+          ゲーム開始
+        </button>
+      </div>
+    </section>
+  `;
+}
+
+function renderRoom() {
+  const room = currentRoom.data;
+
+  gameRoomContent.innerHTML = `
+    <section class="panel game-room-head">
+      <p class="eyebrow">OC Drawing Game</p>
+      <h1>${escapeHtml(room.title || "OC描き合いゲーム")}</h1>
+
+      <span class="game-status-badge">
+        ${escapeHtml(getStatusLabel(room.status))}
+      </span>
+
+      <p class="mini-info">
+        参加者 ${currentPlayers.length} / ${room.maxPlayers}人　
+        1ターン ${Math.floor(room.turnSeconds / 60)}分
+      </p>
+
+      <p class="mini-info">
+        部屋URLを共有すると、ゲストも参加できます。
+      </p>
+
+      <div class="actions">
+        <button id="copyRoomUrlBtn" class="ghost-btn" type="button">
+          部屋URLをコピー
+        </button>
+        <a class="ghost-btn" href="/games/">ゲームトップへ戻る</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Players</p>
+          <h2>参加者</h2>
+        </div>
+      </div>
+
+      ${renderPlayers()}
+    </section>
+
+    ${renderJoinArea()}
+
+    ${renderOwnerArea()}
+
+    <p id="roomMessage" class="mini-info"></p>
+  `;
+
+  const copyRoomUrlBtn = document.getElementById("copyRoomUrlBtn");
+  const guestJoinBtn = document.getElementById("guestJoinBtn");
+  const loginJoinBtn = document.getElementById("loginJoinBtn");
+  const startGameBtn = document.getElementById("startGameBtn");
+  const roomMessage = document.getElementById("roomMessage");
+
+  if (copyRoomUrlBtn) {
+    copyRoomUrlBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+        if (roomMessage) roomMessage.textContent = "部屋URLをコピーしました。";
+      } catch (error) {
+        console.error(error);
+        if (roomMessage) roomMessage.textContent = "コピーに失敗しました。";
+      }
+    });
+  }
+
+  if (guestJoinBtn) {
+    guestJoinBtn.addEventListener("click", joinAsGuest);
+  }
+
+  if (loginJoinBtn) {
+    loginJoinBtn.addEventListener("click", joinAsLoginUser);
+  }
+
+  if (startGameBtn) {
+    startGameBtn.addEventListener("click", startGame);
+  }
+}
+
+function renderNoRoomId() {
+  gameRoomContent.innerHTML = `
+    <section class="panel">
+      <h1>部屋が選ばれていません</h1>
+      <p>URLが正しいか確認してください。</p>
+
+      <div class="actions">
+        <a class="ghost-btn" href="/games/">ゲームトップへ戻る</a>
+      </div>
+    </section>
+  `;
+}
+
+function renderNotFound() {
+  gameRoomContent.innerHTML = `
+    <section class="panel">
+      <h1>部屋が見つかりませんでした</h1>
+      <p>削除されたか、URLが間違っている可能性があります。</p>
+
+      <div class="actions">
+        <a class="ghost-btn" href="/games/">ゲームトップへ戻る</a>
+      </div>
+    </section>
+  `;
+}
+
+function renderError(error) {
+  console.error(error);
+
+  gameRoomContent.innerHTML = `
+    <section class="panel">
+      <h1>読み込みに失敗しました</h1>
+      <p>ページを再読み込みしてみてください。</p>
+    </section>
+  `;
+}
+
+async function reloadRoom() {
+  if (!roomId) {
+    renderNoRoomId();
+    return;
+  }
+
+  try {
+    currentRoom = await getRoom();
+
+    if (!currentRoom) {
+      renderNotFound();
+      return;
+    }
+
+    currentPlayers = await getPlayers();
+
+    renderRoom();
+  } catch (error) {
+    renderError(error);
+  }
+}
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  await reloadRoom();
+});
