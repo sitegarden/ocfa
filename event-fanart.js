@@ -335,30 +335,6 @@ async function getExistingFanartForCharacter() {
 
   return result;
 }
-async function getExistingFanartForCharacter() {
-  if (!currentUser) return null;
-
-  const q = query(
-    collection(db, "v2EventFanarts"),
-    where("eventId", "==", eventId),
-    where("targetCharacterId", "==", characterId),
-    where("userId", "==", currentUser.uid),
-    where("isDeleted", "==", false)
-  );
-
-  const snap = await getDocs(q);
-
-  let result = null;
-
-  snap.forEach((docSnap) => {
-    result = {
-      id: docSnap.id,
-      data: docSnap.data()
-    };
-  });
-
-  return result;
-}
 
 async function ensureClaim(myClaims) {
   const existingFanart = await getExistingFanartForCharacter();
@@ -393,26 +369,44 @@ async function ensureClaim(myClaims) {
   const claimId = getClaimId();
   const entryId = getEntryId();
 
-  const batch = writeBatch(db);
+  try {
+    await setDoc(doc(db, "v2EventFanartClaims", claimId), {
+      eventId,
+      targetCharacterId: characterId,
+      targetCharacterOwnerId: currentCharacter.data.userId || "",
+      userId: currentUser.uid,
+      status: "drawing",
+      isDeleted: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("claim作成で失敗", error);
 
-  batch.set(doc(db, "v2EventFanartClaims", claimId), {
-    eventId,
-    targetCharacterId: characterId,
-    targetCharacterOwnerId: currentCharacter.data.userId || "",
-    userId: currentUser.uid,
-    status: "drawing",
-    isDeleted: false,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
+    renderError(
+      "描く宣言の作成に失敗しました",
+      error.message
+    );
 
-  batch.update(doc(db, "v2EventEntries", entryId), {
-  progressCount: increment(1),
-  fanartCount: currentEntry.data.fanartCount || 0,
-  updatedAt: serverTimestamp()
-});
+    return false;
+  }
 
-  await batch.commit();
+  try {
+    await updateDoc(doc(db, "v2EventEntries", entryId), {
+      progressCount: increment(1),
+      fanartCount: currentEntry.data.fanartCount || 0,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("参加データ更新で失敗", error);
+
+    renderError(
+      "参加データの更新に失敗しました",
+      error.message
+    );
+
+    return false;
+  }
 
   currentClaim = {
     id: claimId,
@@ -634,10 +628,10 @@ function setupSaveFanart() {
       });
 
       batch.update(doc(db, "v2EventEntries", entryId), {
-  progressCount: increment(-1),
-  fanartCount: increment(1),
-  updatedAt: serverTimestamp()
-});
+        progressCount: increment(-1),
+        fanartCount: increment(1),
+        updatedAt: serverTimestamp()
+      });
 
       await batch.commit();
 
@@ -684,10 +678,10 @@ function setupCancelClaim() {
       });
 
       batch.update(doc(db, "v2EventEntries", entryId), {
-  progressCount: increment(-1),
-  fanartCount: currentEntry.data.fanartCount || 0,
-  updatedAt: serverTimestamp()
-});
+        progressCount: increment(-1),
+        fanartCount: currentEntry.data.fanartCount || 0,
+        updatedAt: serverTimestamp()
+      });
 
       await batch.commit();
 
@@ -800,16 +794,16 @@ onAuthStateChanged(auth, async (user) => {
     console.error(error);
 
     fanartContent.innerHTML = `
-  <section class="panel">
-    <h1>読み込みに失敗しました</h1>
-    <p>${escapeHtml(error.message)}</p>
+      <section class="panel">
+        <h1>読み込みに失敗しました</h1>
+        <p>${escapeHtml(error.message)}</p>
 
-    <div class="actions">
-      <a class="ghost-btn" href="/events/file/?id=${encodeURIComponent(eventId || "")}">
-        イベントへ戻る
-      </a>
-    </div>
-  </section>
-`;
+        <div class="actions">
+          <a class="ghost-btn" href="/events/file/?id=${encodeURIComponent(eventId || "")}">
+            イベントへ戻る
+          </a>
+        </div>
+      </section>
+    `;
   }
 });
