@@ -756,10 +756,16 @@ onAuthStateChanged(auth, async (user) => {
     console.error(error);
 
     fanartContent.innerHTML = `
-      <section class="panel">
-        <h1>読み込みに失敗しました</h1>
-        <p>ページを再読み込みしてみてください。</p>
-      </section>
-    `;
+  <section class="panel">
+    <h1>読み込みに失敗しました</h1>
+    <p>${escapeHtml(error.message)}</p>
+
+    <div class="actions">
+      <a class="ghost-btn" href="/events/file/?id=${encodeURIComponent(eventId || "")}">
+        イベントへ戻る
+      </a>
+    </div>
+  </section>
+`;
   }
 });
