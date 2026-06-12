@@ -41,6 +41,19 @@ async function getCharacter() {
   };
 }
 
+async function getOwnerName(userId) {
+  if (!userId) return "作者名未設定";
+
+  const userRef = doc(db, "users", userId);
+  const snap = await getDoc(userRef);
+
+  if (!snap.exists()) return "作者名未設定";
+
+  const userData = snap.data();
+
+  return userData.displayName || "作者名未設定";
+}
+
 function renderNotFound() {
   characterFile.innerHTML = `
     <div class="panel">
@@ -53,7 +66,7 @@ function renderNotFound() {
   `;
 }
 
-function renderCharacter(character) {
+async function renderCharacter(character) {
   const data = character.data;
 
   if (data.isDeleted === true) {
@@ -73,6 +86,8 @@ function renderCharacter(character) {
     `;
     return;
   }
+
+  const ownerName = await getOwnerName(data.userId);
 
   const tags = Array.isArray(data.tags)
     ? data.tags
@@ -153,7 +168,7 @@ function renderCharacter(character) {
         <h2>作者</h2>
         <p>
           <a class="text-link" href="/users/?id=${encodeURIComponent(data.userId)}">
-            ${escapeHtml(data.ownerName || "作者名未設定")}
+            ${escapeHtml(ownerName)}
           </a>
         </p>
       </section>
@@ -187,7 +202,7 @@ async function init() {
     return;
   }
 
-  renderCharacter(character);
+  await renderCharacter(character);
 }
 
 onAuthStateChanged(auth, (user) => {
