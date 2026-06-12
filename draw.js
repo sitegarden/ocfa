@@ -31,6 +31,7 @@ const overwriteDrawingBtn = document.getElementById("overwriteDrawingBtn");
 
 const penModeBtn = document.getElementById("penModeBtn");
 const eraserModeBtn = document.getElementById("eraserModeBtn");
+const eyedropperModeBtn = document.getElementById("eyedropperModeBtn");
 
 const message = document.getElementById("message");
 const drawingList = document.getElementById("drawingList");
@@ -87,8 +88,62 @@ function getPoint(e) {
   };
 }
 
+function rgbToHex(r, g, b) {
+  return (
+    "#" +
+    [r, g, b]
+      .map((value) => value.toString(16).padStart(2, "0"))
+      .join("")
+  );
+}
+
+function pickColor(e) {
+  e.preventDefault();
+
+  const point = getPoint(e);
+
+  const pixel = ctx.getImageData(
+    Math.floor(point.x),
+    Math.floor(point.y),
+    1,
+    1
+  ).data;
+
+  const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+
+  penColor.value = hex;
+  message.textContent = `色を拾いました：${hex}`;
+
+  setTool("pen");
+}
+
+function setTool(tool) {
+  currentTool = tool;
+
+  penModeBtn.classList.toggle("tool-active", tool === "pen");
+  eraserModeBtn.classList.toggle("tool-active", tool === "eraser");
+  eyedropperModeBtn.classList.toggle("tool-active", tool === "eyedropper");
+
+  if (tool === "pen") {
+    message.textContent = "ペンで描けます。";
+  }
+
+  if (tool === "eraser") {
+    message.textContent = "消しゴムで消せます。";
+  }
+
+  if (tool === "eyedropper") {
+    message.textContent = "キャンバスから色を拾えます。拾いたい場所をタップしてください。";
+  }
+}
+
 function startDraw(e) {
   e.preventDefault();
+
+  if (currentTool === "eyedropper") {
+    pickColor(e);
+    return;
+  }
 
   const point = getPoint(e);
 
@@ -176,17 +231,15 @@ canvas.addEventListener("touchmove", draw, { passive: false });
 canvas.addEventListener("touchend", stopDraw);
 
 penModeBtn.addEventListener("click", () => {
-  currentTool = "pen";
-
-  penModeBtn.classList.add("tool-active");
-  eraserModeBtn.classList.remove("tool-active");
+  setTool("pen");
 });
 
 eraserModeBtn.addEventListener("click", () => {
-  currentTool = "eraser";
+  setTool("eraser");
+});
 
-  eraserModeBtn.classList.add("tool-active");
-  penModeBtn.classList.remove("tool-active");
+eyedropperModeBtn.addEventListener("click", () => {
+  setTool("eyedropper");
 });
 
 clearBtn.addEventListener("click", () => {
