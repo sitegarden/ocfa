@@ -1,5 +1,3 @@
-alert("events.js 読めてる");
-
 import { auth, db } from "/firebase.js";
 
 import {
