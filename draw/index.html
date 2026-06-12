@@ -65,11 +65,17 @@
 </div>
 
         <div class="draw-actions">
-          <button id="saveDrawingBtn" class="primary-btn" type="button">
-            下書き保存
-          </button>
-          <p id="message" class="message"></p>
-        </div>
+  <button id="saveDrawingBtn" class="primary-btn" type="button">
+    新しい下書きとして保存
+  </button>
+
+  <button id="overwriteDrawingBtn" class="ghost-btn" type="button" hidden>
+    この下書きに上書き保存
+  </button>
+
+  <p id="message" class="message"></p>
+</div>
+        
       </section>
 
       <section class="panel">
