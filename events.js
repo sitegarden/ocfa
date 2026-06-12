@@ -16,6 +16,16 @@ import {
 const eventList = document.getElementById("eventList");
 const eventAdminActions = document.getElementById("eventAdminActions");
 
+function setLoading(text) {
+  if (!eventList) return;
+
+  eventList.innerHTML = `
+    <div class="panel">
+      <p>${text}</p>
+    </div>
+  `;
+}
+
 function escapeHtml(text) {
   return String(text)
     .replaceAll("&", "&amp;")
@@ -47,19 +57,14 @@ async function getUserData(user) {
   return snap.data();
 }
 
-async function getEvents(isAdmin) {
-  const eventQuery = isAdmin
-    ? query(
-        collection(db, "v2Events"),
-        where("isDeleted", "==", false)
-      )
-    : query(
-        collection(db, "v2Events"),
-        where("isDeleted", "==", false),
-        where("isPublic", "==", true)
-      );
+async function getPublicEvents() {
+  const q = query(
+    collection(db, "v2Events"),
+    where("isDeleted", "==", false),
+    where("isPublic", "==", true)
+  );
 
-  const snap = await getDocs(eventQuery);
+  const snap = await getDocs(q);
 
   const events = [];
 
@@ -70,21 +75,46 @@ async function getEvents(isAdmin) {
     });
   });
 
-  events.sort((a, b) => {
-    const aTime = a.data.createdAt?.seconds || 0;
-    const bTime = b.data.createdAt?.seconds || 0;
-    return bTime - aTime;
+  return events;
+}
+
+async function getAdminEvents() {
+  const q = query(
+    collection(db, "v2Events"),
+    where("isDeleted", "==", false)
+  );
+
+  const snap = await getDocs(q);
+
+  const events = [];
+
+  snap.forEach((docSnap) => {
+    events.push({
+      id: docSnap.id,
+      data: docSnap.data()
+    });
   });
 
   return events;
 }
 
+function sortEvents(events) {
+  return events.sort((a, b) => {
+    const aTime = a.data.createdAt?.seconds || 0;
+    const bTime = b.data.createdAt?.seconds || 0;
+    return bTime - aTime;
+  });
+}
+
 function renderEvents(events, isAdmin) {
+  if (!eventList) return;
+
   if (events.length === 0) {
     eventList.innerHTML = `
       <div class="panel">
         <h2>イベントはまだありません</h2>
         <p>イベントが作成されると、ここに表示されます。</p>
+
         ${
           isAdmin
             ? `
@@ -132,6 +162,8 @@ function renderEvents(events, isAdmin) {
 
 onAuthStateChanged(auth, async (user) => {
   try {
+    setLoading("ログイン状態を確認しています...");
+
     const userData = await getUserData(user);
     const isAdmin = userData?.role === "admin";
 
@@ -139,19 +171,40 @@ onAuthStateChanged(auth, async (user) => {
       eventAdminActions.hidden = false;
     }
 
-    const events = await getEvents(isAdmin);
+    setLoading("イベントを読み込んでいます...");
 
-    renderEvents(events, isAdmin);
+    let events = [];
+
+    if (isAdmin) {
+      try {
+        events = await getAdminEvents();
+      } catch (error) {
+        console.warn("管理者用イベント取得に失敗。公開イベントだけ読み込みます。", error);
+        events = await getPublicEvents();
+      }
+    } else {
+      events = await getPublicEvents();
+    }
+
+    renderEvents(sortEvents(events), isAdmin);
   } catch (error) {
     console.error(error);
+
+    if (!eventList) return;
 
     eventList.innerHTML = `
       <div class="panel">
         <h2>読み込みに失敗しました</h2>
         <p>
           イベントの読み込みに失敗しました。<br>
-          Firestoreルールか、イベントの公開設定を確認してください。
+          Firestoreルール、または v2Events のデータを確認してください。
         </p>
+
+        <div class="panel-soft">
+          <p class="mini-info">
+            エラー内容：${escapeHtml(error.message || String(error))}
+          </p>
+        </div>
       </div>
     `;
   }
