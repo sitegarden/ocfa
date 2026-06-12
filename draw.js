@@ -5,7 +5,6 @@ import {
   collection,
   doc,
   getDocs,
-  orderBy,
   query,
   serverTimestamp,
   updateDoc,
@@ -377,11 +376,10 @@ async function loadDrawings() {
   }
 
   const q = query(
-    collection(db, "v2Drawings"),
-    where("userId", "==", user.uid),
-    where("isDeleted", "==", false),
-    orderBy("createdAt", "desc")
-  );
+  collection(db, "v2Drawings"),
+  where("userId", "==", user.uid),
+  where("isDeleted", "==", false)
+);
 
   const snap = await getDocs(q);
 
@@ -394,9 +392,24 @@ async function loadDrawings() {
 
   drawingList.innerHTML = "";
 
-  snap.forEach((docSnap) => {
-    const drawingData = docSnap.data();
-    const drawingId = docSnap.id;
+const drawings = [];
+
+snap.forEach((docSnap) => {
+  drawings.push({
+    id: docSnap.id,
+    data: docSnap.data()
+  });
+});
+
+drawings.sort((a, b) => {
+  const aTime = a.data.createdAt?.seconds || 0;
+  const bTime = b.data.createdAt?.seconds || 0;
+  return bTime - aTime;
+});
+
+drawings.forEach((item) => {
+  const drawingData = item.data;
+  const drawingId = item.id;
 
     const card = document.createElement("article");
     card.className = "drawing-card";
