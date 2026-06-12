@@ -628,7 +628,13 @@ async function renderGameStageArea() {
         この絵が、ほかの参加者がファンアートを描く元になります。
       </p>
 
-      <p id="originalTimerText" class="game-timer">残り時間：--:--</p>
+      <div class="game-timer-box">
+  <p id="originalTimerText" class="game-timer">残り時間：--:--</p>
+
+  <div class="game-timer-meter">
+    <span id="originalTimerBar"></span>
+  </div>
+</div>
 
       <canvas
         id="gameCanvas"
