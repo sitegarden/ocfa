@@ -1,4 +1,4 @@
-import { db } from "./firebase.js";
+import { db } from "/firebase.js";
 
 import {
   collection,
@@ -10,6 +10,15 @@ import {
 
 const characterList = document.getElementById("characterList");
 
+function escapeHtml(text) {
+  return String(text)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 async function loadCharacters() {
   const q = query(
     collection(db, "v2Characters"),
@@ -20,52 +29,72 @@ async function loadCharacters() {
   const snap = await getDocs(q);
 
   if (snap.empty) {
-    characterList.innerHTML = `<p>まだキャラがいないぞ。最初の1人、作っちまえ。</p>`;
+    characterList.innerHTML = `
+      <div class="panel">
+        <h2>まだキャラが登録されていません</h2>
+        <p>まずは絵を描いて、気に入った下書きをキャラとして登録してみてください。</p>
+        <div class="actions">
+          <a class="primary-btn" href="/draw/">絵を描く</a>
+        </div>
+      </div>
+    `;
     return;
   }
 
   characterList.innerHTML = "";
 
   snap.forEach((docSnap) => {
-    const chara = docSnap.data();
+    const character = docSnap.data();
+    const characterId = docSnap.id;
 
     const card = document.createElement("article");
     card.className = "character-card";
 
-    const tags = Array.isArray(chara.tags)
-      ? chara.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")
+    const tags = Array.isArray(character.tags)
+      ? character.tags
+          .map((tag) => `<span>${escapeHtml(tag)}</span>`)
+          .join("")
       : "";
 
     card.innerHTML = `
-      <img src="${chara.imageData}" alt="${escapeHtml(chara.name)}" />
-      <div class="character-body">
-        <h2>${escapeHtml(chara.name)}</h2>
-        <p>${escapeHtml(chara.profile || "プロフィール未設定")}</p>
+      <a class="character-card-link" href="/characters/detail/?id=${characterId}">
+        <img src="${character.imageData}" alt="${escapeHtml(character.name)}">
 
-        <div class="tag-list">
-          ${tags}
+        <div class="character-body">
+          <h2>${escapeHtml(character.name)}</h2>
+
+          ${
+            character.kana
+              ? `<p class="mini-info">${escapeHtml(character.kana)}</p>`
+              : ""
+          }
+
+          <p>
+            ${escapeHtml(character.profile || "プロフィールはまだありません。")}
+          </p>
+
+          <div class="tag-list">
+            ${tags}
+          </div>
+
+          <p class="mini-info">
+            ${character.faOk ? "ファンアート歓迎" : "ファンアートは要確認"}
+          </p>
         </div>
-
-        <p class="mini-info">
-          ${chara.faOk ? "FA歓迎" : "FA要確認"}
-        </p>
-      </div>
+      </a>
     `;
 
     characterList.appendChild(card);
   });
 }
 
-function escapeHtml(text) {
-  return String(text)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
 loadCharacters().catch((error) => {
   console.error(error);
-  characterList.innerHTML = `<p>読み込みに失敗した。Firestoreルールかindexが怪しい。</p>`;
+
+  characterList.innerHTML = `
+    <div class="panel">
+      <h2>読み込みに失敗しました</h2>
+      <p>ページを再読み込みしてみてください。</p>
+    </div>
+  `;
 });
