@@ -702,6 +702,11 @@ async function init() {
     return;
   }
 
+  if (character.data.faOk !== true) {
+  renderError("このキャラは描けません", "このキャラクターは現在、ファンアートを受け付けていません。");
+  return;
+}
+
   const entry = await getEventEntryForCharacter();
 
   if (!entry) {
