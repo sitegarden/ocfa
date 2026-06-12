@@ -1640,3 +1640,31 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+.event-detail {
+  display: grid;
+  gap: 20px;
+}
+
+.event-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.event-detail-head h1 {
+  margin-bottom: 8px;
+  font-size: clamp(32px, 5vw, 56px);
+}
+
+.event-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 760px) {
+  .event-detail-head {
+    flex-direction: column;
+  }
+}
