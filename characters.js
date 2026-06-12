@@ -3,7 +3,6 @@ import { db } from "/firebase.js";
 import {
   collection,
   getDocs,
-  orderBy,
   query,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -20,11 +19,10 @@ function escapeHtml(text) {
 }
 
 async function loadCharacters() {
-  const q = query(
-    collection(db, "v2Characters"),
-    where("isDeleted", "==", false),
-    orderBy("createdAt", "desc")
-  );
+const q = query(
+  collection(db, "v2Characters"),
+  where("isDeleted", "==", false)
+);
 
   const snap = await getDocs(q);
 
@@ -43,9 +41,24 @@ async function loadCharacters() {
 
   characterList.innerHTML = "";
 
-  snap.forEach((docSnap) => {
-    const character = docSnap.data();
-    const characterId = docSnap.id;
+const characters = [];
+
+snap.forEach((docSnap) => {
+  characters.push({
+    id: docSnap.id,
+    data: docSnap.data()
+  });
+});
+
+characters.sort((a, b) => {
+  const aTime = a.data.createdAt?.seconds || 0;
+  const bTime = b.data.createdAt?.seconds || 0;
+  return bTime - aTime;
+});
+
+characters.forEach((item) => {
+  const character = item.data;
+  const characterId = item.id;
 
     const card = document.createElement("article");
     card.className = "character-card";
