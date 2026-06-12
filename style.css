@@ -1186,3 +1186,29 @@ textarea {
 .danger-btn:hover {
   background: #edc4bd;
 }
+
+.character-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.character-card-link:hover img {
+  filter: brightness(0.98);
+}
+
+.selected-drawing {
+  display: grid;
+  gap: 12px;
+}
+
+.selected-drawing-img {
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border: 2px dashed var(--line-dark);
+  border-radius: 20px;
+  background: #fffdf8;
+  box-shadow: var(--shadow-soft);
+}
