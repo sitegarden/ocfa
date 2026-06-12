@@ -1112,12 +1112,26 @@ function startOriginalAutoSubmitTimer() {
   clearOriginalTimer();
 
   const timerText = document.getElementById("originalTimerText");
+  const timerBar = document.getElementById("originalTimerBar");
 
   async function tick() {
     const remaining = getOriginalRemainingSeconds();
+    const turnSeconds = Number(currentRoom?.data?.turnSeconds || 120);
+
+    const percent =
+      turnSeconds > 0
+        ? Math.max(0, Math.min(100, (remaining / turnSeconds) * 100))
+        : 0;
 
     if (timerText) {
       timerText.textContent = `残り時間：${formatTimer(remaining)}`;
+    }
+
+    if (timerBar) {
+      timerBar.style.width = `${percent}%`;
+
+      timerBar.classList.toggle("is-danger", remaining <= 10);
+      timerBar.classList.toggle("is-warning", remaining <= 30 && remaining > 10);
     }
 
     if (remaining <= 0) {
