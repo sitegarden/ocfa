@@ -3353,3 +3353,35 @@ textarea {
     width: 100%;
   }
 }
+
+.game-target-oc {
+  display: grid;
+  justify-items: center;
+  padding: 12px;
+  border: 2px solid var(--line);
+  border-radius: 22px;
+  background: var(--paper-2);
+  box-shadow: var(--shadow-soft);
+}
+
+.game-target-oc img {
+  width: min(100%, 260px);
+  max-height: 260px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 16px;
+  background: #fffdf8;
+}
+
+@media (max-width: 640px) {
+  .game-target-oc {
+    padding: 10px;
+    border-radius: 18px;
+  }
+
+  .game-target-oc img {
+    width: min(100%, 220px);
+    max-height: 220px;
+    border-radius: 14px;
+  }
+}
