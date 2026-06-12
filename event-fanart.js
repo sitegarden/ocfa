@@ -407,9 +407,10 @@ async function ensureClaim(myClaims) {
   });
 
   batch.update(doc(db, "v2EventEntries", entryId), {
-    progressCount: increment(1),
-    updatedAt: serverTimestamp()
-  });
+  progressCount: increment(1),
+  fanartCount: currentEntry.data.fanartCount || 0,
+  updatedAt: serverTimestamp()
+});
 
   await batch.commit();
 
@@ -633,10 +634,10 @@ function setupSaveFanart() {
       });
 
       batch.update(doc(db, "v2EventEntries", entryId), {
-        progressCount: increment(-1),
-        fanartCount: increment(1),
-        updatedAt: serverTimestamp()
-      });
+  progressCount: increment(-1),
+  fanartCount: increment(1),
+  updatedAt: serverTimestamp()
+});
 
       await batch.commit();
 
@@ -683,9 +684,10 @@ function setupCancelClaim() {
       });
 
       batch.update(doc(db, "v2EventEntries", entryId), {
-        progressCount: increment(-1),
-        updatedAt: serverTimestamp()
-      });
+  progressCount: increment(-1),
+  fanartCount: currentEntry.data.fanartCount || 0,
+  updatedAt: serverTimestamp()
+});
 
       await batch.commit();
 
