@@ -25,6 +25,7 @@ if (siteHeader) {
     <a href="/characters/">キャラ一覧</a>
     <a href="/draw/">描く</a>
     <a href="/mypage/">マイページ</a>
+    <a href="/settings/">設定</a>
   </nav>
 
   <div class="auth-box">
