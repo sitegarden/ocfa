@@ -513,6 +513,12 @@ function renderLayerTools() {
         色
         <input id="gamePenColor" type="color" value="#2b2430">
       </label>
+
+      <label class="game-size-tool">
+        太さ
+        <input id="gamePenSize" type="range" min="1" max="24" value="5">
+        <span id="gamePenSizeText">5</span>
+      </label>
     </div>
 
     <div class="game-layer-tools">
@@ -1061,6 +1067,8 @@ function setupLayerButtons() {
   const layerBtn1 = document.getElementById("layerBtn1");
   const toggleLayerBtn = document.getElementById("toggleLayerBtn");
   const clearLayerBtn = document.getElementById("clearLayerBtn");
+  const gamePenSize = document.getElementById("gamePenSize");
+const gamePenSizeText = document.getElementById("gamePenSizeText");
 
   if (layerBtn0) {
     layerBtn0.addEventListener("click", () => {
@@ -1097,6 +1105,14 @@ function setupLayerButtons() {
       updateLayerUi();
     });
   }
+
+  if (gamePenSize && gamePenSizeText) {
+  gamePenSizeText.textContent = gamePenSize.value;
+
+  gamePenSize.addEventListener("input", () => {
+    gamePenSizeText.textContent = gamePenSize.value;
+  });
+}
 }
 
 function initGameCanvas() {
@@ -1150,14 +1166,16 @@ function drawGameCanvas(e) {
 
   const point = getGamePoint(e);
   const targetCtx = getActiveLayerCtx();
+
   const gamePenColor = document.getElementById("gamePenColor");
+  const gamePenSize = document.getElementById("gamePenSize");
 
   if (!targetCtx) return;
 
   targetCtx.lineCap = "round";
   targetCtx.lineJoin = "round";
   targetCtx.strokeStyle = gamePenColor?.value || "#2b2430";
-  targetCtx.lineWidth = 5;
+  targetCtx.lineWidth = Number(gamePenSize?.value || 5);
 
   targetCtx.beginPath();
   targetCtx.moveTo(gameLastX, gameLastY);
