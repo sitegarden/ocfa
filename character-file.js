@@ -140,9 +140,13 @@ async function loadCharacterFile() {
         }
 
         <section class="detail-section">
-          <h2>作者</h2>
-          <p>${escapeHtml(character.ownerName || "作者名未設定")}</p>
-        </section>
+  <h2>作者</h2>
+  <p>
+    <a class="text-link" href="/users/?id=${encodeURIComponent(character.userId)}">
+      ${escapeHtml(character.ownerName || "作者名未設定")}
+    </a>
+  </p>
+</section>
 
         <section class="detail-section">
           <h2>ファンアート</h2>
