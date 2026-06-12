@@ -160,6 +160,65 @@ async function getEntryCharacters(entries) {
   return results;
 }
 
+async function getEventFanarts() {
+  const q = query(
+    collection(db, "v2EventFanarts"),
+    where("eventId", "==", eventId),
+    where("isDeleted", "==", false)
+  );
+
+  const snap = await getDocs(q);
+
+  const fanarts = [];
+
+  snap.forEach((docSnap) => {
+    fanarts.push({
+      id: docSnap.id,
+      data: docSnap.data()
+    });
+  });
+
+  fanarts.sort((a, b) => {
+    const aTime = a.data.createdAt?.seconds || 0;
+    const bTime = b.data.createdAt?.seconds || 0;
+    return bTime - aTime;
+  });
+
+  return fanarts;
+}
+
+async function getUserDisplayName(userId) {
+  if (!userId) return "描いた人";
+
+  const userRef = doc(db, "users", userId);
+  const snap = await getDoc(userRef);
+
+  if (!snap.exists()) return "描いた人";
+
+  const data = snap.data();
+
+  return data.displayName || "描いた人";
+}
+
+async function getFanartItems(fanarts) {
+  const results = [];
+
+  for (const fanart of fanarts) {
+    const data = fanart.data;
+
+    const character = await getCharacterById(data.targetCharacterId);
+    const artistName = await getUserDisplayName(data.userId);
+
+    results.push({
+      fanart,
+      character,
+      artistName
+    });
+  }
+
+  return results;
+}
+
 function renderNoEventId() {
   eventFile.innerHTML = `
     <section class="panel">
@@ -258,6 +317,74 @@ function renderEntryCharacters(entryCharacters) {
                   `
                   : ""
               }
+            </article>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+function renderFanarts(fanartItems) {
+  if (fanartItems.length === 0) {
+    return `
+      <div class="panel-soft">
+        <p>ファンアートはまだ投稿されていません。</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="fanart-list">
+      ${fanartItems
+        .map(({ fanart, character, artistName }) => {
+          const data = fanart.data;
+          const charData = character?.data;
+
+          return `
+            <article class="fanart-card">
+              <a
+                class="fanart-image-link"
+                href="${escapeHtml(data.imageData)}"
+                target="_blank"
+                rel="noopener"
+              >
+                <img
+                  src="${data.imageData}"
+                  alt="ファンアート"
+                >
+              </a>
+
+              <div class="fanart-card-body">
+                <p class="eyebrow">Fan Art</p>
+
+                <h3>
+                  ${
+                    charData
+                      ? `${escapeHtml(charData.name || "名前未設定")}へのファンアート`
+                      : "ファンアート"
+                  }
+                </h3>
+
+                <p class="mini-info">
+                  描いた人：${escapeHtml(artistName)}
+                </p>
+
+                ${
+                  character
+                    ? `
+                      <div class="actions">
+                        <a
+                          class="ghost-btn small-btn"
+                          href="/characters/file/?id=${encodeURIComponent(character.id)}"
+                        >
+                          キャラを見る
+                        </a>
+                      </div>
+                    `
+                    : ""
+                }
+              </div>
             </article>
           `;
         })
@@ -380,6 +507,9 @@ async function renderEvent(event) {
   const entries = await getEventEntries();
   const entryCharacters = await getEntryCharacters(entries);
 
+  const fanarts = await getEventFanarts();
+  const fanartItems = await getFanartItems(fanarts);
+
   const myEntry = currentUser
     ? entries.find((entry) => entry.data.userId === currentUser.uid)
     : null;
@@ -439,11 +569,10 @@ async function renderEvent(event) {
       </section>
 
       <section class="detail-section">
-        <h2>ファンアート</h2>
-        <p>
-          ファンアート投稿機能は、参加キャラ機能のあとに追加予定です。
-        </p>
-      </section>
+  <h2>ファンアート</h2>
+  <p class="mini-info">${fanartItems.length}枚のファンアートが投稿されています。</p>
+  ${renderFanarts(fanartItems)}
+</section>
 
       <div class="actions">
         <a class="ghost-btn" href="/events/">イベント一覧へ</a>
