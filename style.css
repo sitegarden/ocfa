@@ -3255,3 +3255,14 @@ textarea {
     border-radius: 18px;
   }
 }
+
+.game-timer {
+  width: fit-content;
+  padding: 8px 14px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 900;
+}
