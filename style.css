@@ -2750,3 +2750,50 @@ textarea {
   position: absolute;
   z-index: 2;
 }
+
+.user-profile-main {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.user-page-icon {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  overflow: hidden;
+  flex: 0 0 auto;
+  border: 2px solid var(--line);
+  border-radius: 28px;
+  background: var(--paper-2);
+  box-shadow: var(--shadow-soft);
+}
+
+.user-page-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-page-icon span {
+  color: var(--ink);
+  font-size: 34px;
+  font-weight: 900;
+}
+
+@media (max-width: 640px) {
+  .user-profile-main {
+    align-items: flex-start;
+  }
+
+  .user-page-icon {
+    width: 68px;
+    height: 68px;
+    border-radius: 22px;
+  }
+
+  .user-page-icon span {
+    font-size: 26px;
+  }
+}
