@@ -3588,3 +3588,94 @@ textarea {
     border-radius: 16px;
   }
 }
+
+.game-layer-panel {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 2px dashed var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.game-layer-tools {
+  display: grid;
+  gap: 8px;
+}
+
+.game-layer-tools .layer-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper-2);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.game-layer-tools .layer-btn.is-active {
+  outline: 3px solid rgba(183, 140, 255, 0.34);
+  background: var(--accent);
+  color: #fff;
+}
+
+.game-layer-tools .layer-btn.is-hidden-layer {
+  opacity: 0.45;
+}
+
+.layer-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.layer-btn.is-active .layer-order {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--ink);
+}
+
+.game-layer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.game-layer-actions button {
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.game-layer-actions .danger-btn {
+  background: #fff3f3;
+  color: #b84343;
+}
+
+@media (max-width: 640px) {
+  .game-layer-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .game-layer-actions button {
+    width: 100%;
+  }
+}
