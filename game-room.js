@@ -380,10 +380,7 @@ async function joinAsLoginUser() {
     return;
   }
 
-  const name =
-    currentUser.displayName ||
-    currentUser.email?.split("@")[0] ||
-    "参加者";
+  const name = await getOcfaDisplayName(currentUser);
 
   try {
     if (message) message.textContent = "参加しています...";
@@ -472,6 +469,14 @@ function renderPlayers() {
         .join("")}
     </div>
   `;
+}
+
+function getPlayerNameById(playerId, fallbackName = "匿名") {
+  const player = currentPlayers.find((item) => {
+    return item.id === playerId;
+  });
+
+  return player?.data?.name || fallbackName || "匿名";
 }
 
 function renderJoinArea() {
@@ -690,8 +695,8 @@ function renderRevealArea() {
                               <img src="${fanart.data.imageData}" alt="FA">
 
                               <p>
-                                by ${escapeHtml(fanart.data.artistName || "匿名")}
-                              </p>
+  by ${escapeHtml(getPlayerNameById(fanart.data.artistPlayerId, fanart.data.artistName))}
+</p>
                             </article>
                           `;
                         })
@@ -1702,3 +1707,28 @@ onAuthStateChanged(auth, async (user) => {
 
   startRealtimeListeners();
 });
+
+async function getOcfaDisplayName(user) {
+  if (!user) return "参加者";
+
+  try {
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+
+      if (userData.displayName) {
+        return userData.displayName;
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
+
+  return (
+    user.displayName ||
+    user.email?.split("@")[0] ||
+    "参加者"
+  );
+}
