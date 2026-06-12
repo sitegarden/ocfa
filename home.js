@@ -1,13 +1,21 @@
-import { db } from "/firebase.js";
+import { auth, db } from "/firebase.js";
 
 import {
   collection,
   getDocs,
   query,
-  where
+  where,
+  orderBy,
+  limit
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
 const homeNoticeList = document.getElementById("homeNoticeList");
+const homeOcImage = document.getElementById("homeOcImage");
+const homeOcFallback = document.getElementById("homeOcFallback");
 
 function escapeHtml(text) {
   return String(text)
@@ -18,111 +26,145 @@ function escapeHtml(text) {
     .replaceAll("'", "&#039;");
 }
 
-function formatDate(timestamp) {
-  if (!timestamp?.seconds) return "";
-
-  const date = new Date(timestamp.seconds * 1000);
-
-  return date.toLocaleDateString("ja-JP", {
-    year: "numeric",
-    month: "long",
-    day: "numeric"
-  });
+function nl2br(text) {
+  return escapeHtml(text).replaceAll("\n", "<br>");
 }
 
-function trimText(text, maxLength = 90) {
-  const value = String(text || "").replace(/\s+/g, " ").trim();
+function showHomeCharacterImage(imageData, name) {
+  if (!homeOcImage) return;
 
-  if (value.length <= maxLength) return value;
+  homeOcImage.src = imageData;
+  homeOcImage.alt = `${name || "キャラクター"} のイラスト`;
+  homeOcImage.hidden = false;
 
-  return `${value.slice(0, maxLength)}...`;
+  if (homeOcFallback) {
+    homeOcFallback.hidden = true;
+  }
 }
 
-async function getLatestNotices() {
+function showHomeCharacterFallback() {
+  if (homeOcImage) {
+    homeOcImage.hidden = true;
+    homeOcImage.src = "";
+  }
+
+  if (homeOcFallback) {
+    homeOcFallback.hidden = false;
+  }
+}
+
+function pickRandom(items) {
+  if (!items.length) return null;
+
+  const index = Math.floor(Math.random() * items.length);
+  return items[index];
+}
+
+async function loadMyRandomCharacter(user) {
+  if (!user) {
+    showHomeCharacterFallback();
+    return;
+  }
+
   const q = query(
-    collection(db, "v2Notices"),
-    where("isDeleted", "==", false),
-    where("isPublic", "==", true)
+    collection(db, "v2Characters"),
+    where("userId", "==", user.uid),
+    where("isDeleted", "==", false)
   );
 
   const snap = await getDocs(q);
 
-  const notices = [];
+  const characters = [];
 
   snap.forEach((docSnap) => {
-    notices.push({
+    const data = docSnap.data();
+
+    if (!data.imageData) return;
+
+    characters.push({
       id: docSnap.id,
-      data: docSnap.data()
+      data
     });
   });
 
-  notices.sort((a, b) => {
-    const aTime = a.data.createdAt?.seconds || 0;
-    const bTime = b.data.createdAt?.seconds || 0;
-    return bTime - aTime;
-  });
-
-  return notices.slice(0, 3);
-}
-
-function renderNotices(notices) {
-  if (!homeNoticeList) return;
-
-  if (notices.length === 0) {
-    homeNoticeList.innerHTML = `
-      <div class="home-notice-empty">
-        <p>お知らせはまだありません。</p>
-      </div>
-    `;
+  if (characters.length === 0) {
+    showHomeCharacterFallback();
     return;
   }
 
-  homeNoticeList.innerHTML = notices
-    .map(({ data }) => {
-      return `
-        <article class="home-notice-card">
-          <div class="home-notice-meta">
-            ${
-              data.isImportant
-                ? `<span class="mini-badge">大切</span>`
-                : `<span class="mini-badge soft">お知らせ</span>`
-            }
+  const randomCharacter = pickRandom(characters);
 
-            ${
-              data.createdAt
-                ? `<span>${formatDate(data.createdAt)}</span>`
-                : ""
-            }
-          </div>
-
-          <h3>${escapeHtml(data.title || "無題のお知らせ")}</h3>
-
-          ${
-            data.body
-              ? `<p>${escapeHtml(trimText(data.body))}</p>`
-              : ""
-          }
-        </article>
-      `;
-    })
-    .join("");
+  showHomeCharacterImage(
+    randomCharacter.data.imageData,
+    randomCharacter.data.name
+  );
 }
 
-async function initHomeNotices() {
+async function loadHomeNotices() {
   if (!homeNoticeList) return;
 
   try {
-    const notices = await getLatestNotices();
-    renderNotices(notices);
+    const q = query(
+      collection(db, "v2Notices"),
+      where("isDeleted", "==", false),
+      where("isPublic", "==", true),
+      orderBy("createdAt", "desc"),
+      limit(3)
+    );
+
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      homeNoticeList.innerHTML = `
+        <div class="panel-soft">
+          <p>まだお知らせはありません。</p>
+        </div>
+      `;
+      return;
+    }
+
+    const notices = [];
+
+    snap.forEach((docSnap) => {
+      notices.push({
+        id: docSnap.id,
+        data: docSnap.data()
+      });
+    });
+
+    homeNoticeList.innerHTML = notices
+      .map(({ id, data }) => {
+        return `
+          <article class="home-notice-card">
+            <a href="/news/file/?id=${encodeURIComponent(id)}" class="home-notice-link">
+              <div class="home-notice-body">
+                <p class="mini-info">${data.isImportant ? "重要" : "お知らせ"}</p>
+                <h3>${escapeHtml(data.title || "無題")}</h3>
+                <p>${nl2br(data.body || "").slice(0, 120)}...</p>
+              </div>
+            </a>
+          </article>
+        `;
+      })
+      .join("");
   } catch (error) {
     console.error(error);
 
     homeNoticeList.innerHTML = `
-      <div class="home-notice-empty">
+      <div class="panel-soft">
         <p>お知らせの読み込みに失敗しました。</p>
       </div>
     `;
   }
 }
 
-initHomeNotices();
+onAuthStateChanged(auth, async (user) => {
+  try {
+    await loadMyRandomCharacter(user);
+  } catch (error) {
+    console.error(error);
+    showHomeCharacterFallback();
+  }
+});
+
+loadHomeNotices();
