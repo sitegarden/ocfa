@@ -1266,3 +1266,144 @@ textarea {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+
+.mypage-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.mypage-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mypage-avatar {
+  width: 76px;
+  height: 76px;
+  border: 2px solid var(--line);
+  border-radius: 24px;
+  object-fit: cover;
+  background: #fffdf8;
+  box-shadow: var(--shadow-soft);
+}
+
+.mypage-avatar.placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.mypage-hero h1 {
+  margin-bottom: 4px;
+  font-size: clamp(28px, 5vw, 46px);
+}
+
+.mypage-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mypage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.panel-soft {
+  padding: 18px;
+  border: 2px dashed var(--line);
+  border-radius: 22px;
+  background: rgba(255, 250, 242, 0.72);
+}
+
+.my-characters-head {
+  margin-top: 22px;
+}
+
+@media (max-width: 800px) {
+  .mypage-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mypage-grid {
+    grid-template-columns: 1fr;
+  }
+}.mypage-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.mypage-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mypage-avatar {
+  width: 76px;
+  height: 76px;
+  border: 2px solid var(--line);
+  border-radius: 24px;
+  object-fit: cover;
+  background: #fffdf8;
+  box-shadow: var(--shadow-soft);
+}
+
+.mypage-avatar.placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.mypage-hero h1 {
+  margin-bottom: 4px;
+  font-size: clamp(28px, 5vw, 46px);
+}
+
+.mypage-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mypage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.panel-soft {
+  padding: 18px;
+  border: 2px dashed var(--line);
+  border-radius: 22px;
+  background: rgba(255, 250, 242, 0.72);
+}
+
+.my-characters-head {
+  margin-top: 22px;
+}
+
+@media (max-width: 800px) {
+  .mypage-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mypage-grid {
+    grid-template-columns: 1fr;
+  }
+}
