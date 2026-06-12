@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>キャラ登録 - OCFA</title>
-  <meta name="description" content="保存した絵をOCFAのキャラクターとして登録します。">
+  <meta name="description" content="保存した下書きにプロフィールを付けて、OCFAのキャラクターとして登録します。">
 
   <link rel="stylesheet" href="/style.css">
 
@@ -19,24 +19,29 @@
   <main class="page">
     <section class="page-head">
       <p class="eyebrow">Character Register</p>
-      <h1>絵をキャラとして登録する</h1>
+      <h1>この絵をキャラにする</h1>
       <p>
-        保存した絵に、名前やプロフィールを付けてキャラクターとして公開します。
+        保存した下書きに名前やプロフィールを付けて、キャラクターとして登録します。
       </p>
     </section>
 
-    <form id="characterForm" class="form-grid">
+    <form id="characterForm" class="form-grid" hidden>
       <section class="panel">
         <h2>キャラ情報</h2>
 
         <label>
           キャラ名
-          <input id="charName" type="text" placeholder="例：星川ましろ" required>
+          <input id="charName" type="text" placeholder="例：星川 ましろ" required>
+        </label>
+
+        <label>
+          ふりがな
+          <input id="charKana" type="text" placeholder="例：ほしかわ ましろ">
         </label>
 
         <label>
           プロフィール
-          <textarea id="charProfile" rows="6" placeholder="性格、設定、世界観など"></textarea>
+          <textarea id="charProfile" rows="7" placeholder="性格、設定、世界観、好きなものなど"></textarea>
         </label>
 
         <label>
@@ -51,7 +56,7 @@
 
         <label>
           NG・注意事項
-          <textarea id="ngText" rows="4" placeholder="例：過度な改変NG、R指定NG"></textarea>
+          <textarea id="ngText" rows="4" placeholder="例：過度な改変NG、R指定NG、衣装改変は要確認 など"></textarea>
         </label>
 
         <button class="primary-btn" type="submit">キャラとして登録</button>
@@ -60,6 +65,7 @@
 
       <section class="panel">
         <h2>選んだ絵</h2>
+
         <div id="selectedDrawing" class="selected-drawing">
           <p>読み込み中...</p>
         </div>
@@ -69,6 +75,10 @@
         </div>
       </section>
     </form>
+
+    <section id="registerGuide" class="panel">
+      <p>キャラ登録する下書きを確認しています...</p>
+    </section>
   </main>
 
   <script type="module" src="/app.js"></script>
