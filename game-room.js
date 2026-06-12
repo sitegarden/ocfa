@@ -607,23 +607,109 @@ function renderLayerTools() {
   `;
 }
 
+function getFanartsByTargetPlayerId(targetPlayerId) {
+  return currentFanarts
+    .filter((fanart) => {
+      return fanart.data.targetPlayerId === targetPlayerId
+        && fanart.data.isDeleted !== true;
+    })
+    .sort((a, b) => {
+      const aRound = Number(a.data.round || 0);
+      const bRound = Number(b.data.round || 0);
+
+      return aRound - bRound;
+    });
+}
+
+function renderRevealArea() {
+  if (!currentPlayers.length) {
+    return `
+      <section class="panel">
+        <p class="eyebrow">Result</p>
+        <h2>結果発表</h2>
+        <p>参加者データがありません。</p>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="panel">
+      <p class="eyebrow">Result</p>
+      <h2>結果発表</h2>
+      <p>
+        全ラウンドが終了しました。
+        キャラごとに、みんなが描いたファンアートを表示しています。
+      </p>
+    </section>
+
+    <div class="game-result-list">
+      ${currentPlayers
+        .map((player) => {
+          const original = getOriginalByPlayerId(player.id);
+          const fanarts = getFanartsByTargetPlayerId(player.id);
+
+          return `
+            <section class="panel game-result-character">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Original Character</p>
+                  <h2>${escapeHtml(player.data.name || "匿名")}さんのOC</h2>
+                </div>
+              </div>
+
+              ${
+                original
+                  ? `
+                    <div class="game-result-original">
+                      <img src="${original.data.imageData}" alt="${escapeHtml(player.data.name || "匿名")}さんのOC">
+                    </div>
+                  `
+                  : `
+                    <p class="mini-info">元OCが見つかりませんでした。</p>
+                  `
+              }
+
+              <h3>描かれたFA</h3>
+
+              ${
+                fanarts.length
+                  ? `
+                    <div class="game-result-fanarts">
+                      ${fanarts
+                        .map((fanart) => {
+                          return `
+                            <article class="game-result-fanart-card">
+                              <img src="${fanart.data.imageData}" alt="FA">
+
+                              <p>
+                                by ${escapeHtml(fanart.data.artistName || "匿名")}
+                              </p>
+                            </article>
+                          `;
+                        })
+                        .join("")}
+                    </div>
+                  `
+                  : `
+                    <p class="mini-info">FAがまだありません。</p>
+                  `
+              }
+            </section>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
 async function renderGameStageArea() {
   if (!currentRoom) {
     return "";
   }
 
   if (currentRoom.data.status === "reveal") {
-    return `
-      <section class="panel">
-        <p class="eyebrow">Result</p>
-        <h2>結果発表</h2>
-        <p>
-          全ラウンドが終了しました。
-          次はキャラごとに、みんなのFAを表示する結果画面を作ります。
-        </p>
-      </section>
-    `;
-  }
+  return renderRevealArea();
+}
 
   if (currentRoom.data.status === "drawing_fa") {
     const myPlayer = getMyPlayer();
