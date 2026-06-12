@@ -2381,3 +2381,42 @@ textarea {
     flex-direction: column;
   }
 }
+
+.fanart-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.fanart-card {
+  overflow: hidden;
+  border: 2px solid var(--line);
+  border-radius: 24px;
+  background: var(--paper-2);
+  box-shadow: var(--shadow-soft);
+}
+
+.fanart-image-link {
+  display: block;
+  background: #fffdf8;
+}
+
+.fanart-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.fanart-card-body {
+  padding: 14px;
+}
+
+.fanart-card-body h3 {
+  margin: 4px 0 8px;
+  font-size: 18px;
+}
+
+.fanart-card-body .actions {
+  margin-top: 12px;
+}
