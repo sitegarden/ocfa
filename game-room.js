@@ -8,6 +8,7 @@ import {
   getDocs,
   onSnapshot,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -61,6 +62,13 @@ let currentTool = "pen";
 let layerHistory = [[], []];
 
 const MAX_LAYER_HISTORY = 20;
+const TIME_UP_GRACE_MS = 7000;
+
+function wait(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 function escapeHtml(text) {
   return String(text ?? "")
@@ -329,16 +337,29 @@ function createTimeUpImageData(name, label = "OC") {
   return canvas.toDataURL("image/jpeg", 0.82);
 }
 
+
+
 async function createMissingOriginalForPlayer(player) {
   if (!player) return null;
 
+  const originalId = getOriginalDocId(player.id);
+  const originalRef = doc(db, "ocGameOriginals", originalId);
+
+  const latestSnap = await getDoc(originalRef);
+
+  if (latestSnap.exists() && latestSnap.data().isDeleted !== true) {
+    return {
+      id: originalId,
+      data: latestSnap.data()
+    };
+  }
+
   const alreadySubmitted = getSubmittedOriginalByPlayerId(player.id);
 
-  if (alreadySubmitted) {
+  if (alreadySubmitted && alreadySubmitted.data.isDeleted !== true) {
     return alreadySubmitted;
   }
 
-  const originalId = getOriginalDocId(player.id);
   const playerName = player.data.name || "匿名";
 
   const originalData = {
@@ -356,18 +377,28 @@ async function createMissingOriginalForPlayer(player) {
     updatedAt: serverTimestamp()
   };
 
-  await setDoc(
-    doc(db, "ocGameOriginals", originalId),
-    originalData,
-    { merge: true }
-  );
+  let savedOriginalData = null;
+
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(originalRef);
+
+    if (snap.exists() && snap.data().isDeleted !== true) {
+      savedOriginalData = snap.data();
+      return;
+    }
+
+    transaction.set(originalRef, originalData);
+    savedOriginalData = originalData;
+  });
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
 
   const localOriginal = {
     id: originalId,
     data: {
-      ...originalData,
-      createdAt: { seconds: Math.floor(Date.now() / 1000) },
-      updatedAt: { seconds: Math.floor(Date.now() / 1000) }
+      ...savedOriginalData,
+      createdAt: savedOriginalData.createdAt || { seconds: nowSeconds },
+      updatedAt: savedOriginalData.updatedAt || { seconds: nowSeconds }
     }
   };
 
@@ -381,6 +412,8 @@ async function createMissingOriginalForPlayer(player) {
 }
 
 async function createMissingOriginalsForAllPlayers() {
+  await wait(TIME_UP_GRACE_MS);
+
   for (const player of currentPlayers) {
     await createMissingOriginalForPlayer(player);
   }
@@ -393,14 +426,25 @@ async function createMissingFanartForPlayer(player) {
 
   if (!targetPlayer) return null;
 
+  const round = Number(currentRoom?.data?.currentRound || 0);
+  const fanartId = getFanartDocId(round, player.id, targetPlayer.id);
+  const fanartRef = doc(db, "ocGameFanarts", fanartId);
+
+  const latestSnap = await getDoc(fanartRef);
+
+  if (latestSnap.exists() && latestSnap.data().isDeleted !== true) {
+    return {
+      id: fanartId,
+      data: latestSnap.data()
+    };
+  }
+
   const alreadySubmitted = getMyFanartForCurrentRound(player, targetPlayer);
 
-  if (alreadySubmitted) {
+  if (alreadySubmitted && alreadySubmitted.data.isDeleted !== true) {
     return alreadySubmitted;
   }
 
-  const round = Number(currentRoom?.data?.currentRound || 0);
-  const fanartId = getFanartDocId(round, player.id, targetPlayer.id);
   const artistName = player.data.name || "匿名";
   const targetName = targetPlayer.data.name || "匿名";
 
@@ -422,18 +466,28 @@ async function createMissingFanartForPlayer(player) {
     updatedAt: serverTimestamp()
   };
 
-  await setDoc(
-    doc(db, "ocGameFanarts", fanartId),
-    fanartData,
-    { merge: true }
-  );
+  let savedFanartData = null;
+
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(fanartRef);
+
+    if (snap.exists() && snap.data().isDeleted !== true) {
+      savedFanartData = snap.data();
+      return;
+    }
+
+    transaction.set(fanartRef, fanartData);
+    savedFanartData = fanartData;
+  });
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
 
   const localFanart = {
     id: fanartId,
     data: {
-      ...fanartData,
-      createdAt: { seconds: Math.floor(Date.now() / 1000) },
-      updatedAt: { seconds: Math.floor(Date.now() / 1000) }
+      ...savedFanartData,
+      createdAt: savedFanartData.createdAt || { seconds: nowSeconds },
+      updatedAt: savedFanartData.updatedAt || { seconds: nowSeconds }
     }
   };
 
@@ -451,6 +505,8 @@ async function createMissingFanartForPlayer(player) {
 }
 
 async function createMissingFanartsForCurrentRound() {
+  await wait(TIME_UP_GRACE_MS);
+
   for (const player of currentPlayers) {
     await createMissingFanartForPlayer(player);
   }
@@ -625,7 +681,6 @@ async function forceAdvanceByOwner() {
   }
 
   if (forceAdvanceBusy) return;
-
   if (!currentRoom) return;
 
   const ok = confirm(
@@ -890,6 +945,9 @@ function renderPlayers() {
     </div>
   `;
 }
+
+
+
 
 function getPlayerNameById(playerId, fallbackName = "匿名") {
   const player = currentPlayers.find((item) => {
