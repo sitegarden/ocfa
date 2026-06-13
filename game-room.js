@@ -1757,19 +1757,34 @@ async function submitOriginalOc(isAutoSubmit = false) {
 
     const imageData = getGameCanvasImageData();
 
-    await addDoc(collection(db, "ocGameOriginals"), {
-      roomId,
-      playerId: myPlayer.id,
-      playerName: myPlayer.data.name || "匿名",
-      userId: myPlayer.data.userId || "",
-      guestId: myPlayer.data.guestId || "",
-      imageData,
-      hasDrawn: gameHasDrawn,
-      isAutoSubmit,
-      isDeleted: false,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
+    const originalData = {
+  roomId,
+  playerId: myPlayer.id,
+  playerName: myPlayer.data.name || "匿名",
+  userId: myPlayer.data.userId || "",
+  guestId: myPlayer.data.guestId || "",
+  imageData,
+  hasDrawn: gameHasDrawn,
+  isAutoSubmit,
+  isDeleted: false,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp()
+};
+
+const originalRef = await addDoc(collection(db, "ocGameOriginals"), originalData);
+
+currentOriginals = currentOriginals.filter((original) => {
+  return original.data.playerId !== myPlayer.id;
+});
+
+currentOriginals.push({
+  id: originalRef.id,
+  data: {
+    ...originalData,
+    createdAt: { seconds: Math.floor(Date.now() / 1000) },
+    updatedAt: { seconds: Math.floor(Date.now() / 1000) }
+  }
+});
 
     clearOriginalTimer();
 
@@ -1842,22 +1857,41 @@ async function submitFanart() {
     const imageData = getGameCanvasImageData();
     const round = Number(currentRoom?.data?.currentRound || 0);
 
-    await addDoc(collection(db, "ocGameFanarts"), {
-      roomId,
-      round,
-      artistPlayerId: myPlayer.id,
-      artistName: myPlayer.data.name || "匿名",
-      artistUserId: myPlayer.data.userId || "",
-      artistGuestId: myPlayer.data.guestId || "",
-      targetPlayerId: targetPlayer.id,
-      targetName: targetPlayer.data.name || "匿名",
-      imageData,
-      hasDrawn: true,
-      isAutoSubmit: false,
-      isDeleted: false,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
+    const fanartData = {
+  roomId,
+  round,
+  artistPlayerId: myPlayer.id,
+  artistName: myPlayer.data.name || "匿名",
+  artistUserId: myPlayer.data.userId || "",
+  artistGuestId: myPlayer.data.guestId || "",
+  targetPlayerId: targetPlayer.id,
+  targetName: targetPlayer.data.name || "匿名",
+  imageData,
+  hasDrawn: true,
+  isAutoSubmit: false,
+  isDeleted: false,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp()
+};
+
+const fanartRef = await addDoc(collection(db, "ocGameFanarts"), fanartData);
+
+currentFanarts = currentFanarts.filter((fanart) => {
+  return !(
+    fanart.data.round === round
+    && fanart.data.artistPlayerId === myPlayer.id
+    && fanart.data.targetPlayerId === targetPlayer.id
+  );
+});
+
+currentFanarts.push({
+  id: fanartRef.id,
+  data: {
+    ...fanartData,
+    createdAt: { seconds: Math.floor(Date.now() / 1000) },
+    updatedAt: { seconds: Math.floor(Date.now() / 1000) }
+  }
+});
 
     if (message) {
       message.textContent =
