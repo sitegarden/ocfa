@@ -790,16 +790,26 @@ async function renderGameStageArea() {
         <img src="${submittedFanart.data.imageData}" alt="提出したFA">
       </div>
 
-      <div class="actions">
-        <button
-          id="cancelFanartBtn"
-          class="ghost-btn"
-          type="button"
-          data-fanart-id="${submittedFanart.id}"
-        >
-          提出を取り消す
-        </button>
-      </div>
+      ${
+        canCancelSubmitNow()
+          ? `
+            <div class="actions">
+              <button
+                id="cancelFanartBtn"
+                class="ghost-btn"
+                type="button"
+                data-fanart-id="${submittedFanart.id}"
+              >
+                提出を取り消す
+              </button>
+            </div>
+          `
+          : `
+            <p class="mini-info">
+              残り30秒を切ったため、提出は取り消せません。
+            </p>
+          `
+      }
     </section>
   `;
 }
@@ -869,16 +879,26 @@ async function renderGameStageArea() {
         <img src="${submitted.data.imageData}" alt="提出したOC">
       </div>
 
-      <div class="actions">
-        <button
-          id="cancelOriginalBtn"
-          class="ghost-btn"
-          type="button"
-          data-original-id="${submitted.id}"
-        >
-          提出を取り消す
-        </button>
-      </div>
+      ${
+        canCancelSubmitNow()
+          ? `
+            <div class="actions">
+              <button
+                id="cancelOriginalBtn"
+                class="ghost-btn"
+                type="button"
+                data-original-id="${submitted.id}"
+              >
+                提出を取り消す
+              </button>
+            </div>
+          `
+          : `
+            <p class="mini-info">
+              残り30秒を切ったため、提出は取り消せません。
+            </p>
+          `
+      }
     </section>
   `;
 }
@@ -1058,7 +1078,15 @@ async function cancelOriginalSubmit(originalId) {
 
   if (!originalId) return;
 
-  if (!confirm("提出したOCを取り消しますか？")) return;
+if (!canCancelSubmitNow()) {
+  if (message) {
+    message.textContent = "残り30秒を切ったため、提出は取り消せません。";
+  }
+
+  return;
+}
+
+if (!confirm("提出したOCを取り消しますか？")) return;
 
   try {
     if (message) message.textContent = "OC提出を取り消しています...";
@@ -1089,7 +1117,15 @@ async function cancelFanartSubmit(fanartId) {
 
   if (!fanartId) return;
 
-  if (!confirm("提出したFAを取り消しますか？")) return;
+if (!canCancelSubmitNow()) {
+  if (message) {
+    message.textContent = "残り30秒を切ったため、提出は取り消せません。";
+  }
+
+  return;
+}
+
+if (!confirm("提出したFAを取り消しますか？")) return;
 
   try {
     if (message) message.textContent = "FA提出を取り消しています...";
@@ -2108,4 +2144,24 @@ function fillActiveLayer(startX, startY) {
   gameHasDrawn = true;
 
   redrawGameCanvas();
+}
+
+
+function getCurrentTurnRemainingSeconds() {
+  if (!currentRoom) return 9999;
+
+  if (currentRoom.data.status === "drawing_oc") {
+    return getOriginalRemainingSeconds();
+  }
+
+  // FAタイマーは次で追加するので、今は取り消し可能扱いにしておく
+  if (currentRoom.data.status === "drawing_fa") {
+    return 9999;
+  }
+
+  return 9999;
+}
+
+function canCancelSubmitNow() {
+  return getCurrentTurnRemainingSeconds() > 30;
 }
