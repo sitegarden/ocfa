@@ -210,7 +210,7 @@ function getTargetPlayerForCurrentRound(myPlayer) {
 
   if (myIndex < 0) return null;
 
-  const targetIndex = (myIndex + round) % currentPlayers.length;
+  const targetIndex = (myIndex + round + 1) % currentPlayers.length;
 
   return currentPlayers[targetIndex];
 }
@@ -295,7 +295,7 @@ async function checkAllFanartsSubmitted() {
 
   const currentRound = Number(currentRoom.data.currentRound || 0);
   const nextRound = currentRound + 1;
-  const lastRoundIndex = currentPlayers.length - 1;
+  const lastRoundIndex = currentPlayers.length - 2;
 
   try {
     advancingRound = true;
@@ -776,22 +776,33 @@ async function renderGameStageArea() {
     const submittedFanart = getMyFanartForCurrentRound(myPlayer, targetPlayer);
 
     if (submittedFanart) {
-      return `
-        <section class="panel">
-          <p class="eyebrow">Fan Art Turn</p>
-          <h2>FA提出済み</h2>
+  return `
+    <section class="panel">
+      <p class="eyebrow">Fan Art Turn</p>
+      <h2>FA提出済み</h2>
 
-          <p>
-            ${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCへのFAを提出しました。
-            ほかの人の提出を待っています。
-          </p>
+      <p>
+        ${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCへのFAを提出しました。
+        ほかの人の提出を待っています。
+      </p>
 
-          <div class="submitted-oc-preview">
-            <img src="${submittedFanart.data.imageData}" alt="提出したFA">
-          </div>
-        </section>
-      `;
-    }
+      <div class="submitted-oc-preview">
+        <img src="${submittedFanart.data.imageData}" alt="提出したFA">
+      </div>
+
+      <div class="actions">
+        <button
+          id="cancelFanartBtn"
+          class="ghost-btn"
+          type="button"
+          data-fanart-id="${submittedFanart.id}"
+        >
+          提出を取り消す
+        </button>
+      </div>
+    </section>
+  `;
+}
 
     return `
       <section class="panel game-fa-panel">
@@ -799,8 +810,8 @@ async function renderGameStageArea() {
         <h2>${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCを描く</h2>
 
         <p class="mini-info">
-          Round ${Number(currentRoom.data.currentRound || 0) + 1} / ${currentPlayers.length}
-        </p>
+  Round ${Number(currentRoom.data.currentRound || 0) + 1} / ${Math.max(1, currentPlayers.length - 1)}
+</p>
 
         <div class="game-target-oc">
           <img
@@ -848,18 +859,29 @@ async function renderGameStageArea() {
   const submitted = await getMyOriginal(myPlayer.id);
 
   if (submitted) {
-    return `
-      <section class="panel">
-        <p class="eyebrow">Your OC</p>
-        <h2>OC提出済み</h2>
-        <p>あなたのOCは提出済みです。全員の提出が終わるまで待ってください。</p>
+  return `
+    <section class="panel">
+      <p class="eyebrow">Your OC</p>
+      <h2>OC提出済み</h2>
+      <p>あなたのOCは提出済みです。全員の提出が終わるまで待ってください。</p>
 
-        <div class="submitted-oc-preview">
-          <img src="${submitted.data.imageData}" alt="提出したOC">
-        </div>
-      </section>
-    `;
-  }
+      <div class="submitted-oc-preview">
+        <img src="${submitted.data.imageData}" alt="提出したOC">
+      </div>
+
+      <div class="actions">
+        <button
+          id="cancelOriginalBtn"
+          class="ghost-btn"
+          type="button"
+          data-original-id="${submitted.id}"
+        >
+          提出を取り消す
+        </button>
+      </div>
+    </section>
+  `;
+}
 
   return `
     <section class="panel game-draw-panel">
@@ -966,9 +988,12 @@ async function renderRoom() {
   const guestJoinBtn = document.getElementById("guestJoinBtn");
   const loginJoinBtn = document.getElementById("loginJoinBtn");
   const startGameBtn = document.getElementById("startGameBtn");
+
   const submitOriginalBtn = document.getElementById("submitOriginalBtn");
-  const submitFanartBtn = document.getElementById("submitFanartBtn");
-  const roomMessage = document.getElementById("roomMessage");
+const submitFanartBtn = document.getElementById("submitFanartBtn");
+const cancelOriginalBtn = document.getElementById("cancelOriginalBtn");
+const cancelFanartBtn = document.getElementById("cancelFanartBtn");
+const roomMessage = document.getElementById("roomMessage");
 
   if (copyRoomUrlBtn) {
     copyRoomUrlBtn.addEventListener("click", async () => {
@@ -1013,6 +1038,80 @@ async function renderRoom() {
     initGameCanvas();
 
     submitFanartBtn.addEventListener("click", submitFanart);
+  }
+
+  if (cancelOriginalBtn) {
+  cancelOriginalBtn.addEventListener("click", () => {
+    cancelOriginalSubmit(cancelOriginalBtn.dataset.originalId);
+  });
+}
+
+if (cancelFanartBtn) {
+  cancelFanartBtn.addEventListener("click", () => {
+    cancelFanartSubmit(cancelFanartBtn.dataset.fanartId);
+  });
+}
+}
+
+async function cancelOriginalSubmit(originalId) {
+  const message = document.getElementById("roomMessage");
+
+  if (!originalId) return;
+
+  if (!confirm("提出したOCを取り消しますか？")) return;
+
+  try {
+    if (message) message.textContent = "OC提出を取り消しています...";
+
+    await updateDoc(doc(db, "ocGameOriginals", originalId), {
+      isDeleted: true,
+      updatedAt: serverTimestamp()
+    });
+
+    currentOriginals = currentOriginals.filter((original) => {
+      return original.id !== originalId;
+    });
+
+    if (message) message.textContent = "OC提出を取り消しました。";
+
+    await renderRoom();
+  } catch (error) {
+    console.error(error);
+
+    if (message) {
+      message.textContent = "OC提出の取り消しに失敗しました。";
+    }
+  }
+}
+
+async function cancelFanartSubmit(fanartId) {
+  const message = document.getElementById("roomMessage");
+
+  if (!fanartId) return;
+
+  if (!confirm("提出したFAを取り消しますか？")) return;
+
+  try {
+    if (message) message.textContent = "FA提出を取り消しています...";
+
+    await updateDoc(doc(db, "ocGameFanarts", fanartId), {
+      isDeleted: true,
+      updatedAt: serverTimestamp()
+    });
+
+    currentFanarts = currentFanarts.filter((fanart) => {
+      return fanart.id !== fanartId;
+    });
+
+    if (message) message.textContent = "FA提出を取り消しました。";
+
+    await renderRoom();
+  } catch (error) {
+    console.error(error);
+
+    if (message) {
+      message.textContent = "FA提出の取り消しに失敗しました。";
+    }
   }
 }
 
