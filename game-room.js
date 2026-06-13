@@ -58,7 +58,7 @@ let layerHistory = [[], []];
 const MAX_LAYER_HISTORY = 20;
 
 function escapeHtml(text) {
-  return String(text)
+  return String(text ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -307,6 +307,7 @@ async function checkAllFanartsSubmitted() {
         updatedAt: serverTimestamp()
       });
 
+      advancingRound = false;
       return;
     }
 
