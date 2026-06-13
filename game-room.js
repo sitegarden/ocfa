@@ -37,6 +37,7 @@ let hasStartedListening = false;
 
 let advancingToFa = false;
 let advancingRound = false;
+let forceAdvanceBusy = false;
 let isRenderingRoom = false;
 
 let gameCanvas = null;
@@ -112,6 +113,14 @@ function getLatestItem(items) {
   return [...items].sort((a, b) => {
     return getDocTime(b) - getDocTime(a);
   })[0];
+}
+
+function getOriginalDocId(playerId) {
+  return `${roomId}_${playerId}`;
+}
+
+function getFanartDocId(round, artistPlayerId, targetPlayerId) {
+  return `${roomId}_${round}_${artistPlayerId}_${targetPlayerId}`;
 }
 
 function getMyPlayer() {
@@ -287,6 +296,217 @@ function getMyFanartForCurrentRound(myPlayer, targetPlayer) {
   return getLatestItem(fanarts);
 }
 
+function createTimeUpImageData(name, label = "OC") {
+  const canvas = document.createElement("canvas");
+  canvas.width = 768;
+  canvas.height = 768;
+
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#fffdf8";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#2b2430";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.font = "bold 54px sans-serif";
+  ctx.fillText("時間切れ", canvas.width / 2, canvas.height / 2 - 44);
+
+  ctx.font = "bold 28px sans-serif";
+  ctx.fillText(
+    `${name || "匿名"} の${label}`,
+    canvas.width / 2,
+    canvas.height / 2 + 26
+  );
+
+  ctx.globalAlpha = 0.72;
+  ctx.textAlign = "right";
+  ctx.textBaseline = "bottom";
+  ctx.font = "bold 24px sans-serif";
+  ctx.fillText(`by ${name || "匿名"}`, canvas.width - 22, canvas.height - 18);
+
+  return canvas.toDataURL("image/jpeg", 0.82);
+}
+
+async function createMissingOriginalForPlayer(player) {
+  if (!player) return null;
+
+  const alreadySubmitted = getSubmittedOriginalByPlayerId(player.id);
+
+  if (alreadySubmitted) {
+    return alreadySubmitted;
+  }
+
+  const originalId = getOriginalDocId(player.id);
+  const playerName = player.data.name || "匿名";
+
+  const originalData = {
+    roomId,
+    playerId: player.id,
+    playerName,
+    userId: player.data.userId || "",
+    guestId: player.data.guestId || "",
+    imageData: createTimeUpImageData(playerName, "OC"),
+    hasDrawn: false,
+    isAutoSubmit: true,
+    isTimeUpPlaceholder: true,
+    isDeleted: false,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  await setDoc(
+    doc(db, "ocGameOriginals", originalId),
+    originalData,
+    { merge: true }
+  );
+
+  const localOriginal = {
+    id: originalId,
+    data: {
+      ...originalData,
+      createdAt: { seconds: Math.floor(Date.now() / 1000) },
+      updatedAt: { seconds: Math.floor(Date.now() / 1000) }
+    }
+  };
+
+  currentOriginals = currentOriginals.filter((original) => {
+    return original.data.playerId !== player.id;
+  });
+
+  currentOriginals.push(localOriginal);
+
+  return localOriginal;
+}
+
+async function createMissingOriginalsForAllPlayers() {
+  for (const player of currentPlayers) {
+    await createMissingOriginalForPlayer(player);
+  }
+}
+
+async function createMissingFanartForPlayer(player) {
+  if (!player) return null;
+
+  const targetPlayer = getTargetPlayerForCurrentRound(player);
+
+  if (!targetPlayer) return null;
+
+  const alreadySubmitted = getMyFanartForCurrentRound(player, targetPlayer);
+
+  if (alreadySubmitted) {
+    return alreadySubmitted;
+  }
+
+  const round = Number(currentRoom?.data?.currentRound || 0);
+  const fanartId = getFanartDocId(round, player.id, targetPlayer.id);
+  const artistName = player.data.name || "匿名";
+  const targetName = targetPlayer.data.name || "匿名";
+
+  const fanartData = {
+    roomId,
+    round,
+    artistPlayerId: player.id,
+    artistName,
+    artistUserId: player.data.userId || "",
+    artistGuestId: player.data.guestId || "",
+    targetPlayerId: targetPlayer.id,
+    targetName,
+    imageData: createTimeUpImageData(artistName, "FA"),
+    hasDrawn: false,
+    isAutoSubmit: true,
+    isTimeUpPlaceholder: true,
+    isDeleted: false,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  await setDoc(
+    doc(db, "ocGameFanarts", fanartId),
+    fanartData,
+    { merge: true }
+  );
+
+  const localFanart = {
+    id: fanartId,
+    data: {
+      ...fanartData,
+      createdAt: { seconds: Math.floor(Date.now() / 1000) },
+      updatedAt: { seconds: Math.floor(Date.now() / 1000) }
+    }
+  };
+
+  currentFanarts = currentFanarts.filter((fanart) => {
+    return !(
+      fanart.data.round === round
+      && fanart.data.artistPlayerId === player.id
+      && fanart.data.targetPlayerId === targetPlayer.id
+    );
+  });
+
+  currentFanarts.push(localFanart);
+
+  return localFanart;
+}
+
+async function createMissingFanartsForCurrentRound() {
+  for (const player of currentPlayers) {
+    await createMissingFanartForPlayer(player);
+  }
+}
+
+function isOriginalTimeExpired() {
+  if (!currentRoom) return false;
+  if (currentRoom.data.status !== "drawing_oc") return false;
+
+  return getOriginalRemainingSeconds() <= 0;
+}
+
+function isFanartTimeExpired() {
+  if (!currentRoom) return false;
+  if (currentRoom.data.status !== "drawing_fa") return false;
+
+  const roundStartedAt = currentRoom.data.roundStartedAt;
+
+  if (!roundStartedAt) {
+    return false;
+  }
+
+  return getFanartRemainingSeconds() <= 0;
+}
+
+async function advanceToFirstFanartRound() {
+  await updateDoc(doc(db, "ocGameRooms", roomId), {
+    status: "drawing_fa",
+    currentRound: 0,
+    roundStartedAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+}
+
+async function advanceToNextFanartRoundOrReveal() {
+  const currentRound = Number(currentRoom.data.currentRound || 0);
+  const nextRound = currentRound + 1;
+  const lastRoundIndex = currentPlayers.length - 2;
+
+  if (nextRound > lastRoundIndex) {
+    await updateDoc(doc(db, "ocGameRooms", roomId), {
+      status: "reveal",
+      revealedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    return;
+  }
+
+  await updateDoc(doc(db, "ocGameRooms", roomId), {
+    currentRound: nextRound,
+    roundStartedAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+}
+
 async function checkAllOriginalsSubmitted() {
   if (!currentRoom) return;
   if (currentRoom.data.status !== "drawing_oc") return;
@@ -298,17 +518,18 @@ async function checkAllOriginalsSubmitted() {
     return getSubmittedOriginalByPlayerId(player.id);
   });
 
-  if (!allSubmitted) return;
+  const timeExpired = isOriginalTimeExpired();
+
+  if (!allSubmitted && !timeExpired) return;
 
   try {
     advancingToFa = true;
 
-    await updateDoc(doc(db, "ocGameRooms", roomId), {
-      status: "drawing_fa",
-      currentRound: 0,
-      roundStartedAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
+    if (timeExpired) {
+      await createMissingOriginalsForAllPlayers();
+    }
+
+    await advanceToFirstFanartRound();
   } catch (error) {
     console.error(error);
     advancingToFa = false;
@@ -372,36 +593,77 @@ async function checkAllFanartsSubmitted() {
     return hasPlayerSubmittedFanartThisRound(player);
   });
 
-  if (!allSubmitted) return;
+  const timeExpired = isFanartTimeExpired();
 
-  const currentRound = Number(currentRoom.data.currentRound || 0);
-  const nextRound = currentRound + 1;
-  const lastRoundIndex = currentPlayers.length - 2;
+  if (!allSubmitted && !timeExpired) return;
 
   try {
     advancingRound = true;
 
-    if (nextRound > lastRoundIndex) {
-      await updateDoc(doc(db, "ocGameRooms", roomId), {
-        status: "reveal",
-        revealedAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-
-      advancingRound = false;
-      return;
+    if (timeExpired) {
+      await createMissingFanartsForCurrentRound();
     }
 
-    await updateDoc(doc(db, "ocGameRooms", roomId), {
-      currentRound: nextRound,
-      roundStartedAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
+    await advanceToNextFanartRoundOrReveal();
 
     advancingRound = false;
   } catch (error) {
     console.error(error);
     advancingRound = false;
+  }
+}
+
+async function forceAdvanceByOwner() {
+  const message = document.getElementById("roomMessage");
+
+  if (!isOwner()) {
+    if (message) {
+      message.textContent = "この操作はオーナーのみできます。";
+    }
+
+    return;
+  }
+
+  if (forceAdvanceBusy) return;
+
+  if (!currentRoom) return;
+
+  const ok = confirm(
+    "未提出の人を時間切れ扱いにして、次へ進めますか？"
+  );
+
+  if (!ok) return;
+
+  try {
+    forceAdvanceBusy = true;
+
+    if (message) {
+      message.textContent = "未提出者を時間切れ扱いにして進めています...";
+    }
+
+    if (currentRoom.data.status === "drawing_oc") {
+      await createMissingOriginalsForAllPlayers();
+      await advanceToFirstFanartRound();
+      return;
+    }
+
+    if (currentRoom.data.status === "drawing_fa") {
+      await createMissingFanartsForCurrentRound();
+      await advanceToNextFanartRoundOrReveal();
+      return;
+    }
+
+    if (message) {
+      message.textContent = "現在は強制進行できる状態ではありません。";
+    }
+  } catch (error) {
+    console.error(error);
+
+    if (message) {
+      message.textContent = "強制進行に失敗しました。";
+    }
+  } finally {
+    forceAdvanceBusy = false;
   }
 }
 
@@ -767,25 +1029,48 @@ async function safeRenderRoom(previousRoomData = null) {
 function renderOwnerArea() {
   if (!isOwner()) return "";
 
-  if (currentRoom.data.status !== "waiting") {
+  if (currentRoom.data.status === "waiting") {
+    return `
+      <section class="panel">
+        <p class="eyebrow">Owner</p>
+        <h2>オーナー操作</h2>
+        <p>参加者が集まったらゲームを開始できます。</p>
+
+        <div class="actions">
+          <button id="startGameBtn" class="primary-btn" type="button">
+            ゲーム開始
+          </button>
+        </div>
+      </section>
+    `;
+  }
+
+  if (
+    currentRoom.data.status === "drawing_oc"
+    || currentRoom.data.status === "drawing_fa"
+  ) {
     return `
       <section class="panel-soft">
-        <p>ゲームは開始されています。</p>
+        <p class="eyebrow">Owner</p>
+        <h2>オーナー操作</h2>
+
+        <p>
+          もし誰かの提出が反映されずに止まった場合、
+          未提出者を時間切れ扱いにして次へ進められます。
+        </p>
+
+        <div class="actions">
+          <button id="forceAdvanceBtn" class="danger-btn" type="button">
+            未提出者を時間切れ扱いで進める
+          </button>
+        </div>
       </section>
     `;
   }
 
   return `
-    <section class="panel">
-      <p class="eyebrow">Owner</p>
-      <h2>オーナー操作</h2>
-      <p>参加者が集まったらゲームを開始できます。</p>
-
-      <div class="actions">
-        <button id="startGameBtn" class="primary-btn" type="button">
-          ゲーム開始
-        </button>
-      </div>
+    <section class="panel-soft">
+      <p>ゲームは終了しています。</p>
     </section>
   `;
 }
@@ -1213,6 +1498,58 @@ async function renderGameStageArea() {
 
 
 
+function clearOwnerAutoAdvanceWatcher() {
+  if (window.ocfaGameOwnerWatchId) {
+    clearInterval(window.ocfaGameOwnerWatchId);
+    window.ocfaGameOwnerWatchId = null;
+  }
+}
+
+function startOwnerAutoAdvanceWatcher() {
+  clearOwnerAutoAdvanceWatcher();
+
+  if (!isOwner()) return;
+  if (!currentRoom) return;
+
+  const status = currentRoom.data.status;
+
+  if (status !== "drawing_oc" && status !== "drawing_fa") return;
+
+  window.ocfaGameOwnerWatchId = setInterval(async () => {
+    if (!currentRoom) return;
+    if (!isOwner()) return;
+
+    try {
+      await checkAllOriginalsSubmitted();
+      await checkAllFanartsSubmitted();
+    } catch (error) {
+      console.error(error);
+    }
+  }, 1000);
+}
+
+function syncOwnerAutoAdvanceWatcher() {
+  if (!currentRoom) {
+    clearOwnerAutoAdvanceWatcher();
+    return;
+  }
+
+  const status = currentRoom.data.status;
+
+  if (
+    isOwner()
+    && (status === "drawing_oc" || status === "drawing_fa")
+  ) {
+    if (!window.ocfaGameOwnerWatchId) {
+      startOwnerAutoAdvanceWatcher();
+    }
+
+    return;
+  }
+
+  clearOwnerAutoAdvanceWatcher();
+}
+
 async function renderRoom() {
   if (!currentRoom) return;
 
@@ -1283,11 +1620,14 @@ async function renderRoom() {
   const guestJoinBtn = document.getElementById("guestJoinBtn");
   const loginJoinBtn = document.getElementById("loginJoinBtn");
   const startGameBtn = document.getElementById("startGameBtn");
+  const forceAdvanceBtn = document.getElementById("forceAdvanceBtn");
   const submitOriginalBtn = document.getElementById("submitOriginalBtn");
   const submitFanartBtn = document.getElementById("submitFanartBtn");
   const cancelOriginalBtn = document.getElementById("cancelOriginalBtn");
   const cancelFanartBtn = document.getElementById("cancelFanartBtn");
   const roomMessage = document.getElementById("roomMessage");
+
+  syncOwnerAutoAdvanceWatcher();
 
   if (copyRoomUrlBtn) {
     copyRoomUrlBtn.addEventListener("click", async () => {
@@ -1317,6 +1657,10 @@ async function renderRoom() {
 
   if (startGameBtn) {
     startGameBtn.addEventListener("click", startGame);
+  }
+
+  if (forceAdvanceBtn) {
+    forceAdvanceBtn.addEventListener("click", forceAdvanceByOwner);
   }
 
   if (submitOriginalBtn) {
@@ -1384,7 +1728,7 @@ async function cancelOriginalSubmit(originalId) {
       return item.id === originalId;
     });
 
-    if (original?.data?.imageData) {
+    if (original?.data?.imageData && !hasGameDraft("oc")) {
       saveSubmittedImageAsDraft(original.data.imageData, "oc");
     }
 
@@ -1435,7 +1779,7 @@ async function cancelFanartSubmit(fanartId) {
       return item.id === fanartId;
     });
 
-    if (fanart?.data?.imageData) {
+    if (fanart?.data?.imageData && !hasGameDraft("fa")) {
       saveSubmittedImageAsDraft(fanart.data.imageData, "fa");
     }
 
@@ -1463,6 +1807,10 @@ async function cancelFanartSubmit(fanartId) {
 }
 
 function renderNoRoomId() {
+  clearOriginalTimer();
+  clearFanartTimer();
+  clearOwnerAutoAdvanceWatcher();
+
   gameRoomContent.innerHTML = `
     <section class="panel">
       <h1>部屋が選ばれていません</h1>
@@ -1478,6 +1826,7 @@ function renderNoRoomId() {
 function renderNotFound() {
   clearOriginalTimer();
   clearFanartTimer();
+  clearOwnerAutoAdvanceWatcher();
 
   gameRoomContent.innerHTML = `
     <section class="panel">
@@ -1493,6 +1842,9 @@ function renderNotFound() {
 
 function renderError(error) {
   console.error(error);
+
+  clearOriginalTimer();
+  clearFanartTimer();
 
   gameRoomContent.innerHTML = `
     <section class="panel">
@@ -1530,6 +1882,13 @@ function startRealtimeListeners() {
         id: snap.id,
         data
       };
+
+      if (
+        currentRoom.data.status !== "drawing_oc"
+        && currentRoom.data.status !== "drawing_fa"
+      ) {
+        clearOwnerAutoAdvanceWatcher();
+      }
 
       await checkAllOriginalsSubmitted();
       await checkAllFanartsSubmitted();
@@ -2004,6 +2363,17 @@ function saveGameDraft(type = "oc") {
   }
 }
 
+function hasGameDraft(type = "oc") {
+  try {
+    const draftKey = getDraftKey(type);
+
+    return Boolean(localStorage.getItem(draftKey));
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+}
+
 function loadGameDraft(type = "oc") {
   if (!gameCanvas || !gameCtx) return false;
 
@@ -2198,6 +2568,11 @@ function startOriginalAutoSubmitTimer() {
   const timerBar = document.getElementById("originalTimerBar");
 
   async function tick() {
+    if (!currentRoom || currentRoom.data.status !== "drawing_oc") {
+      clearOriginalTimer();
+      return;
+    }
+
     const remaining = getOriginalRemainingSeconds();
     const turnSeconds = Number(currentRoom?.data?.turnSeconds || 120);
 
@@ -2226,6 +2601,11 @@ function startFanartAutoSubmitTimer() {
   const timerBar = document.getElementById("fanartTimerBar");
 
   async function tick() {
+    if (!currentRoom || currentRoom.data.status !== "drawing_fa") {
+      clearFanartTimer();
+      return;
+    }
+
     const startedMs = getRoundStartedMs();
     const turnSeconds = Number(currentRoom?.data?.turnSeconds || 120);
 
@@ -2260,20 +2640,16 @@ async function waitForDraftLoad() {
   });
 }
 
-function getOriginalDocId(playerId) {
-  return `${roomId}_${playerId}`;
-}
-
-function getFanartDocId(round, artistPlayerId, targetPlayerId) {
-  return `${roomId}_${round}_${artistPlayerId}_${targetPlayerId}`;
-}
-
 async function submitOriginalOc(isAutoSubmit = false) {
   const message = document.getElementById("roomMessage");
   const submitOriginalBtn = document.getElementById("submitOriginalBtn");
   const myPlayer = getMyPlayer();
 
   if (submittingOriginal) return;
+
+  if (!currentRoom || currentRoom.data.status !== "drawing_oc") {
+    return;
+  }
 
   if (!myPlayer) {
     if (message) {
@@ -2298,9 +2674,11 @@ async function submitOriginalOc(isAutoSubmit = false) {
       submitOriginalBtn.disabled = true;
     }
 
-    const alreadySubmitted = await getMyOriginal(myPlayer.id);
+    const originalId = getOriginalDocId(myPlayer.id);
+    const originalRef = doc(db, "ocGameOriginals", originalId);
+    const existingSnap = await getDoc(originalRef);
 
-    if (alreadySubmitted) {
+    if (existingSnap.exists() && existingSnap.data().isDeleted !== true) {
       clearOriginalTimer();
 
       if (message) {
@@ -2334,7 +2712,6 @@ async function submitOriginalOc(isAutoSubmit = false) {
     addWatermarkToGameCanvas(myPlayer.data.name || "匿名");
 
     const imageData = getGameCanvasImageData();
-    const originalId = getOriginalDocId(myPlayer.id);
 
     const originalData = {
       roomId,
@@ -2346,12 +2723,14 @@ async function submitOriginalOc(isAutoSubmit = false) {
       hasDrawn: gameHasDrawn,
       isAutoSubmit,
       isDeleted: false,
-      createdAt: serverTimestamp(),
+      createdAt: existingSnap.exists()
+        ? existingSnap.data().createdAt || serverTimestamp()
+        : serverTimestamp(),
       updatedAt: serverTimestamp()
     };
 
     await setDoc(
-      doc(db, "ocGameOriginals", originalId),
+      originalRef,
       originalData,
       { merge: true }
     );
@@ -2370,7 +2749,6 @@ async function submitOriginalOc(isAutoSubmit = false) {
     });
 
     clearOriginalTimer();
-    clearGameDraft("oc");
 
     if (message) {
       message.textContent = isAutoSubmit
@@ -2402,6 +2780,14 @@ async function submitFanart(isAutoSubmit = false) {
 
   if (submittingFanart) return;
 
+  if (!currentRoom || currentRoom.data.status !== "drawing_fa") {
+    return;
+  }
+
+  if (isAutoSubmit && !getRoundStartedMs()) {
+    return;
+  }
+
   if (!myPlayer) {
     if (message) {
       message.textContent = "参加してから提出してください。";
@@ -2420,7 +2806,19 @@ async function submitFanart(isAutoSubmit = false) {
     return;
   }
 
-  if (isAutoSubmit && !getRoundStartedMs()) {
+  const round = Number(currentRoom?.data?.currentRound || 0);
+  const fanartId = getFanartDocId(round, myPlayer.id, targetPlayer.id);
+  const fanartRef = doc(db, "ocGameFanarts", fanartId);
+  const existingSnap = await getDoc(fanartRef);
+
+  if (existingSnap.exists() && existingSnap.data().isDeleted !== true) {
+    clearFanartTimer();
+
+    if (message) {
+      message.textContent = "このターンのFAは提出済みです。";
+    }
+
+    await renderRoom();
     return;
   }
 
@@ -2437,19 +2835,6 @@ async function submitFanart(isAutoSubmit = false) {
       message.textContent = "提出する前にFAを描いてください。";
     }
 
-    return;
-  }
-
-  const alreadySubmitted = getMyFanartForCurrentRound(myPlayer, targetPlayer);
-
-  if (alreadySubmitted) {
-    clearFanartTimer();
-
-    if (message) {
-      message.textContent = "このターンのFAは提出済みです。";
-    }
-
-    await renderRoom();
     return;
   }
 
@@ -2475,8 +2860,6 @@ async function submitFanart(isAutoSubmit = false) {
     addWatermarkToGameCanvas(myPlayer.data.name || "匿名");
 
     const imageData = getGameCanvasImageData();
-    const round = Number(currentRoom?.data?.currentRound || 0);
-    const fanartId = getFanartDocId(round, myPlayer.id, targetPlayer.id);
 
     const fanartData = {
       roomId,
@@ -2491,12 +2874,14 @@ async function submitFanart(isAutoSubmit = false) {
       hasDrawn: gameHasDrawn,
       isAutoSubmit,
       isDeleted: false,
-      createdAt: serverTimestamp(),
+      createdAt: existingSnap.exists()
+        ? existingSnap.data().createdAt || serverTimestamp()
+        : serverTimestamp(),
       updatedAt: serverTimestamp()
     };
 
     await setDoc(
-      doc(db, "ocGameFanarts", fanartId),
+      fanartRef,
       fanartData,
       { merge: true }
     );
@@ -2519,7 +2904,6 @@ async function submitFanart(isAutoSubmit = false) {
     });
 
     clearFanartTimer();
-    clearGameDraft("fa");
 
     if (message) {
       message.textContent = isAutoSubmit
