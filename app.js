@@ -250,19 +250,30 @@ function renderHeader() {
 function renderFooter() {
   if (!siteFooter) return;
 
+  const contactUrl = "https://docs.google.com/forms/d/e/1FAIpQLSesMw6-ymf5_sRUzs_35r_Ml-ztA3Cgh8JAai1XNQH84__SWQ/viewform?usp=header";
+
   siteFooter.innerHTML = `
-    <div class="site-footer-inner">
+  <div class="site-footer-inner">
+    <div class="footer-main">
       <p class="footer-brand">OCFA</p>
 
-      <nav class="footer-nav">
-        <a href="/terms/">利用規約</a>
-        <a href="/privacy/">プライバシーポリシー</a>
-      </nav>
-
-      <p class="footer-copy">
-        © OCFA
+      <p class="footer-text">
+        不具合報告・ご意見・ご感想などがあれば、フォームから送ってください。
       </p>
     </div>
+
+    <nav class="footer-nav">
+      <a href="/terms/">利用規約</a>
+      <a href="/privacy/">プライバシーポリシー</a>
+      <a href="${contactUrl}" target="_blank" rel="noopener noreferrer">
+        感想・不具合を送る
+      </a>
+    </nav>
+
+    <p class="footer-copy">
+      © OCFA
+    </p>
+  </div>
   `;
 }
 
