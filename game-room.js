@@ -92,6 +92,28 @@ function getStatusLabel(status) {
   return "不明";
 }
 
+function getDocTime(item) {
+  const data = item?.data || {};
+
+  if (data.updatedAt?.seconds) {
+    return data.updatedAt.seconds;
+  }
+
+  if (data.createdAt?.seconds) {
+    return data.createdAt.seconds;
+  }
+
+  return 0;
+}
+
+function getLatestItem(items) {
+  if (!items.length) return null;
+
+  return [...items].sort((a, b) => {
+    return getDocTime(b) - getDocTime(a);
+  })[0];
+}
+
 function getMyPlayer() {
   if (currentUser) {
     return currentPlayers.find((player) => {
@@ -182,16 +204,16 @@ async function getMyOriginal(playerId) {
 
   if (snap.empty) return null;
 
-  let result = null;
+  const originals = [];
 
   snap.forEach((docSnap) => {
-    result = {
+    originals.push({
       id: docSnap.id,
       data: docSnap.data()
-    };
+    });
   });
 
-  return result;
+  return getLatestItem(originals);
 }
 
 function getAutoGuestName() {
@@ -203,10 +225,25 @@ function getAutoGuestName() {
 }
 
 function getSubmittedOriginalByPlayerId(playerId) {
-  return currentOriginals.find((original) => {
+  const originals = currentOriginals.filter((original) => {
     return original.data.playerId === playerId
       && original.data.isDeleted !== true;
   });
+
+  return getLatestItem(originals);
+}
+
+function getOriginalSubmittedCount() {
+  const submittedPlayerIds = new Set();
+
+  currentOriginals.forEach((original) => {
+    if (original.data.isDeleted === true) return;
+    if (!original.data.playerId) return;
+
+    submittedPlayerIds.add(original.data.playerId);
+  });
+
+  return submittedPlayerIds.size;
 }
 
 function getTargetPlayerForCurrentRound(myPlayer) {
@@ -227,10 +264,12 @@ function getTargetPlayerForCurrentRound(myPlayer) {
 }
 
 function getOriginalByPlayerId(playerId) {
-  return currentOriginals.find((original) => {
+  const originals = currentOriginals.filter((original) => {
     return original.data.playerId === playerId
       && original.data.isDeleted !== true;
   });
+
+  return getLatestItem(originals);
 }
 
 function getMyFanartForCurrentRound(myPlayer, targetPlayer) {
@@ -238,12 +277,14 @@ function getMyFanartForCurrentRound(myPlayer, targetPlayer) {
 
   const round = Number(currentRoom?.data?.currentRound || 0);
 
-  return currentFanarts.find((fanart) => {
+  const fanarts = currentFanarts.filter((fanart) => {
     return fanart.data.round === round
       && fanart.data.artistPlayerId === myPlayer.id
       && fanart.data.targetPlayerId === targetPlayer.id
       && fanart.data.isDeleted !== true;
   });
+
+  return getLatestItem(fanarts);
 }
 
 async function checkAllOriginalsSubmitted() {
@@ -276,11 +317,38 @@ async function checkAllOriginalsSubmitted() {
 
 function getFanartsForCurrentRound() {
   const round = Number(currentRoom?.data?.currentRound || 0);
+  const fanartMap = new Map();
 
-  return currentFanarts.filter((fanart) => {
-    return fanart.data.round === round
-      && fanart.data.isDeleted !== true;
+  currentFanarts.forEach((fanart) => {
+    if (fanart.data.isDeleted === true) return;
+    if (fanart.data.round !== round) return;
+
+    const key = [
+      fanart.data.round,
+      fanart.data.artistPlayerId,
+      fanart.data.targetPlayerId
+    ].join("_");
+
+    const oldFanart = fanartMap.get(key);
+
+    if (!oldFanart || getDocTime(fanart) >= getDocTime(oldFanart)) {
+      fanartMap.set(key, fanart);
+    }
   });
+
+  return [...fanartMap.values()];
+}
+
+function getFanartSubmittedCountForCurrentRound() {
+  const artistIds = new Set();
+
+  getFanartsForCurrentRound().forEach((fanart) => {
+    if (!fanart.data.artistPlayerId) return;
+
+    artistIds.add(fanart.data.artistPlayerId);
+  });
+
+  return artistIds.size;
 }
 
 function hasPlayerSubmittedFanartThisRound(player) {
@@ -788,17 +856,31 @@ function renderLayerTools() {
 }
 
 function getFanartsByTargetPlayerId(targetPlayerId) {
-  return currentFanarts
-    .filter((fanart) => {
-      return fanart.data.targetPlayerId === targetPlayerId
-        && fanart.data.isDeleted !== true;
-    })
-    .sort((a, b) => {
-      const aRound = Number(a.data.round || 0);
-      const bRound = Number(b.data.round || 0);
+  const fanartMap = new Map();
 
-      return aRound - bRound;
-    });
+  currentFanarts.forEach((fanart) => {
+    if (fanart.data.isDeleted === true) return;
+    if (fanart.data.targetPlayerId !== targetPlayerId) return;
+
+    const key = [
+      fanart.data.round,
+      fanart.data.artistPlayerId,
+      fanart.data.targetPlayerId
+    ].join("_");
+
+    const oldFanart = fanartMap.get(key);
+
+    if (!oldFanart || getDocTime(fanart) >= getDocTime(oldFanart)) {
+      fanartMap.set(key, fanart);
+    }
+  });
+
+  return [...fanartMap.values()].sort((a, b) => {
+    const aRound = Number(a.data.round || 0);
+    const bRound = Number(b.data.round || 0);
+
+    return aRound - bRound;
+  });
 }
 
 function renderRevealArea() {
@@ -1151,14 +1233,14 @@ async function renderRoom() {
       </p>
 
       <p class="mini-info">
-        OC提出 ${currentOriginals.length} / ${currentPlayers.length}人
+        OC提出 ${getOriginalSubmittedCount()} / ${currentPlayers.length}人
       </p>
 
       ${
         room.status === "drawing_fa"
           ? `
             <p class="mini-info">
-              現在のFA提出 ${getFanartsForCurrentRound().length} / ${currentPlayers.length}人
+              現在のFA提出 ${getFanartSubmittedCountForCurrentRound()} / ${currentPlayers.length}人
             </p>
           `
           : ""
@@ -2009,13 +2091,14 @@ function getRoomStartedMs() {
 }
 
 function getRoundStartedMs() {
-  return getTimestampMs(
-    currentRoom?.data?.roundStartedAt ||
-    currentRoom?.data?.updatedAt ||
-    currentRoom?.data?.startedAt
-  );
-}
+  const roundStartedAt = currentRoom?.data?.roundStartedAt;
 
+  if (!roundStartedAt) {
+    return null;
+  }
+
+  return getTimestampMs(roundStartedAt);
+}
 
 
 
@@ -2038,6 +2121,11 @@ function getOriginalRemainingSeconds() {
 function getFanartRemainingSeconds() {
   const startedMs = getRoundStartedMs();
   const turnSeconds = Number(currentRoom?.data?.turnSeconds || 120);
+
+  if (!startedMs) {
+    return turnSeconds;
+  }
+
   const endMs = startedMs + turnSeconds * 1000;
 
   return Math.max(0, Math.ceil((endMs - Date.now()) / 1000));
@@ -2138,8 +2226,15 @@ function startFanartAutoSubmitTimer() {
   const timerBar = document.getElementById("fanartTimerBar");
 
   async function tick() {
-    const remaining = getFanartRemainingSeconds();
+    const startedMs = getRoundStartedMs();
     const turnSeconds = Number(currentRoom?.data?.turnSeconds || 120);
+
+    if (!startedMs) {
+      updateTimerDisplay(timerText, timerBar, turnSeconds, turnSeconds);
+      return;
+    }
+
+    const remaining = getFanartRemainingSeconds();
 
     updateTimerDisplay(timerText, timerBar, remaining, turnSeconds);
 
@@ -2322,6 +2417,10 @@ async function submitFanart(isAutoSubmit = false) {
       message.textContent = "描く相手が見つかりません。";
     }
 
+    return;
+  }
+
+  if (isAutoSubmit && !getRoundStartedMs()) {
     return;
   }
 
