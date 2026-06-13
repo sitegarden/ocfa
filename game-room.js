@@ -9,6 +9,7 @@ import {
   onSnapshot,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -2015,6 +2016,17 @@ function getRoundStartedMs() {
   );
 }
 
+
+
+
+
+
+
+
+
+
+
+
 function getOriginalRemainingSeconds() {
   const startedMs = getRoomStartedMs();
   const turnSeconds = Number(currentRoom?.data?.turnSeconds || 120);
@@ -2062,7 +2074,11 @@ function drawTimeUpCard(name, label = "OC") {
   gameCtx.fillText("時間切れ", gameCanvas.width / 2, gameCanvas.height / 2 - 28);
 
   gameCtx.font = "bold 24px sans-serif";
-  gameCtx.fillText(`${name || "匿名"} の${label}`, gameCanvas.width / 2, gameCanvas.height / 2 + 28);
+  gameCtx.fillText(
+    `${name || "匿名"} の${label}`,
+    gameCanvas.width / 2,
+    gameCanvas.height / 2 + 28
+  );
 
   gameCtx.restore();
 
@@ -2149,6 +2165,14 @@ async function waitForDraftLoad() {
   });
 }
 
+function getOriginalDocId(playerId) {
+  return `${roomId}_${playerId}`;
+}
+
+function getFanartDocId(round, artistPlayerId, targetPlayerId) {
+  return `${roomId}_${round}_${artistPlayerId}_${targetPlayerId}`;
+}
+
 async function submitOriginalOc(isAutoSubmit = false) {
   const message = document.getElementById("roomMessage");
   const submitOriginalBtn = document.getElementById("submitOriginalBtn");
@@ -2215,6 +2239,7 @@ async function submitOriginalOc(isAutoSubmit = false) {
     addWatermarkToGameCanvas(myPlayer.data.name || "匿名");
 
     const imageData = getGameCanvasImageData();
+    const originalId = getOriginalDocId(myPlayer.id);
 
     const originalData = {
       roomId,
@@ -2230,9 +2255,10 @@ async function submitOriginalOc(isAutoSubmit = false) {
       updatedAt: serverTimestamp()
     };
 
-    const originalRef = await addDoc(
-      collection(db, "ocGameOriginals"),
-      originalData
+    await setDoc(
+      doc(db, "ocGameOriginals", originalId),
+      originalData,
+      { merge: true }
     );
 
     currentOriginals = currentOriginals.filter((original) => {
@@ -2240,7 +2266,7 @@ async function submitOriginalOc(isAutoSubmit = false) {
     });
 
     currentOriginals.push({
-      id: originalRef.id,
+      id: originalId,
       data: {
         ...originalData,
         createdAt: { seconds: Math.floor(Date.now() / 1000) },
@@ -2351,6 +2377,7 @@ async function submitFanart(isAutoSubmit = false) {
 
     const imageData = getGameCanvasImageData();
     const round = Number(currentRoom?.data?.currentRound || 0);
+    const fanartId = getFanartDocId(round, myPlayer.id, targetPlayer.id);
 
     const fanartData = {
       roomId,
@@ -2369,9 +2396,10 @@ async function submitFanart(isAutoSubmit = false) {
       updatedAt: serverTimestamp()
     };
 
-    const fanartRef = await addDoc(
-      collection(db, "ocGameFanarts"),
-      fanartData
+    await setDoc(
+      doc(db, "ocGameFanarts", fanartId),
+      fanartData,
+      { merge: true }
     );
 
     currentFanarts = currentFanarts.filter((fanart) => {
@@ -2383,7 +2411,7 @@ async function submitFanart(isAutoSubmit = false) {
     });
 
     currentFanarts.push({
-      id: fanartRef.id,
+      id: fanartId,
       data: {
         ...fanartData,
         createdAt: { seconds: Math.floor(Date.now() / 1000) },
