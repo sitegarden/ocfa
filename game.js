@@ -3,6 +3,8 @@ import { auth, db } from "/firebase.js";
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -24,8 +26,23 @@ function setMessage(text) {
   gameMessage.textContent = text;
 }
 
-function getOwnerName(user) {
+async function getOwnerName(user) {
   if (!user) return "オーナー";
+
+  try {
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+
+      if (userData.displayName) {
+        return userData.displayName;
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
 
   return (
     user.displayName ||
@@ -77,9 +94,11 @@ async function createRoom() {
     createRoomBtn.disabled = true;
     setMessage("部屋を作成しています...");
 
+    const ownerName = await getOwnerName(currentUser);
+
     const roomRef = await addDoc(collection(db, "ocGameRooms"), {
       ownerId: currentUser.uid,
-      ownerName: getOwnerName(currentUser),
+      ownerName,
       title,
       status: "waiting",
       turnSeconds: selectedTurnSeconds,
@@ -93,7 +112,7 @@ async function createRoom() {
       roomId: roomRef.id,
       userId: currentUser.uid,
       guestId: "",
-      name: getOwnerName(currentUser),
+      name: ownerName,
       isGuest: false,
       isOwner: true,
       order: 0,
