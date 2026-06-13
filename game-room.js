@@ -53,6 +53,10 @@ let submittingOriginal = false;
 let submittingFanart = false;
 let advancingRound = false;
 
+let currentTool = "pen";
+let layerHistory = [[], []];
+const MAX_LAYER_HISTORY = 20;
+
 function escapeHtml(text) {
   return String(text)
     .replaceAll("&", "&amp;")
@@ -586,6 +590,20 @@ function renderLayerTools() {
         <input id="gamePenSize" type="range" min="1" max="24" value="5">
         <span id="gamePenSizeText">5</span>
       </label>
+    </div>
+
+    <div class="game-tool-actions">
+      <button id="penToolBtn" type="button" class="is-active">
+        ペン
+      </button>
+
+      <button id="fillToolBtn" type="button">
+        塗りつぶし
+      </button>
+
+      <button id="undoLayerBtn" type="button">
+        1つ戻る
+      </button>
     </div>
 
     <div class="game-layer-panel">
@@ -1203,6 +1221,8 @@ function initGameLayers() {
   layerContexts = [];
   activeLayerIndex = 0;
   layerVisible = [true, true];
+  currentTool = "pen";
+  layerHistory = [[], []];
 
   for (let i = 0; i < 2; i++) {
     const layer = createLayerCanvas();
@@ -1263,7 +1283,38 @@ function setupLayerButtons() {
   const toggleLayerBtn = document.getElementById("toggleLayerBtn");
   const clearLayerBtn = document.getElementById("clearLayerBtn");
   const gamePenSize = document.getElementById("gamePenSize");
-const gamePenSizeText = document.getElementById("gamePenSizeText");
+  const gamePenSizeText = document.getElementById("gamePenSizeText");
+  const penToolBtn = document.getElementById("penToolBtn");
+  const fillToolBtn = document.getElementById("fillToolBtn");
+  const undoLayerBtn = document.getElementById("undoLayerBtn");
+
+  function updateToolButtons() {
+    if (penToolBtn) {
+      penToolBtn.classList.toggle("is-active", currentTool === "pen");
+    }
+
+    if (fillToolBtn) {
+      fillToolBtn.classList.toggle("is-active", currentTool === "fill");
+    }
+  }
+
+  if (penToolBtn) {
+    penToolBtn.addEventListener("click", () => {
+      currentTool = "pen";
+      updateToolButtons();
+    });
+  }
+
+  if (fillToolBtn) {
+    fillToolBtn.addEventListener("click", () => {
+      currentTool = "fill";
+      updateToolButtons();
+    });
+  }
+
+  if (undoLayerBtn) {
+    undoLayerBtn.addEventListener("click", undoActiveLayer);
+  }
 
   if (layerBtn0) {
     layerBtn0.addEventListener("click", () => {
@@ -1295,6 +1346,8 @@ const gamePenSizeText = document.getElementById("gamePenSizeText");
 
       if (!targetCtx) return;
 
+      saveActiveLayerHistory();
+
       targetCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
       redrawGameCanvas();
       updateLayerUi();
@@ -1302,12 +1355,14 @@ const gamePenSizeText = document.getElementById("gamePenSizeText");
   }
 
   if (gamePenSize && gamePenSizeText) {
-  gamePenSizeText.textContent = gamePenSize.value;
-
-  gamePenSize.addEventListener("input", () => {
     gamePenSizeText.textContent = gamePenSize.value;
-  });
-}
+
+    gamePenSize.addEventListener("input", () => {
+      gamePenSizeText.textContent = gamePenSize.value;
+    });
+  }
+
+  updateToolButtons();
 }
 
 function initGameCanvas() {
@@ -1348,6 +1403,13 @@ function startGameDraw(e) {
   }
 
   const point = getGamePoint(e);
+
+  if (currentTool === "fill") {
+    fillActiveLayer(point.x, point.y);
+    return;
+  }
+
+  saveActiveLayerHistory();
 
   gameDrawing = true;
   gameLastX = point.x;
@@ -1731,4 +1793,158 @@ async function getOcfaDisplayName(user) {
     user.email?.split("@")[0] ||
     "参加者"
   );
+}
+
+function saveActiveLayerHistory() {
+  const targetCtx = getActiveLayerCtx();
+
+  if (!targetCtx || !gameCanvas) return;
+
+  const imageData = targetCtx.getImageData(
+    0,
+    0,
+    gameCanvas.width,
+    gameCanvas.height
+  );
+
+  layerHistory[activeLayerIndex].push(imageData);
+
+  if (layerHistory[activeLayerIndex].length > MAX_LAYER_HISTORY) {
+    layerHistory[activeLayerIndex].shift();
+  }
+}
+
+function undoActiveLayer() {
+  const targetCtx = getActiveLayerCtx();
+  const history = layerHistory[activeLayerIndex];
+
+  if (!targetCtx || !history || history.length === 0) {
+    const roomMessage = document.getElementById("roomMessage");
+
+    if (roomMessage) {
+      roomMessage.textContent = "これ以上戻れません。";
+    }
+
+    return;
+  }
+
+  const previousImage = history.pop();
+
+  targetCtx.putImageData(previousImage, 0, 0);
+  redrawGameCanvas();
+  updateLayerUi();
+}
+
+function hexToRgba(hex) {
+  const cleanHex = hex.replace("#", "");
+
+  const r = parseInt(cleanHex.slice(0, 2), 16);
+  const g = parseInt(cleanHex.slice(2, 4), 16);
+  const b = parseInt(cleanHex.slice(4, 6), 16);
+
+  return [r, g, b, 255];
+}
+
+function colorsClose(data, index, targetColor, tolerance = 24) {
+  return Math.abs(data[index] - targetColor[0]) <= tolerance
+    && Math.abs(data[index + 1] - targetColor[1]) <= tolerance
+    && Math.abs(data[index + 2] - targetColor[2]) <= tolerance
+    && Math.abs(data[index + 3] - targetColor[3]) <= tolerance;
+}
+
+function fillActiveLayer(startX, startY) {
+  const targetCtx = getActiveLayerCtx();
+  const colorInput = document.getElementById("gamePenColor");
+
+  if (!targetCtx || !gameCanvas || !gameCtx) return;
+
+  if (!layerVisible[activeLayerIndex]) {
+    const roomMessage = document.getElementById("roomMessage");
+
+    if (roomMessage) {
+      roomMessage.textContent = "非表示中のレイヤーには塗りつぶしできません。";
+    }
+
+    return;
+  }
+
+  saveActiveLayerHistory();
+
+  redrawGameCanvas();
+
+  const width = gameCanvas.width;
+  const height = gameCanvas.height;
+
+  const x = Math.floor(startX);
+  const y = Math.floor(startY);
+
+  if (x < 0 || y < 0 || x >= width || y >= height) return;
+
+  const baseImage = gameCtx.getImageData(0, 0, width, height);
+  const baseData = baseImage.data;
+
+  const layerImage = targetCtx.getImageData(0, 0, width, height);
+  const layerData = layerImage.data;
+
+  const fillColor = hexToRgba(colorInput?.value || "#2b2430");
+
+  const startIndex = (y * width + x) * 4;
+  const targetColor = [
+    baseData[startIndex],
+    baseData[startIndex + 1],
+    baseData[startIndex + 2],
+    baseData[startIndex + 3]
+  ];
+
+  if (
+    Math.abs(targetColor[0] - fillColor[0]) < 3
+    && Math.abs(targetColor[1] - fillColor[1]) < 3
+    && Math.abs(targetColor[2] - fillColor[2]) < 3
+  ) {
+    return;
+  }
+
+  const stack = [[x, y]];
+  const visited = new Uint8Array(width * height);
+
+  while (stack.length > 0) {
+    const [currentX, currentY] = stack.pop();
+
+    if (
+      currentX < 0 ||
+      currentY < 0 ||
+      currentX >= width ||
+      currentY >= height
+    ) {
+      continue;
+    }
+
+    const pixelIndex = currentY * width + currentX;
+
+    if (visited[pixelIndex]) continue;
+
+    visited[pixelIndex] = 1;
+
+    const dataIndex = pixelIndex * 4;
+
+    if (!colorsClose(baseData, dataIndex, targetColor)) {
+      continue;
+    }
+
+    layerData[dataIndex] = fillColor[0];
+    layerData[dataIndex + 1] = fillColor[1];
+    layerData[dataIndex + 2] = fillColor[2];
+    layerData[dataIndex + 3] = fillColor[3];
+
+    stack.push([currentX + 1, currentY]);
+    stack.push([currentX - 1, currentY]);
+    stack.push([currentX, currentY + 1]);
+    stack.push([currentX, currentY - 1]);
+  }
+
+  targetCtx.putImageData(layerImage, 0, 0);
+
+  gameHasDrawn = true;
+
+  redrawGameCanvas();
 }
