@@ -598,6 +598,10 @@ function renderLayerTools() {
         ペン
       </button>
 
+      <button id="eraserToolBtn" type="button">
+        消しゴム
+      </button>
+
       <button id="fillToolBtn" type="button">
         塗りつぶし
       </button>
@@ -1286,12 +1290,17 @@ function setupLayerButtons() {
   const gamePenSize = document.getElementById("gamePenSize");
   const gamePenSizeText = document.getElementById("gamePenSizeText");
   const penToolBtn = document.getElementById("penToolBtn");
+  const eraserToolBtn = document.getElementById("eraserToolBtn");
   const fillToolBtn = document.getElementById("fillToolBtn");
   const undoLayerBtn = document.getElementById("undoLayerBtn");
 
   function updateToolButtons() {
     if (penToolBtn) {
       penToolBtn.classList.toggle("is-active", currentTool === "pen");
+    }
+
+    if (eraserToolBtn) {
+      eraserToolBtn.classList.toggle("is-active", currentTool === "eraser");
     }
 
     if (fillToolBtn) {
@@ -1302,6 +1311,13 @@ function setupLayerButtons() {
   if (penToolBtn) {
     penToolBtn.addEventListener("click", () => {
       currentTool = "pen";
+      updateToolButtons();
+    });
+  }
+
+  if (eraserToolBtn) {
+    eraserToolBtn.addEventListener("click", () => {
+      currentTool = "eraser";
       updateToolButtons();
     });
   }
@@ -1430,15 +1446,26 @@ function drawGameCanvas(e) {
 
   if (!targetCtx) return;
 
+  targetCtx.save();
+
   targetCtx.lineCap = "round";
   targetCtx.lineJoin = "round";
-  targetCtx.strokeStyle = gamePenColor?.value || "#2b2430";
   targetCtx.lineWidth = Number(gamePenSize?.value || 5);
+
+  if (currentTool === "eraser") {
+    targetCtx.globalCompositeOperation = "destination-out";
+    targetCtx.strokeStyle = "rgba(0, 0, 0, 1)";
+  } else {
+    targetCtx.globalCompositeOperation = "source-over";
+    targetCtx.strokeStyle = gamePenColor?.value || "#2b2430";
+  }
 
   targetCtx.beginPath();
   targetCtx.moveTo(gameLastX, gameLastY);
   targetCtx.lineTo(point.x, point.y);
   targetCtx.stroke();
+
+  targetCtx.restore();
 
   gameLastX = point.x;
   gameLastY = point.y;
