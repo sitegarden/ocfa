@@ -35,6 +35,8 @@ let unsubscribeFanarts = null;
 let hasStartedListening = false;
 
 let advancingToFa = false;
+let advancingRound = false;
+let isRenderingRoom = false;
 
 let gameCanvas = null;
 let gameCtx = null;
@@ -49,13 +51,13 @@ let activeLayerIndex = 0;
 let layerVisible = [true, true];
 
 let originalTimerId = null;
+let fanartTimerId = null;
 let submittingOriginal = false;
 let submittingFanart = false;
-let advancingRound = false;
-let isRenderingRoom = false;
 
 let currentTool = "pen";
 let layerHistory = [[], []];
+
 const MAX_LAYER_HISTORY = 20;
 
 function escapeHtml(text) {
@@ -83,27 +85,33 @@ function getStatusLabel(status) {
   if (status === "waiting") return "待機中";
   if (status === "drawing_oc") return "OC作成中";
   if (status === "drawing_fa") return "FA作成中";
-  if (status === "reveal") return "公開中";
+  if (status === "reveal") return "結果発表";
   if (status === "finished") return "終了";
+
   return "不明";
 }
 
 function getMyPlayer() {
   if (currentUser) {
     return currentPlayers.find((player) => {
-      return player.data.userId === currentUser.uid && player.data.isLeft !== true;
+      return player.data.userId === currentUser.uid
+        && player.data.isLeft !== true;
     });
   }
 
   const guestId = getGuestId();
 
   return currentPlayers.find((player) => {
-    return player.data.guestId === guestId && player.data.isLeft !== true;
+    return player.data.guestId === guestId
+      && player.data.isLeft !== true;
   });
 }
 
 function isOwner() {
-  return currentUser && currentRoom?.data?.ownerId === currentUser.uid;
+  return Boolean(
+    currentUser
+    && currentRoom?.data?.ownerId === currentUser.uid
+  );
 }
 
 async function getRoom() {
@@ -195,7 +203,8 @@ function getAutoGuestName() {
 
 function getSubmittedOriginalByPlayerId(playerId) {
   return currentOriginals.find((original) => {
-    return original.data.playerId === playerId;
+    return original.data.playerId === playerId
+      && original.data.isDeleted !== true;
   });
 }
 
@@ -218,7 +227,8 @@ function getTargetPlayerForCurrentRound(myPlayer) {
 
 function getOriginalByPlayerId(playerId) {
   return currentOriginals.find((original) => {
-    return original.data.playerId === playerId;
+    return original.data.playerId === playerId
+      && original.data.isDeleted !== true;
   });
 }
 
@@ -254,6 +264,7 @@ async function checkAllOriginalsSubmitted() {
     await updateDoc(doc(db, "ocGameRooms", roomId), {
       status: "drawing_fa",
       currentRound: 0,
+      roundStartedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
   } catch (error) {
@@ -314,6 +325,7 @@ async function checkAllFanartsSubmitted() {
 
     await updateDoc(doc(db, "ocGameRooms", roomId), {
       currentRound: nextRound,
+      roundStartedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
 
@@ -331,12 +343,26 @@ async function joinAsGuest() {
   const alreadyJoined = getMyPlayer();
 
   if (alreadyJoined) {
-    if (message) message.textContent = "すでに参加しています。";
+    if (message) {
+      message.textContent = "すでに参加しています。";
+    }
+
+    return;
+  }
+
+  if (currentRoom.data.status !== "waiting") {
+    if (message) {
+      message.textContent = "この部屋はすでに開始されています。";
+    }
+
     return;
   }
 
   if (currentPlayers.length >= currentRoom.data.maxPlayers) {
-    if (message) message.textContent = "この部屋は満員です。";
+    if (message) {
+      message.textContent = "この部屋は満員です。";
+    }
+
     return;
   }
 
@@ -344,7 +370,9 @@ async function joinAsGuest() {
   const guestId = getGuestId();
 
   try {
-    if (message) message.textContent = "参加しています...";
+    if (message) {
+      message.textContent = "参加しています...";
+    }
 
     await addDoc(collection(db, "ocGamePlayers"), {
       roomId,
@@ -359,10 +387,15 @@ async function joinAsGuest() {
       updatedAt: serverTimestamp()
     });
 
-    if (message) message.textContent = "参加しました。";
+    if (message) {
+      message.textContent = "参加しました。";
+    }
   } catch (error) {
     console.error(error);
-    if (message) message.textContent = "参加に失敗しました。";
+
+    if (message) {
+      message.textContent = "参加に失敗しました。";
+    }
   }
 }
 
@@ -370,26 +403,45 @@ async function joinAsLoginUser() {
   const message = document.getElementById("roomMessage");
 
   if (!currentUser) {
-    if (message) message.textContent = "ログインしていません。";
+    if (message) {
+      message.textContent = "ログインしていません。";
+    }
+
     return;
   }
 
   const alreadyJoined = getMyPlayer();
 
   if (alreadyJoined) {
-    if (message) message.textContent = "すでに参加しています。";
+    if (message) {
+      message.textContent = "すでに参加しています。";
+    }
+
+    return;
+  }
+
+  if (currentRoom.data.status !== "waiting") {
+    if (message) {
+      message.textContent = "この部屋はすでに開始されています。";
+    }
+
     return;
   }
 
   if (currentPlayers.length >= currentRoom.data.maxPlayers) {
-    if (message) message.textContent = "この部屋は満員です。";
+    if (message) {
+      message.textContent = "この部屋は満員です。";
+    }
+
     return;
   }
 
   const name = await getOcfaDisplayName(currentUser);
 
   try {
-    if (message) message.textContent = "参加しています...";
+    if (message) {
+      message.textContent = "参加しています...";
+    }
 
     await addDoc(collection(db, "ocGamePlayers"), {
       roomId,
@@ -404,10 +456,15 @@ async function joinAsLoginUser() {
       updatedAt: serverTimestamp()
     });
 
-    if (message) message.textContent = "参加しました。";
+    if (message) {
+      message.textContent = "参加しました。";
+    }
   } catch (error) {
     console.error(error);
-    if (message) message.textContent = "参加に失敗しました。";
+
+    if (message) {
+      message.textContent = "参加に失敗しました。";
+    }
   }
 }
 
@@ -415,17 +472,39 @@ async function startGame() {
   const message = document.getElementById("roomMessage");
 
   if (!isOwner()) {
-    if (message) message.textContent = "ゲーム開始はオーナーのみできます。";
+    if (message) {
+      message.textContent = "ゲーム開始はオーナーのみできます。";
+    }
+
+    return;
+  }
+
+  if (currentRoom.data.status !== "waiting") {
+    if (message) {
+      message.textContent = "この部屋はすでに開始されています。";
+    }
+
     return;
   }
 
   if (currentPlayers.length < 2) {
-    if (message) message.textContent = "2人以上集まると開始できます。";
+    if (message) {
+      message.textContent = "2人以上集まると開始できます。";
+    }
+
     return;
   }
 
+  const ok = confirm(
+    `現在の参加者は${currentPlayers.length}人です。\nこの人数でゲームを開始しますか？`
+  );
+
+  if (!ok) return;
+
   try {
-    if (message) message.textContent = "ゲームを開始しています...";
+    if (message) {
+      message.textContent = "ゲームを開始しています...";
+    }
 
     await updateDoc(doc(db, "ocGameRooms", roomId), {
       status: "drawing_oc",
@@ -434,7 +513,10 @@ async function startGame() {
     });
   } catch (error) {
     console.error(error);
-    if (message) message.textContent = "ゲーム開始に失敗しました。";
+
+    if (message) {
+      message.textContent = "ゲーム開始に失敗しました。";
+    }
   }
 }
 
@@ -457,6 +539,7 @@ function renderPlayers() {
             <article class="player-card">
               <div>
                 <strong>${escapeHtml(data.name || "匿名")}</strong>
+
                 <p class="mini-info">
                   ${
                     data.isOwner
@@ -732,6 +815,7 @@ function renderRevealArea() {
     <section class="panel">
       <p class="eyebrow">Result</p>
       <h2>結果発表</h2>
+
       <p>
         全ラウンドが終了しました。
         キャラごとに、みんなが描いたファンアートを表示しています。
@@ -757,7 +841,10 @@ function renderRevealArea() {
                 original
                   ? `
                     <div class="game-result-original">
-                      <img src="${original.data.imageData}" alt="${escapeHtml(player.data.name || "匿名")}さんのOC">
+                      <img
+                        src="${original.data.imageData}"
+                        alt="${escapeHtml(player.data.name || "匿名")}さんのOC"
+                      >
                     </div>
                   `
                   : `
@@ -778,8 +865,11 @@ function renderRevealArea() {
                               <img src="${fanart.data.imageData}" alt="FA">
 
                               <p>
-  by ${escapeHtml(getPlayerNameById(fanart.data.artistPlayerId, fanart.data.artistName))}
-</p>
+                                by ${escapeHtml(getPlayerNameById(
+                                  fanart.data.artistPlayerId,
+                                  fanart.data.artistName
+                                ))}
+                              </p>
                             </article>
                           `;
                         })
@@ -787,7 +877,7 @@ function renderRevealArea() {
                     </div>
                   `
                   : `
-                    <p class="mini-info">FAがまだありません。</p>
+                    <p class="mini-info">FAがありません。</p>
                   `
               }
             </section>
@@ -797,8 +887,6 @@ function renderRevealArea() {
     </div>
   `;
 }
-
-
 
 async function renderGameStageArea() {
   if (!currentRoom) {
@@ -886,7 +974,9 @@ async function renderGameStageArea() {
         <h2>${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCを描く</h2>
 
         <p class="mini-info">
-          Round ${Number(currentRoom.data.currentRound || 0) + 1} / ${Math.max(1, currentPlayers.length - 1)}
+          Round ${Number(currentRoom.data.currentRound || 0) + 1}
+          /
+          ${Math.max(1, currentPlayers.length - 1)}
         </p>
 
         <div class="game-target-oc">
@@ -902,8 +992,16 @@ async function renderGameStageArea() {
 
         <p class="mini-info">
           描いた内容はこの端末に自動保存されます。
-          画面が更新されても、同じ端末なら復元される場合があります。
+          時間切れになった場合も、保存されている絵があればそれを提出します。
         </p>
+
+        <div class="game-timer-box">
+          <p id="fanartTimerText" class="game-timer">残り時間：--:--</p>
+
+          <div class="game-timer-meter">
+            <span id="fanartTimerBar"></span>
+          </div>
+        </div>
 
         ${renderLayerTools()}
 
@@ -944,7 +1042,11 @@ async function renderGameStageArea() {
       <section class="panel">
         <p class="eyebrow">Your OC</p>
         <h2>OC提出済み</h2>
-        <p>あなたのOCは提出済みです。全員の提出が終わるまで待ってください。</p>
+
+        <p>
+          あなたのOCは提出済みです。
+          全員の提出が終わるまで待ってください。
+        </p>
 
         <div class="submitted-oc-preview">
           <img src="${submitted.data.imageData}" alt="提出したOC">
@@ -1044,7 +1146,7 @@ async function renderRoom() {
 
       <p class="mini-info">
         参加者 ${currentPlayers.length} / ${room.maxPlayers}人　
-        1ターン ${Math.floor(room.turnSeconds / 60)}分
+        1ターン ${Math.floor(Number(room.turnSeconds || 120) / 60)}分
       </p>
 
       <p class="mini-info">
@@ -1069,6 +1171,7 @@ async function renderRoom() {
         <button id="copyRoomUrlBtn" class="ghost-btn" type="button">
           部屋URLをコピー
         </button>
+
         <a class="ghost-btn" href="/games/">ゲームトップへ戻る</a>
       </div>
     </section>
@@ -1152,8 +1255,13 @@ async function renderRoom() {
 
     initGameCanvas();
     loadGameDraft("fa");
+    startFanartAutoSubmitTimer();
 
-    submitFanartBtn.addEventListener("click", submitFanart);
+    submitFanartBtn.addEventListener("click", () => {
+      submitFanart(false);
+    });
+  } else {
+    clearFanartTimer();
   }
 
   if (cancelOriginalBtn) {
@@ -1285,6 +1393,9 @@ function renderNoRoomId() {
 }
 
 function renderNotFound() {
+  clearOriginalTimer();
+  clearFanartTimer();
+
   gameRoomContent.innerHTML = `
     <section class="panel">
       <h1>部屋が見つかりませんでした</h1>
@@ -1332,15 +1443,15 @@ function startRealtimeListeners() {
 
       const previousRoomData = currentRoom?.data || null;
 
-currentRoom = {
-  id: snap.id,
-  data
-};
+      currentRoom = {
+        id: snap.id,
+        data
+      };
 
-await checkAllOriginalsSubmitted();
-await checkAllFanartsSubmitted();
+      await checkAllOriginalsSubmitted();
+      await checkAllFanartsSubmitted();
 
-await safeRenderRoom(previousRoomData);
+      await safeRenderRoom(previousRoomData);
     },
     (error) => {
       renderError(error);
@@ -1382,9 +1493,9 @@ await safeRenderRoom(previousRoomData);
       await checkAllOriginalsSubmitted();
       await checkAllFanartsSubmitted();
 
-if (currentRoom) {
-  await safeRenderRoom();
-}
+      if (currentRoom) {
+        await safeRenderRoom();
+      }
     },
     (error) => {
       renderError(error);
@@ -1415,8 +1526,8 @@ if (currentRoom) {
       await checkAllFanartsSubmitted();
 
       if (currentRoom) {
-  await safeRenderRoom();
-}
+        await safeRenderRoom();
+      }
     },
     (error) => {
       renderError(error);
@@ -1446,8 +1557,8 @@ if (currentRoom) {
       await checkAllFanartsSubmitted();
 
       if (currentRoom) {
-  await safeRenderRoom();
-}
+        await safeRenderRoom();
+      }
     },
     (error) => {
       renderError(error);
@@ -1611,6 +1722,7 @@ function setupLayerButtons() {
       layerVisible[activeLayerIndex] = !layerVisible[activeLayerIndex];
 
       redrawGameCanvas();
+      gameHasDrawn = true;
       saveCurrentGameDraft();
       updateLayerUi();
     });
@@ -1667,6 +1779,7 @@ function initGameCanvas() {
   gameCanvas.addEventListener("touchstart", startGameDraw, { passive: false });
   gameCanvas.addEventListener("touchmove", drawGameCanvas, { passive: false });
   gameCanvas.addEventListener("touchend", stopGameDraw);
+  gameCanvas.addEventListener("touchcancel", stopGameDraw);
 
   setupLayerButtons();
 }
@@ -1744,6 +1857,7 @@ function stopGameDraw() {
   if (!gameDrawing) return;
 
   gameDrawing = false;
+  saveCurrentGameDraft();
 }
 
 function addWatermarkToGameCanvas(name) {
@@ -1785,6 +1899,10 @@ function getCurrentDraftType() {
 }
 
 function saveCurrentGameDraft() {
+  const status = currentRoom?.data?.status;
+
+  if (status !== "drawing_oc" && status !== "drawing_fa") return;
+
   saveGameDraft(getCurrentDraftType());
 }
 
@@ -1864,24 +1982,49 @@ function clearOriginalTimer() {
   }
 }
 
-function getRoomStartedMs() {
-  const startedAt = currentRoom?.data?.startedAt;
+function clearFanartTimer() {
+  if (fanartTimerId) {
+    clearInterval(fanartTimerId);
+    fanartTimerId = null;
+  }
+}
 
-  if (!startedAt) return Date.now();
+function getTimestampMs(value) {
+  if (!value) return Date.now();
 
-  if (typeof startedAt.toMillis === "function") {
-    return startedAt.toMillis();
+  if (typeof value.toMillis === "function") {
+    return value.toMillis();
   }
 
-  if (startedAt.seconds) {
-    return startedAt.seconds * 1000;
+  if (value.seconds) {
+    return value.seconds * 1000;
   }
 
   return Date.now();
 }
 
+function getRoomStartedMs() {
+  return getTimestampMs(currentRoom?.data?.startedAt);
+}
+
+function getRoundStartedMs() {
+  return getTimestampMs(
+    currentRoom?.data?.roundStartedAt ||
+    currentRoom?.data?.updatedAt ||
+    currentRoom?.data?.startedAt
+  );
+}
+
 function getOriginalRemainingSeconds() {
   const startedMs = getRoomStartedMs();
+  const turnSeconds = Number(currentRoom?.data?.turnSeconds || 120);
+  const endMs = startedMs + turnSeconds * 1000;
+
+  return Math.max(0, Math.ceil((endMs - Date.now()) / 1000));
+}
+
+function getFanartRemainingSeconds() {
+  const startedMs = getRoundStartedMs();
   const turnSeconds = Number(currentRoom?.data?.turnSeconds || 120);
   const endMs = startedMs + turnSeconds * 1000;
 
@@ -1895,7 +2038,7 @@ function formatTimer(seconds) {
   return `${min}:${String(sec).padStart(2, "0")}`;
 }
 
-function drawTimeUpCard(name) {
+function drawTimeUpCard(name, label = "OC") {
   if (!gameCtx || !gameCanvas) return;
 
   layerCanvases.forEach((layerCanvas) => {
@@ -1919,9 +2062,29 @@ function drawTimeUpCard(name) {
   gameCtx.fillText("時間切れ", gameCanvas.width / 2, gameCanvas.height / 2 - 28);
 
   gameCtx.font = "bold 24px sans-serif";
-  gameCtx.fillText(`${name || "匿名"} のOC`, gameCanvas.width / 2, gameCanvas.height / 2 + 28);
+  gameCtx.fillText(`${name || "匿名"} の${label}`, gameCanvas.width / 2, gameCanvas.height / 2 + 28);
 
   gameCtx.restore();
+
+  gameHasDrawn = true;
+}
+
+function updateTimerDisplay(timerText, timerBar, remaining, turnSeconds) {
+  const percent =
+    turnSeconds > 0
+      ? Math.max(0, Math.min(100, (remaining / turnSeconds) * 100))
+      : 0;
+
+  if (timerText) {
+    timerText.textContent = `残り時間：${formatTimer(remaining)}`;
+  }
+
+  if (timerBar) {
+    timerBar.style.width = `${percent}%`;
+
+    timerBar.classList.toggle("is-danger", remaining <= 10);
+    timerBar.classList.toggle("is-warning", remaining <= 30 && remaining > 10);
+  }
 }
 
 function startOriginalAutoSubmitTimer() {
@@ -1934,21 +2097,7 @@ function startOriginalAutoSubmitTimer() {
     const remaining = getOriginalRemainingSeconds();
     const turnSeconds = Number(currentRoom?.data?.turnSeconds || 120);
 
-    const percent =
-      turnSeconds > 0
-        ? Math.max(0, Math.min(100, (remaining / turnSeconds) * 100))
-        : 0;
-
-    if (timerText) {
-      timerText.textContent = `残り時間：${formatTimer(remaining)}`;
-    }
-
-    if (timerBar) {
-      timerBar.style.width = `${percent}%`;
-
-      timerBar.classList.toggle("is-danger", remaining <= 10);
-      timerBar.classList.toggle("is-warning", remaining <= 30 && remaining > 10);
-    }
+    updateTimerDisplay(timerText, timerBar, remaining, turnSeconds);
 
     if (remaining <= 0) {
       clearOriginalTimer();
@@ -1962,6 +2111,34 @@ function startOriginalAutoSubmitTimer() {
   tick();
 
   originalTimerId = setInterval(() => {
+    tick();
+  }, 1000);
+}
+
+function startFanartAutoSubmitTimer() {
+  clearFanartTimer();
+
+  const timerText = document.getElementById("fanartTimerText");
+  const timerBar = document.getElementById("fanartTimerBar");
+
+  async function tick() {
+    const remaining = getFanartRemainingSeconds();
+    const turnSeconds = Number(currentRoom?.data?.turnSeconds || 120);
+
+    updateTimerDisplay(timerText, timerBar, remaining, turnSeconds);
+
+    if (remaining <= 0) {
+      clearFanartTimer();
+
+      if (!submittingFanart) {
+        await submitFanart(true);
+      }
+    }
+  }
+
+  tick();
+
+  fanartTimerId = setInterval(() => {
     tick();
   }, 1000);
 }
@@ -2030,7 +2207,7 @@ async function submitOriginalOc(isAutoSubmit = false) {
     }
 
     if (isAutoSubmit && !gameHasDrawn) {
-      drawTimeUpCard(myPlayer.data.name || "匿名");
+      drawTimeUpCard(myPlayer.data.name || "匿名", "OC");
     } else {
       redrawGameCanvas();
     }
@@ -2096,7 +2273,7 @@ async function submitOriginalOc(isAutoSubmit = false) {
   }
 }
 
-async function submitFanart() {
+async function submitFanart(isAutoSubmit = false) {
   const message = document.getElementById("roomMessage");
   const submitFanartBtn = document.getElementById("submitFanartBtn");
 
@@ -2130,7 +2307,7 @@ async function submitFanart() {
     }
   }
 
-  if (!gameHasDrawn) {
+  if (!gameHasDrawn && !isAutoSubmit) {
     if (message) {
       message.textContent = "提出する前にFAを描いてください。";
     }
@@ -2141,10 +2318,13 @@ async function submitFanart() {
   const alreadySubmitted = getMyFanartForCurrentRound(myPlayer, targetPlayer);
 
   if (alreadySubmitted) {
+    clearFanartTimer();
+
     if (message) {
       message.textContent = "このターンのFAは提出済みです。";
     }
 
+    await renderRoom();
     return;
   }
 
@@ -2156,10 +2336,17 @@ async function submitFanart() {
     }
 
     if (message) {
-      message.textContent = "FAを提出しています...";
+      message.textContent = isAutoSubmit
+        ? "時間になったため、FAを自動提出しています..."
+        : "FAを提出しています...";
     }
 
-    redrawGameCanvas();
+    if (isAutoSubmit && !gameHasDrawn) {
+      drawTimeUpCard(myPlayer.data.name || "匿名", "FA");
+    } else {
+      redrawGameCanvas();
+    }
+
     addWatermarkToGameCanvas(myPlayer.data.name || "匿名");
 
     const imageData = getGameCanvasImageData();
@@ -2175,8 +2362,8 @@ async function submitFanart() {
       targetPlayerId: targetPlayer.id,
       targetName: targetPlayer.data.name || "匿名",
       imageData,
-      hasDrawn: true,
-      isAutoSubmit: false,
+      hasDrawn: gameHasDrawn,
+      isAutoSubmit,
       isDeleted: false,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
@@ -2204,11 +2391,13 @@ async function submitFanart() {
       }
     });
 
+    clearFanartTimer();
     clearGameDraft("fa");
 
     if (message) {
-      message.textContent =
-        "FAを提出しました。ほかの人の提出を待っています。";
+      message.textContent = isAutoSubmit
+        ? "時間切れのため、FAを自動提出しました。"
+        : "FAを提出しました。ほかの人の提出を待っています。";
     }
 
     await renderRoom();
@@ -2436,7 +2625,7 @@ function getCurrentTurnRemainingSeconds() {
   }
 
   if (currentRoom.data.status === "drawing_fa") {
-    return 9999;
+    return getFanartRemainingSeconds();
   }
 
   return 9999;
