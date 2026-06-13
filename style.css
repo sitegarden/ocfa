@@ -3912,3 +3912,38 @@ textarea {
     padding: 8px 6px;
   }
 }
+
+/* =========================
+   Game result fanarts
+========================= */
+
+.game-result-fanarts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.game-result-fanart-card {
+  min-width: 0;
+}
+
+.game-result-fanart-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+}
+
+/* PCだけ3列にする */
+@media (min-width: 900px) {
+  .game-result-fanarts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* スマホは2列維持 */
+@media (max-width: 640px) {
+  .game-result-fanarts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
