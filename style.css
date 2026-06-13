@@ -3843,3 +3843,38 @@ textarea {
     background: #fffdf8;
   }
 }
+
+
+.game-tool-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.game-tool-actions button {
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.game-tool-actions button.is-active {
+  background: var(--accent);
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .game-tool-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .game-tool-actions button {
+    width: 100%;
+    padding: 8px 6px;
+  }
+}
