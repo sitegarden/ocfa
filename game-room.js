@@ -52,6 +52,7 @@ let originalTimerId = null;
 let submittingOriginal = false;
 let submittingFanart = false;
 let advancingRound = false;
+let isRenderingRoom = false;
 
 let currentTool = "pen";
 let layerHistory = [[], []];
@@ -550,6 +551,65 @@ function renderJoinArea() {
       }
     </section>
   `;
+}
+
+function isDrawingCanvasVisible() {
+  return Boolean(document.getElementById("gameCanvas"));
+}
+
+function shouldProtectCanvasFromRealtimeRender(previousRoomData = null) {
+  if (!currentRoom) return false;
+
+  const status = currentRoom.data.status;
+
+  if (status !== "drawing_oc" && status !== "drawing_fa") {
+    return false;
+  }
+
+  if (!isDrawingCanvasVisible()) {
+    return false;
+  }
+
+  if (submittingOriginal || submittingFanart) {
+    return false;
+  }
+
+  if (previousRoomData) {
+    const previousStatus = previousRoomData.status;
+    const currentStatus = currentRoom.data.status;
+
+    const previousRound = Number(previousRoomData.currentRound || 0);
+    const currentRound = Number(currentRoom.data.currentRound || 0);
+
+    if (previousStatus !== currentStatus) {
+      return false;
+    }
+
+    if (previousRound !== currentRound) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+async function safeRenderRoom(previousRoomData = null) {
+  if (!currentRoom) return;
+
+  if (shouldProtectCanvasFromRealtimeRender(previousRoomData)) {
+    return;
+  }
+
+  if (isRenderingRoom) {
+    return;
+  }
+
+  try {
+    isRenderingRoom = true;
+    await renderRoom();
+  } finally {
+    isRenderingRoom = false;
+  }
 }
 
 function renderOwnerArea() {
@@ -1270,15 +1330,17 @@ function startRealtimeListeners() {
         return;
       }
 
-      currentRoom = {
-        id: snap.id,
-        data
-      };
+      const previousRoomData = currentRoom?.data || null;
 
-      await checkAllOriginalsSubmitted();
-      await checkAllFanartsSubmitted();
+currentRoom = {
+  id: snap.id,
+  data
+};
 
-      await renderRoom();
+await checkAllOriginalsSubmitted();
+await checkAllFanartsSubmitted();
+
+await safeRenderRoom(previousRoomData);
     },
     (error) => {
       renderError(error);
@@ -1320,9 +1382,9 @@ function startRealtimeListeners() {
       await checkAllOriginalsSubmitted();
       await checkAllFanartsSubmitted();
 
-      if (currentRoom) {
-        await renderRoom();
-      }
+if (currentRoom) {
+  await safeRenderRoom();
+}
     },
     (error) => {
       renderError(error);
@@ -1353,8 +1415,8 @@ function startRealtimeListeners() {
       await checkAllFanartsSubmitted();
 
       if (currentRoom) {
-        await renderRoom();
-      }
+  await safeRenderRoom();
+}
     },
     (error) => {
       renderError(error);
@@ -1384,8 +1446,8 @@ function startRealtimeListeners() {
       await checkAllFanartsSubmitted();
 
       if (currentRoom) {
-        await renderRoom();
-      }
+  await safeRenderRoom();
+}
     },
     (error) => {
       renderError(error);
