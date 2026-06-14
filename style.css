@@ -5377,3 +5377,17 @@ textarea {
     border-radius: 20px;
   }
 }
+
+/* mypage / public setting */
+.mypage-public-setting {
+  margin: 14px 0;
+}
+
+.mypage-public-setting button {
+  margin-top: 8px;
+}
+
+.disabled-link {
+  opacity: 0.65;
+  pointer-events: none;
+}
