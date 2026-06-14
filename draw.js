@@ -214,17 +214,6 @@ function restoreImage(dataUrl) {
   img.src = dataUrl;
 }
 
-function getPoint(e) {
-  const rect = canvas.getBoundingClientRect();
-  const source = e.touches ? e.touches[0] : e;
-
-  return {
-    x: ((source.clientX - rect.left) / rect.width) * canvas.width,
-    y: ((source.clientY - rect.top) / rect.height) * canvas.height,
-    pressure: getPressure(e)
-  };
-}
-
 function getPressure(e) {
   if (!pressureToggle?.checked) return 1;
 
@@ -939,7 +928,7 @@ try {
   if (drawingList) {
     drawingList.innerHTML = `
       <p class="mini-info">
-        ログイン状態を確認しています...
+        draw.jsを読み込みました。ログイン状態を確認しています...
       </p>
     `;
   }
@@ -953,7 +942,11 @@ try {
   setupCanvasEvents();
   setupLayerEvents();
 
+  let authReady = false;
+
   onAuthStateChanged(auth, async () => {
+    authReady = true;
+
     try {
       await loadDrawings();
     } catch (error) {
@@ -968,6 +961,32 @@ try {
       }
     }
   });
+
+  setTimeout(async () => {
+    if (authReady) return;
+
+    try {
+      if (drawingList) {
+        drawingList.innerHTML = `
+          <p class="mini-info">
+            ログイン確認に時間がかかっています。下書きを確認しています...
+          </p>
+        `;
+      }
+
+      await loadDrawings();
+    } catch (error) {
+      console.error(error);
+
+      if (drawingList) {
+        drawingList.innerHTML = `
+          <p class="mini-info">
+            下書きの読み込みに失敗しました。ページを再読み込みしてみてください。
+          </p>
+        `;
+      }
+    }
+  }, 1800);
 } catch (error) {
   console.error(error);
 
