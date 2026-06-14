@@ -935,22 +935,51 @@ if (opacityValue && penOpacity) {
   });
 }
 
-setupCanvasEvents();
-setupLayerEvents();
+try {
+  if (drawingList) {
+    drawingList.innerHTML = `
+      <p class="mini-info">
+        ログイン状態を確認しています...
+      </p>
+    `;
+  }
 
-onAuthStateChanged(auth, () => {
-  loadDrawings().catch((error) => {
-    console.error(error);
+  initCanvas();
 
-    if (drawingList) {
-      drawingList.innerHTML = `
-        <p class="mini-info">
-          下書きの読み込みに失敗しました。ページを再読み込みしてみてください。
-        </p>
-      `;
+  if (penModeBtn) {
+    setTool("pen");
+  }
+
+  setupCanvasEvents();
+  setupLayerEvents();
+
+  onAuthStateChanged(auth, async () => {
+    try {
+      await loadDrawings();
+    } catch (error) {
+      console.error(error);
+
+      if (drawingList) {
+        drawingList.innerHTML = `
+          <p class="mini-info">
+            下書きの読み込みに失敗しました。ページを再読み込みしてみてください。
+          </p>
+        `;
+      }
     }
   });
-});
+} catch (error) {
+  console.error(error);
 
-initCanvas();
-setTool("pen");
+  if (drawingList) {
+    drawingList.innerHTML = `
+      <p class="mini-info">
+        描画ページの初期化に失敗しました。ページを再読み込みしてみてください。
+      </p>
+    `;
+  }
+
+  if (message) {
+    message.textContent = "描画ページの初期化に失敗しました。";
+  }
+}
