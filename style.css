@@ -4713,3 +4713,77 @@ textarea {
     font-size: 0.84rem !important;
   }
 }
+
+/* draw / mobile button overflow fix */
+.draw-tool-panel {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.draw-tool-panel > .tool-mode,
+.draw-tool-panel > .canvas-tools,
+.draw-tool-panel > .draw-layer-buttons,
+.draw-tool-panel > .draw-layer-actions,
+.draw-tool-panel > .draw-sub-actions,
+.draw-tool-panel > .draw-danger-actions,
+.draw-tool-panel > .mini-info {
+  box-sizing: border-box;
+  width: auto;
+  max-width: 100%;
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+.tool-mode {
+  display: grid !important;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.tool-mode button {
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 9px 12px;
+  text-align: center;
+}
+
+@media (min-width: 641px) {
+  .tool-mode {
+    display: flex !important;
+    flex-wrap: wrap;
+  }
+
+  .tool-mode button {
+    width: auto !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .draw-tool-panel {
+    overflow: hidden;
+  }
+
+  .draw-tool-panel summary {
+    box-sizing: border-box;
+  }
+
+  .tool-mode,
+  .draw-layer-buttons,
+  .draw-layer-actions,
+  .draw-sub-actions,
+  .draw-danger-actions {
+    width: auto !important;
+    max-width: 100%;
+  }
+
+  .layer-btn,
+  .draw-layer-actions button,
+  .draw-sub-actions button,
+  .draw-danger-actions button {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+}
