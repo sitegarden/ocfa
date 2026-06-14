@@ -5001,59 +5001,7 @@ textarea {
   }
 }
 
-/* header / hamburger compact fix */
-.menu-toggle {
-  display: inline-flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 5px !important;
-  width: 48px !important;
-  height: 48px !important;
-  min-width: 48px !important;
-  min-height: 48px !important;
-  padding: 0 !important;
-  box-sizing: border-box !important;
-  line-height: 1 !important;
-}
 
-.menu-toggle span {
-  display: block !important;
-  width: 25px !important;
-  height: 4px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border-radius: 999px !important;
-  background: #3c342e !important;
-  transform-origin: center !important;
-}
-
-.menu-toggle.is-open span:nth-child(1) {
-  transform: translateY(9px) rotate(45deg) !important;
-}
-
-.menu-toggle.is-open span:nth-child(2) {
-  opacity: 0 !important;
-}
-
-.menu-toggle.is-open span:nth-child(3) {
-  transform: translateY(-9px) rotate(-45deg) !important;
-}
-
-@media (max-width: 720px) {
-  .menu-toggle {
-    width: 48px !important;
-    height: 48px !important;
-    min-width: 48px !important;
-    min-height: 48px !important;
-    border-radius: 18px !important;
-  }
-
-  .menu-toggle span {
-    width: 25px !important;
-    height: 4px !important;
-  }
-}
 
 /* mypage / character icon layout fix */
 .mypage-profile-panel {
@@ -5218,5 +5166,53 @@ textarea {
 
   .mypage-character-actions {
     justify-content: stretch;
+  }
+}
+
+
+
+/* header / show hamburger only on mobile */
+.menu-toggle {
+  display: none !important;
+}
+
+@media (max-width: 720px) {
+  .menu-toggle {
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    line-height: 1 !important;
+    border-radius: 18px !important;
+  }
+
+  .menu-toggle span {
+    display: block !important;
+    width: 25px !important;
+    height: 4px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 999px !important;
+    background: #3c342e !important;
+    transform-origin: center !important;
+  }
+
+  .menu-toggle.is-open span:nth-child(1) {
+    transform: translateY(9px) rotate(45deg) !important;
+  }
+
+  .menu-toggle.is-open span:nth-child(2) {
+    opacity: 0 !important;
+  }
+
+  .menu-toggle.is-open span:nth-child(3) {
+    transform: translateY(-9px) rotate(-45deg) !important;
   }
 }
