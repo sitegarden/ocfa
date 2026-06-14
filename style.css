@@ -4572,3 +4572,87 @@ textarea {
     justify-content: center !important;
   }
 }
+
+/* draw / pen setting layout fix */
+.canvas-tools {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+.canvas-tools .draw-control {
+  display: grid !important;
+  grid-template-columns: 110px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+}
+
+.canvas-tools .draw-control span {
+  white-space: nowrap;
+  font-size: 0.86rem;
+  color: var(--muted, #7d7284);
+  font-weight: 700;
+}
+
+.canvas-tools .draw-control b {
+  font-weight: 900;
+  color: inherit;
+}
+
+.canvas-tools .draw-control input[type="range"] {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.canvas-tools .draw-control input[type="color"] {
+  width: 44px !important;
+  height: 38px !important;
+}
+
+.pressure-toggle {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  padding: 7px 12px !important;
+  border: 1px solid rgba(101, 82, 140, 0.18) !important;
+  border-radius: 999px !important;
+  background: #fffdf8 !important;
+  white-space: nowrap !important;
+}
+
+.pressure-toggle input {
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+.pressure-toggle span {
+  white-space: nowrap !important;
+  font-size: 0.84rem !important;
+  font-weight: 800 !important;
+}
+
+@media (max-width: 640px) {
+  .canvas-tools .draw-control {
+    grid-template-columns: 92px minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .canvas-tools .draw-control span {
+    font-size: 0.8rem;
+  }
+
+  .pressure-toggle {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
