@@ -31,6 +31,7 @@ const overwriteDrawingBtn = document.getElementById("overwriteDrawingBtn");
 const penModeBtn = document.getElementById("penModeBtn");
 const eraserModeBtn = document.getElementById("eraserModeBtn");
 const eyedropperModeBtn = document.getElementById("eyedropperModeBtn");
+const fillModeBtn = document.getElementById("fillModeBtn");
 
 const message = document.getElementById("message");
 const drawingList = document.getElementById("drawingList");
@@ -281,9 +282,23 @@ function pickColor(e) {
 function setTool(tool) {
   currentTool = tool;
 
-  penModeBtn.classList.toggle("tool-active", tool === "pen");
-  eraserModeBtn.classList.toggle("tool-active", tool === "eraser");
-  eyedropperModeBtn.classList.toggle("tool-active", tool === "eyedropper");
+  if (penModeBtn) {
+    penModeBtn.classList.toggle("tool-active", tool === "pen");
+  }
+
+  if (eraserModeBtn) {
+    eraserModeBtn.classList.toggle("tool-active", tool === "eraser");
+  }
+
+  if (eyedropperModeBtn) {
+    eyedropperModeBtn.classList.toggle("tool-active", tool === "eyedropper");
+  }
+
+  if (fillModeBtn) {
+    fillModeBtn.classList.toggle("tool-active", tool === "fill");
+  }
+
+  if (!message) return;
 
   if (tool === "pen") {
     message.textContent = "ペンで描けます。";
@@ -295,6 +310,10 @@ function setTool(tool) {
 
   if (tool === "eyedropper") {
     message.textContent = "キャンバスから色を拾えます。拾いたい場所をタップしてください。";
+  }
+
+  if (tool === "fill") {
+    message.textContent = "塗りつぶしたい場所をタップしてください。";
   }
 }
 
@@ -325,11 +344,17 @@ function updateLayerUi() {
 function startDraw(e) {
   if (shouldIgnoreCanvasInput(e)) {
     drawing = false;
-    message.textContent = "筆圧ON中は、キャンバスではペン入力のみ描画できます。";
+
+    if (message) {
+      message.textContent = "筆圧ON中は、キャンバスではペン入力のみ描画できます。";
+    }
+
     return;
   }
 
   e.preventDefault();
+
+  const point = getPoint(e);
 
   if (currentTool === "eyedropper") {
     pickColor(e);
@@ -337,11 +362,17 @@ function startDraw(e) {
   }
 
   if (!layerVisible[activeLayerIndex]) {
-    message.textContent = "非表示中のレイヤーには描けません。";
+    if (message) {
+      message.textContent = "非表示中のレイヤーには描けません。";
+    }
+
     return;
   }
 
-  const point = getPoint(e);
+  if (currentTool === "fill") {
+    fillActiveLayer(point.x, point.y);
+    return;
+  }
 
   drawing = true;
   lastX = point.x;
@@ -406,6 +437,121 @@ function draw(e) {
   hasDrawn = true;
 
   redrawCanvas();
+}
+
+function hexToRgba(hex) {
+  const cleanHex = hex.replace("#", "");
+
+  const r = parseInt(cleanHex.slice(0, 2), 16);
+  const g = parseInt(cleanHex.slice(2, 4), 16);
+  const b = parseInt(cleanHex.slice(4, 6), 16);
+
+  return [r, g, b, 255];
+}
+
+function colorsClose(data, index, targetColor, tolerance = 24) {
+  return Math.abs(data[index] - targetColor[0]) <= tolerance
+    && Math.abs(data[index + 1] - targetColor[1]) <= tolerance
+    && Math.abs(data[index + 2] - targetColor[2]) <= tolerance
+    && Math.abs(data[index + 3] - targetColor[3]) <= tolerance;
+}
+
+function fillActiveLayer(startX, startY) {
+  const targetCtx = getActiveLayerCtx();
+
+  if (!targetCtx || !canvas || !ctx) return;
+
+  if (!layerVisible[activeLayerIndex]) {
+    if (message) {
+      message.textContent = "非表示中のレイヤーには塗りつぶしできません。";
+    }
+
+    return;
+  }
+
+  saveHistory();
+
+  redrawCanvas();
+
+  const width = canvas.width;
+  const height = canvas.height;
+
+  const x = Math.floor(startX);
+  const y = Math.floor(startY);
+
+  if (x < 0 || y < 0 || x >= width || y >= height) return;
+
+  const baseImage = ctx.getImageData(0, 0, width, height);
+  const baseData = baseImage.data;
+
+  const layerImage = targetCtx.getImageData(0, 0, width, height);
+  const layerData = layerImage.data;
+
+  const fillColor = hexToRgba(penColor?.value || "#3c342e");
+
+  const startIndex = (y * width + x) * 4;
+  const targetColor = [
+    baseData[startIndex],
+    baseData[startIndex + 1],
+    baseData[startIndex + 2],
+    baseData[startIndex + 3]
+  ];
+
+  if (
+    Math.abs(targetColor[0] - fillColor[0]) < 3
+    && Math.abs(targetColor[1] - fillColor[1]) < 3
+    && Math.abs(targetColor[2] - fillColor[2]) < 3
+  ) {
+    return;
+  }
+
+  const stack = [[x, y]];
+  const visited = new Uint8Array(width * height);
+
+  while (stack.length > 0) {
+    const [currentX, currentY] = stack.pop();
+
+    if (
+      currentX < 0 ||
+      currentY < 0 ||
+      currentX >= width ||
+      currentY >= height
+    ) {
+      continue;
+    }
+
+    const pixelIndex = currentY * width + currentX;
+
+    if (visited[pixelIndex]) continue;
+
+    visited[pixelIndex] = 1;
+
+    const dataIndex = pixelIndex * 4;
+
+    if (!colorsClose(baseData, dataIndex, targetColor)) {
+      continue;
+    }
+
+    layerData[dataIndex] = fillColor[0];
+    layerData[dataIndex + 1] = fillColor[1];
+    layerData[dataIndex + 2] = fillColor[2];
+    layerData[dataIndex + 3] = fillColor[3];
+
+    stack.push([currentX + 1, currentY]);
+    stack.push([currentX - 1, currentY]);
+    stack.push([currentX, currentY + 1]);
+    stack.push([currentX, currentY - 1]);
+  }
+
+  targetCtx.putImageData(layerImage, 0, 0);
+
+  hasDrawn = true;
+
+  redrawCanvas();
+
+  if (message) {
+    message.textContent = "塗りつぶしました。";
+  }
 }
 
 function stopDraw(e) {
@@ -532,6 +678,12 @@ if (eraserModeBtn) {
 if (eyedropperModeBtn) {
   eyedropperModeBtn.addEventListener("click", () => {
     setTool("eyedropper");
+  });
+}
+
+if (fillModeBtn) {
+  fillModeBtn.addEventListener("click", () => {
+    setTool("fill");
   });
 }
 
