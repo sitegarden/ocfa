@@ -61,6 +61,8 @@ let submittingFanart = false;
 let currentTool = "pen";
 let layerHistory = [[], []];
 
+let pressureEnabled = false;
+
 const MAX_LAYER_HISTORY = 20;
 const TIME_UP_GRACE_MS = 7000;
 
@@ -336,8 +338,6 @@ function createTimeUpImageData(name, label = "OC") {
 
   return canvas.toDataURL("image/jpeg", 0.82);
 }
-
-
 
 async function createMissingOriginalForPlayer(player) {
   if (!player) return null;
@@ -946,9 +946,6 @@ function renderPlayers() {
   `;
 }
 
-
-
-
 function getPlayerNameById(playerId, fallbackName = "匿名") {
   const player = currentPlayers.find((item) => {
     return item.id === playerId;
@@ -1024,6 +1021,16 @@ function renderJoinArea() {
     </section>
   `;
 }
+
+
+
+
+
+
+
+
+
+
 
 function isDrawingCanvasVisible() {
   return Boolean(document.getElementById("gameCanvas"));
@@ -1164,6 +1171,18 @@ function renderLayerTools() {
       <button id="undoLayerBtn" type="button">
         1つ戻る
       </button>
+
+      <label class="game-pressure-toggle">
+        <input
+          id="gamePressureToggle"
+          type="checkbox"
+          ${pressureEnabled ? "checked" : ""}
+        >
+        <span>
+          筆圧ON
+          <small>対応ペンのみ</small>
+        </span>
+      </label>
     </div>
 
     <div class="game-layer-panel">
@@ -1546,15 +1565,6 @@ async function renderGameStageArea() {
     </section>
   `;
 }
-
-
-
-
-
-
-
-
-
 
 function clearOwnerAutoAdvanceWatcher() {
   if (window.ocfaGameOwnerWatchId) {
@@ -2066,13 +2076,52 @@ function startRealtimeListeners() {
   );
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function getGamePressure(e) {
+  if (!pressureEnabled) return 1;
+
+  if (e.pointerType && e.pointerType !== "pen") {
+    return 0;
+  }
+
+  if (typeof e.pressure === "number" && e.pressure > 0) {
+    return Math.max(0.25, Math.min(1.8, e.pressure * 1.6));
+  }
+
+  return 1;
+}
+
+function shouldIgnoreGameCanvasInput(e) {
+  if (!pressureEnabled) return false;
+  if (!e.pointerType) return false;
+
+  return e.pointerType !== "pen";
+}
+
 function getGamePoint(e) {
   const rect = gameCanvas.getBoundingClientRect();
   const touch = e.touches ? e.touches[0] : e;
 
   return {
     x: ((touch.clientX - rect.left) / rect.width) * gameCanvas.width,
-    y: ((touch.clientY - rect.top) / rect.height) * gameCanvas.height
+    y: ((touch.clientY - rect.top) / rect.height) * gameCanvas.height,
+    pressure: getGamePressure(e)
   };
 }
 
@@ -2163,6 +2212,7 @@ function setupLayerButtons() {
   const eraserToolBtn = document.getElementById("eraserToolBtn");
   const fillToolBtn = document.getElementById("fillToolBtn");
   const undoLayerBtn = document.getElementById("undoLayerBtn");
+  const gamePressureToggle = document.getElementById("gamePressureToggle");
 
   function updateToolButtons() {
     if (penToolBtn) {
@@ -2201,6 +2251,14 @@ function setupLayerButtons() {
 
   if (undoLayerBtn) {
     undoLayerBtn.addEventListener("click", undoActiveLayer);
+  }
+
+  if (gamePressureToggle) {
+    gamePressureToggle.checked = pressureEnabled;
+
+    gamePressureToggle.addEventListener("change", () => {
+      pressureEnabled = gamePressureToggle.checked;
+    });
   }
 
   if (layerBtn0) {
@@ -2271,20 +2329,40 @@ function initGameCanvas() {
 
   initGameLayers();
 
-  gameCanvas.addEventListener("mousedown", startGameDraw);
-  gameCanvas.addEventListener("mousemove", drawGameCanvas);
-  gameCanvas.addEventListener("mouseup", stopGameDraw);
-  gameCanvas.addEventListener("mouseleave", stopGameDraw);
+  if (window.PointerEvent) {
+    gameCanvas.addEventListener("pointerdown", startGameDraw);
+    gameCanvas.addEventListener("pointermove", drawGameCanvas);
+    gameCanvas.addEventListener("pointerup", stopGameDraw);
+    gameCanvas.addEventListener("pointercancel", stopGameDraw);
+    gameCanvas.addEventListener("pointerleave", stopGameDraw);
+  } else {
+    gameCanvas.addEventListener("mousedown", startGameDraw);
+    gameCanvas.addEventListener("mousemove", drawGameCanvas);
+    gameCanvas.addEventListener("mouseup", stopGameDraw);
+    gameCanvas.addEventListener("mouseleave", stopGameDraw);
 
-  gameCanvas.addEventListener("touchstart", startGameDraw, { passive: false });
-  gameCanvas.addEventListener("touchmove", drawGameCanvas, { passive: false });
-  gameCanvas.addEventListener("touchend", stopGameDraw);
-  gameCanvas.addEventListener("touchcancel", stopGameDraw);
+    gameCanvas.addEventListener("touchstart", startGameDraw, { passive: false });
+    gameCanvas.addEventListener("touchmove", drawGameCanvas, { passive: false });
+    gameCanvas.addEventListener("touchend", stopGameDraw);
+    gameCanvas.addEventListener("touchcancel", stopGameDraw);
+  }
 
   setupLayerButtons();
 }
 
 function startGameDraw(e) {
+  if (shouldIgnoreGameCanvasInput(e)) {
+    gameDrawing = false;
+
+    const roomMessage = document.getElementById("roomMessage");
+
+    if (roomMessage) {
+      roomMessage.textContent = "筆圧ON中は、キャンバスではペン入力のみ描画できます。";
+    }
+
+    return;
+  }
+
   e.preventDefault();
 
   if (!layerVisible[activeLayerIndex]) {
@@ -2309,10 +2387,23 @@ function startGameDraw(e) {
   gameDrawing = true;
   gameLastX = point.x;
   gameLastY = point.y;
+
+  if (gameCanvas.setPointerCapture && e.pointerId !== undefined) {
+    try {
+      gameCanvas.setPointerCapture(e.pointerId);
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }
 
 function drawGameCanvas(e) {
   if (!gameDrawing) return;
+
+  if (shouldIgnoreGameCanvasInput(e)) {
+    gameDrawing = false;
+    return;
+  }
 
   e.preventDefault();
 
@@ -2324,11 +2415,17 @@ function drawGameCanvas(e) {
 
   if (!targetCtx) return;
 
+  const pressure = point.pressure;
+
+  if (pressure <= 0) {
+    return;
+  }
+
   targetCtx.save();
 
   targetCtx.lineCap = "round";
   targetCtx.lineJoin = "round";
-  targetCtx.lineWidth = Number(gamePenSize?.value || 5);
+  targetCtx.lineWidth = Math.max(1, Number(gamePenSize?.value || 5) * pressure);
 
   if (currentTool === "eraser") {
     targetCtx.globalCompositeOperation = "destination-out";
@@ -2353,11 +2450,19 @@ function drawGameCanvas(e) {
   saveCurrentGameDraft();
 }
 
-function stopGameDraw() {
+function stopGameDraw(e) {
   if (!gameDrawing) return;
 
   gameDrawing = false;
   saveCurrentGameDraft();
+
+  if (gameCanvas?.releasePointerCapture && e?.pointerId !== undefined) {
+    try {
+      gameCanvas.releasePointerCapture(e.pointerId);
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }
 
 function addWatermarkToGameCanvas(name) {
@@ -2527,16 +2632,6 @@ function getRoundStartedMs() {
 
   return getTimestampMs(roundStartedAt);
 }
-
-
-
-
-
-
-
-
-
-
 
 function getOriginalRemainingSeconds() {
   const startedMs = getRoomStartedMs();
