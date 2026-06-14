@@ -4308,3 +4308,175 @@ textarea {
     flex: 0 1 auto;
   }
 }
+
+/* draw / mobile canvas first layout */
+.draw-main-panel {
+  overflow: visible;
+}
+
+.canvas-wrap {
+  margin-top: 12px;
+}
+
+.draw-save-area {
+  margin-top: 12px;
+}
+
+.draw-tool-stack {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.draw-tool-panel {
+  padding: 0;
+  border: 1px solid rgba(101, 82, 140, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  overflow: hidden;
+}
+
+.draw-tool-panel summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 11px 13px;
+  font-weight: 900;
+}
+
+.draw-tool-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.draw-tool-panel summary::after {
+  content: "＋";
+  float: right;
+  opacity: 0.7;
+}
+
+.draw-tool-panel[open] summary::after {
+  content: "−";
+}
+
+.draw-tool-panel > .tool-mode,
+.draw-tool-panel > .canvas-tools,
+.draw-tool-panel > .draw-layer-buttons,
+.draw-tool-panel > .draw-layer-actions,
+.draw-tool-panel > .draw-sub-actions,
+.draw-tool-panel > .draw-danger-actions,
+.draw-tool-panel > .mini-info {
+  margin: 0 13px 13px;
+}
+
+.tool-mode,
+.canvas-tools,
+.draw-layer-buttons,
+.draw-layer-actions,
+.draw-sub-actions,
+.draw-danger-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.tool-mode button,
+.layer-btn,
+.draw-layer-actions button,
+.draw-sub-actions button,
+.draw-danger-actions button {
+  padding: 7px 10px;
+  min-height: 34px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.canvas-tools {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.canvas-tools label {
+  display: grid;
+  gap: 5px;
+  font-size: 0.84rem;
+  color: var(--muted, #7d7284);
+}
+
+.canvas-tools input[type="range"] {
+  width: 100%;
+}
+
+.pressure-toggle {
+  display: flex !important;
+  grid-template-columns: none !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid rgba(101, 82, 140, 0.18);
+  border-radius: 999px;
+  background: #fffdf8;
+  color: inherit;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.pressure-toggle input {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.draw-danger-panel {
+  border-color: rgba(190, 80, 80, 0.24);
+  background: rgba(255, 248, 248, 0.82);
+}
+
+.draw-danger-panel summary {
+  color: #7a3b3b;
+}
+
+.layer-btn.is-active,
+.tool-mode button.tool-active {
+  box-shadow: 0 0 0 3px rgba(151, 127, 212, 0.18);
+  border-color: rgba(101, 82, 140, 0.42);
+}
+
+.layer-btn.is-hidden-layer {
+  opacity: 0.48;
+}
+
+#drawCanvas {
+  touch-action: none;
+}
+
+@media (max-width: 640px) {
+  .draw-tool-stack {
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .draw-tool-panel summary {
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .tool-mode button,
+  .layer-btn,
+  .draw-layer-actions button,
+  .draw-sub-actions button,
+  .draw-danger-actions button {
+    flex: 0 1 auto;
+    padding: 7px 9px;
+    min-height: 33px;
+    font-size: 0.8rem;
+  }
+
+  .draw-save-area .primary-btn,
+  .draw-save-area .ghost-btn {
+    width: 100%;
+  }
+}
