@@ -7,7 +7,7 @@ import {
   getDocs,
   query,
   serverTimestamp,
-  updateDoc,
+  setDoc,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -84,12 +84,28 @@ async function setMyIconCharacter(character) {
 
   const userRef = doc(db, "users", currentUser.uid);
 
-  await updateDoc(userRef, {
+  await setDoc(userRef, {
     iconCharacterId: character.id,
     iconCharacterName: character.data.name || "名前未設定",
     iconImageData: imageData,
     updatedAt: serverTimestamp()
-  });
+  }, { merge: true });
+}
+
+async function setMyProfilePublic(isPublic) {
+  if (!currentUser) return;
+
+  const userRef = doc(db, "users", currentUser.uid);
+
+  await setDoc(userRef, {
+    isPublic,
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+
+  currentUserData = {
+    ...(currentUserData || {}),
+    isPublic
+  };
 }
 
 function getMypageIconHtml(user, userData, displayName) {
@@ -106,6 +122,31 @@ function getMypageIconHtml(user, userData, displayName) {
 
   return `
     <span>${escapeHtml(displayName.slice(0, 1) || "？")}</span>
+  `;
+}
+
+function renderPublicSetting(userData) {
+  const isPublic = userData?.isPublic !== false;
+
+  return `
+    <div class="panel-soft mypage-public-setting">
+      <p class="mini-info">
+        公開設定：
+        <strong>${isPublic ? "公開中" : "非公開"}</strong>
+      </p>
+
+      <button
+        id="togglePublicProfileBtn"
+        class="${isPublic ? "ghost-btn" : "primary-btn"}"
+        type="button"
+      >
+        ${isPublic ? "非公開にする" : "公開にする"}
+      </button>
+
+      <p class="mini-info">
+        非公開にすると、ユーザー一覧と公開ユーザーページに表示されません。
+      </p>
+    </div>
   `;
 }
 
@@ -254,6 +295,43 @@ function setupIconButtons() {
   });
 }
 
+function setupPublicProfileButton() {
+  const button = document.getElementById("togglePublicProfileBtn");
+
+  if (!button) return;
+
+  button.addEventListener("click", async () => {
+    const isNowPublic = currentUserData?.isPublic !== false;
+    const nextIsPublic = !isNowPublic;
+
+    const ok = confirm(
+      nextIsPublic
+        ? "プロフィールを公開しますか？"
+        : "プロフィールを非公開にしますか？\nユーザー一覧と公開ページに表示されなくなります。"
+    );
+
+    if (!ok) return;
+
+    const oldText = button.textContent;
+
+    button.disabled = true;
+    button.textContent = "変更中...";
+
+    try {
+      await setMyProfilePublic(nextIsPublic);
+
+      renderMypage(currentUser, currentUserData, currentCharacters);
+    } catch (error) {
+      console.error(error);
+
+      alert("公開設定の変更に失敗しました。");
+
+      button.disabled = false;
+      button.textContent = oldText;
+    }
+  });
+}
+
 function renderMypage(user, userData, characters) {
   const displayName =
     userData?.displayName ||
@@ -299,6 +377,8 @@ function renderMypage(user, userData, characters) {
             </p>
           `
       }
+
+      ${renderPublicSetting(userData)}
 
       ${
         profileText
@@ -346,9 +426,19 @@ function renderMypage(user, userData, characters) {
           プロフィール設定
         </a>
 
-        <a class="ghost-btn" href="/users/?id=${encodeURIComponent(user.uid)}">
-          公開ページを見る
-        </a>
+        ${
+          userData?.isPublic === false
+            ? `
+              <span class="ghost-btn disabled-link">
+                公開ページは非公開中
+              </span>
+            `
+            : `
+              <a class="ghost-btn" href="/users/?id=${encodeURIComponent(user.uid)}">
+                公開ページを見る
+              </a>
+            `
+        }
       </div>
     </section>
 
@@ -391,6 +481,7 @@ function renderMypage(user, userData, characters) {
   `;
 
   setupIconButtons();
+  setupPublicProfileButton();
 }
 
 function renderLoginRequired() {
@@ -445,10 +536,13 @@ onAuthStateChanged(auth, async (user) => {
       getMyCharacters(user)
     ]);
 
-    currentUserData = userData;
+    currentUserData = userData || {
+      isPublic: true
+    };
+
     currentCharacters = characters;
 
-    renderMypage(user, userData, characters);
+    renderMypage(user, currentUserData, characters);
   } catch (error) {
     renderError(error);
   }
