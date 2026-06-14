@@ -4826,3 +4826,44 @@ textarea {
   -webkit-user-select: auto;
   user-select: auto;
 }
+
+.game-pressure-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 9px 14px;
+  border: 1px solid rgba(101, 82, 140, 0.22);
+  border-radius: 999px;
+  background: #fffdf8;
+  color: #30283a;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.game-pressure-toggle input {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+}
+
+.game-pressure-toggle span {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-weight: 900;
+  font-size: 0.9rem;
+}
+
+.game-pressure-toggle small {
+  color: var(--muted, #7d7284);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+#gameCanvas {
+  touch-action: none;
+}
