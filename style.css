@@ -4480,3 +4480,95 @@ textarea {
     width: 100%;
   }
 }
+
+/* draw / final mobile tool fix */
+.draw-save-area {
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid rgba(101, 82, 140, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.draw-save-area .primary-btn,
+.draw-save-area .ghost-btn {
+  width: auto;
+  max-width: 100%;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  min-height: 36px;
+}
+
+.draw-save-area .message {
+  margin: 8px 0 0;
+}
+
+.draw-tool-panel > .canvas-tools {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.canvas-tools label:not(.pressure-toggle) {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.canvas-tools label:not(.pressure-toggle) input[type="range"] {
+  width: 100%;
+  min-width: 0;
+}
+
+.canvas-tools label:not(.pressure-toggle) input[type="color"] {
+  width: 44px;
+  height: 38px;
+}
+
+.pressure-toggle {
+  display: inline-flex !important;
+  width: auto !important;
+  max-width: 100%;
+  justify-content: flex-start !important;
+  justify-self: start;
+  overflow: hidden;
+}
+
+.pressure-toggle span {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.canvas-tools .mini-info {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .draw-save-area {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    margin: 10px 0;
+  }
+
+  .draw-save-area .primary-btn,
+  .draw-save-area .ghost-btn {
+    width: 100%;
+  }
+
+  .canvas-tools label:not(.pressure-toggle) {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 8px;
+    font-size: 0.8rem;
+  }
+
+  .pressure-toggle {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
