@@ -96,10 +96,13 @@
     <input id="eraserSize" type="range" min="4" max="80" value="24">
   </label>
 
-  <label class="pressure-toggle">
-    <input id="pressureToggle" type="checkbox">
-    <span>筆圧を使う</span>
-  </label>
+  <label class="pressure-toggle pressure-switch">
+  <input id="pressureToggle" type="checkbox">
+  <span class="pressure-switch-text">
+    筆圧ON
+    <small>対応ペンのみ</small>
+  </span>
+</label>
 
   <p class="mini-info">
     筆圧は対応端末のみ有効です。ON中はキャンバスではペン入力のみ描画します。
