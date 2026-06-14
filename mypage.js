@@ -6,6 +6,8 @@ import {
   getDoc,
   getDocs,
   query,
+  serverTimestamp,
+  updateDoc,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -15,8 +17,12 @@ import {
 
 const mypageContent = document.getElementById("mypageContent");
 
+let currentUser = null;
+let currentUserData = null;
+let currentCharacters = [];
+
 function escapeHtml(text) {
-  return String(text)
+  return String(text ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -60,27 +66,68 @@ async function getMyCharacters(user) {
   characters.sort((a, b) => {
     const aTime = a.data.createdAt?.seconds || 0;
     const bTime = b.data.createdAt?.seconds || 0;
+
     return bTime - aTime;
   });
 
   return characters;
 }
 
-function renderCharacterCards(characters) {
+async function setMyIconCharacter(character) {
+  if (!currentUser || !character) return;
+
+  const imageData = character.data.imageData || "";
+
+  if (!imageData) {
+    throw new Error("character imageData is empty");
+  }
+
+  const userRef = doc(db, "users", currentUser.uid);
+
+  await updateDoc(userRef, {
+    iconCharacterId: character.id,
+    iconCharacterName: character.data.name || "名前未設定",
+    iconImageData: imageData,
+    updatedAt: serverTimestamp()
+  });
+}
+
+function getMypageIconHtml(user, userData, displayName) {
+  const iconImage = userData?.iconImageData || user.photoURL || "";
+
+  if (iconImage) {
+    return `
+      <img
+        src="${iconImage}"
+        alt="${escapeHtml(displayName)}のアイコン"
+      >
+    `;
+  }
+
+  return `
+    <span>${escapeHtml(displayName.slice(0, 1) || "？")}</span>
+  `;
+}
+
+function renderCharacterCards(characters, userData) {
   if (characters.length === 0) {
     return `
       <div class="panel-soft">
         <p>まだキャラクターが登録されていません。</p>
 
         <div class="actions">
-          <a class="primary-btn" href="/draw/">キャラを描く</a>
+          <a class="primary-btn" href="/draw/">
+            キャラを描く
+          </a>
         </div>
       </div>
     `;
   }
 
+  const iconCharacterId = userData?.iconCharacterId || "";
+
   return `
-    <div class="character-list">
+    <div class="mypage-character-list">
       ${characters
         .map(({ id, data }) => {
           const tags = Array.isArray(data.tags)
@@ -89,16 +136,30 @@ function renderCharacterCards(characters) {
                 .join("")
             : "";
 
-          return `
-            <article class="character-card">
-              <a class="character-card-link" href="/characters/file/?id=${encodeURIComponent(id)}">
-                <img
-                  src="${data.imageData}"
-                  alt="${escapeHtml(data.name || "キャラクター")}"
-                >
+          const isCurrentIcon = iconCharacterId === id;
 
-                <div class="character-body">
-                  <h2>${escapeHtml(data.name || "名前未設定")}</h2>
+          return `
+            <article class="mypage-character-card">
+              <a class="mypage-character-link" href="/characters/detail/?id=${encodeURIComponent(id)}">
+                <div class="mypage-character-image">
+                  ${
+                    data.imageData
+                      ? `
+                        <img
+                          src="${data.imageData}"
+                          alt="${escapeHtml(data.name || "キャラクター")}"
+                        >
+                      `
+                      : `
+                        <div class="mypage-character-noimage">
+                          No Image
+                        </div>
+                      `
+                  }
+                </div>
+
+                <div class="mypage-character-info">
+                  <h3>${escapeHtml(data.name || "名前未設定")}</h3>
 
                   ${
                     data.kana
@@ -106,22 +167,91 @@ function renderCharacterCards(characters) {
                       : ""
                   }
 
-                  <div class="tag-list">
-                    ${tags}
-                  </div>
-
                   <p class="mini-info">
-                    ${data.isPublic === false ? "非公開" : "公開中"} /
+                    ${data.isPublic === false ? "非公開" : "公開中"}
+                    /
                     ${data.faOk ? "ファンアート歓迎" : "ファンアート要確認"}
                   </p>
+
+                  ${
+                    tags
+                      ? `
+                        <div class="character-tags">
+                          ${tags}
+                        </div>
+                      `
+                      : ""
+                  }
                 </div>
               </a>
+
+              <div class="mypage-character-actions">
+                <button
+                  class="ghost-btn icon-character-btn"
+                  type="button"
+                  data-character-id="${escapeHtml(id)}"
+                  ${!data.imageData ? "disabled" : ""}
+                >
+                  ${isCurrentIcon ? "現在のアイコン" : "アイコンにする"}
+                </button>
+              </div>
             </article>
           `;
         })
         .join("")}
     </div>
   `;
+}
+
+function setupIconButtons() {
+  const buttons = document.querySelectorAll(".icon-character-btn");
+
+  buttons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const characterId = button.dataset.characterId;
+
+      const character = currentCharacters.find((item) => {
+        return item.id === characterId;
+      });
+
+      if (!character) {
+        alert("キャラクターが見つかりませんでした。");
+        return;
+      }
+
+      if (!character.data.imageData) {
+        alert("このキャラには画像がありません。");
+        return;
+      }
+
+      const ok = confirm(
+        `${character.data.name || "このキャラ"}をアイコンに設定しますか？`
+      );
+
+      if (!ok) return;
+
+      const oldText = button.textContent;
+
+      button.disabled = true;
+      button.textContent = "設定中...";
+
+      try {
+        await setMyIconCharacter(character);
+
+        const latestUserData = await getOcfaUserData(currentUser);
+        currentUserData = latestUserData;
+
+        renderMypage(currentUser, currentUserData, currentCharacters);
+      } catch (error) {
+        console.error(error);
+
+        alert("アイコン設定に失敗しました。");
+
+        button.disabled = false;
+        button.textContent = oldText;
+      }
+    });
+  });
 }
 
 function renderMypage(user, userData, characters) {
@@ -139,103 +269,128 @@ function renderMypage(user, userData, characters) {
   });
 
   mypageContent.innerHTML = `
-    <section class="mypage-hero panel">
-      <div class="mypage-profile">
+    <section class="panel mypage-profile-panel">
+      <div class="mypage-profile-head">
         <div class="mypage-icon">
-          ${
-            user.photoURL
-              ? `<img src="${user.photoURL}" alt="${escapeHtml(displayName)}">`
-              : `<span>${escapeHtml(displayName.slice(0, 1))}</span>`
-          }
+          ${getMypageIconHtml(user, userData, displayName)}
         </div>
 
-        <div class="mypage-profile-body">
+        <div>
           <p class="eyebrow">My Page</p>
           <h1>${escapeHtml(displayName)}</h1>
 
           <p class="mini-info">
-            登録キャラ ${characters.length}体 /
-            公開キャラ ${publicCharacters.length}体
+            登録キャラ ${characters.length}体 / 公開キャラ ${publicCharacters.length}体
           </p>
-
-          ${
-            profileText
-              ? `<p class="mypage-profile-text">${nl2br(profileText)}</p>`
-              : `<p class="mypage-profile-text muted-text">プロフィールはまだ設定されていません。</p>`
-          }
-
-          ${
-            genreText
-              ? `
-                <div class="tag-list">
-                  <span>${escapeHtml(genreText)}</span>
-                </div>
-              `
-              : ""
-          }
-
-          ${
-            linkUrl && linkUrl.startsWith("https://")
-              ? `
-                <p class="mini-info">
-                  <a href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener">
-                    登録リンクを開く
-                  </a>
-                </p>
-              `
-              : ""
-          }
         </div>
       </div>
 
+      ${
+        userData?.iconCharacterName
+          ? `
+            <p class="mini-info">
+              現在のアイコン：
+              ${escapeHtml(userData.iconCharacterName)}
+            </p>
+          `
+          : `
+            <p class="mini-info">
+              自分のキャラをアイコンに設定できます。
+            </p>
+          `
+      }
+
+      ${
+        profileText
+          ? `
+            <div class="mypage-profile-text">
+              <p>${nl2br(profileText)}</p>
+            </div>
+          `
+          : `
+            <div class="mypage-profile-text">
+              <p>プロフィールはまだ設定されていません。</p>
+            </div>
+          `
+      }
+
+      ${
+        genreText
+          ? `
+            <p class="mini-info">
+              好きなジャンル：
+              ${escapeHtml(genreText)}
+            </p>
+          `
+          : ""
+      }
+
+      ${
+        linkUrl && linkUrl.startsWith("https://")
+          ? `
+            <div class="actions">
+              <a class="ghost-btn" href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener">
+                登録リンクを開く
+              </a>
+            </div>
+          `
+          : ""
+      }
+
       <div class="actions">
-        <a class="primary-btn" href="/draw/">新しく描く</a>
-        <a class="ghost-btn" href="/settings/">プロフィール設定</a>
+        <a class="primary-btn" href="/draw/">
+          新しく描く
+        </a>
+
+        <a class="ghost-btn" href="/settings/">
+          プロフィール設定
+        </a>
+
         <a class="ghost-btn" href="/users/?id=${encodeURIComponent(user.uid)}">
           公開ページを見る
         </a>
       </div>
     </section>
 
-    <section class="mypage-section panel">
+    <section class="panel">
       <div class="section-head">
         <div>
           <p class="eyebrow">Characters</p>
           <h2>自分のキャラクター</h2>
         </div>
 
-        <a class="ghost-btn" href="/characters/">キャラ一覧へ</a>
+        <a class="ghost-btn" href="/characters/">
+          キャラ一覧へ
+        </a>
       </div>
 
-      ${renderCharacterCards(characters)}
+      ${renderCharacterCards(characters, userData)}
     </section>
 
-    <section class="mypage-section panel">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">Draft</p>
-          <h2>下書き・作成</h2>
-        </div>
-      </div>
+    <section class="panel">
+      <p class="eyebrow">Draft</p>
+      <h2>下書き・作成</h2>
 
       <div class="mypage-link-grid">
-        <a class="mypage-link-card" href="/draw/">
+        <a class="panel-soft" href="/draw/">
           <strong>描く</strong>
           <span>サイト内キャンバスで新しい絵を描きます。</span>
         </a>
 
-        <a class="mypage-link-card" href="/characters/new/">
+        <a class="panel-soft" href="/characters/new/">
           <strong>キャラ登録</strong>
           <span>保存した下書きからキャラクターを登録します。</span>
         </a>
 
-        <a class="mypage-link-card" href="/events/">
+        <a class="panel-soft" href="/events/">
           <strong>イベント</strong>
           <span>開催中のイベントや参加キャラを確認します。</span>
         </a>
       </div>
     </section>
   `;
+
+  setupIconButtons();
 }
 
 function renderLoginRequired() {
@@ -243,10 +398,15 @@ function renderLoginRequired() {
     <section class="panel">
       <p class="eyebrow">My Page</p>
       <h1>ログインが必要です</h1>
-      <p>マイページを見るにはログインしてください。</p>
+
+      <p>
+        マイページを見るにはログインしてください。
+      </p>
 
       <div class="actions">
-        <a class="ghost-btn" href="/">トップへ戻る</a>
+        <a class="ghost-btn" href="/">
+          トップへ戻る
+        </a>
       </div>
     </section>
   `;
@@ -266,6 +426,8 @@ function renderError(error) {
 onAuthStateChanged(auth, async (user) => {
   if (!mypageContent) return;
 
+  currentUser = user;
+
   if (!user) {
     renderLoginRequired();
     return;
@@ -282,6 +444,9 @@ onAuthStateChanged(auth, async (user) => {
       getOcfaUserData(user),
       getMyCharacters(user)
     ]);
+
+    currentUserData = userData;
+    currentCharacters = characters;
 
     renderMypage(user, userData, characters);
   } catch (error) {
