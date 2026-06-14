@@ -228,11 +228,34 @@ function getPoint(e) {
 function getPressure(e) {
   if (!pressureToggle?.checked) return 1;
 
+  if (e.pointerType && e.pointerType !== "pen") {
+    return 0;
+  }
+
   if (typeof e.pressure === "number" && e.pressure > 0) {
     return Math.max(0.25, Math.min(1.8, e.pressure * 1.6));
   }
 
   return 1;
+}
+
+function shouldIgnoreCanvasInput(e) {
+  if (!pressureToggle?.checked) return false;
+
+  if (!e.pointerType) return false;
+
+  return e.pointerType !== "pen";
+}
+
+function getPoint(e) {
+  const rect = canvas.getBoundingClientRect();
+  const source = e.touches ? e.touches[0] : e;
+
+  return {
+    x: ((source.clientX - rect.left) / rect.width) * canvas.width,
+    y: ((source.clientY - rect.top) / rect.height) * canvas.height,
+    pressure: getPressure(e)
+  };
 }
 
 function rgbToHex(r, g, b) {
@@ -311,6 +334,12 @@ function updateLayerUi() {
 }
 
 function startDraw(e) {
+  if (shouldIgnoreCanvasInput(e)) {
+    drawing = false;
+    message.textContent = "筆圧ON中は、キャンバスではペン入力のみ描画できます。";
+    return;
+  }
+
   e.preventDefault();
 
   if (currentTool === "eyedropper") {
@@ -339,6 +368,11 @@ function startDraw(e) {
 function draw(e) {
   if (!drawing) return;
 
+  if (shouldIgnoreCanvasInput(e)) {
+    drawing = false;
+    return;
+  }
+
   e.preventDefault();
 
   const point = getPoint(e);
@@ -347,6 +381,10 @@ function draw(e) {
   if (!targetCtx) return;
 
   const pressure = point.pressure;
+
+  if (pressure <= 0) {
+    return;
+  }
 
   targetCtx.save();
 
