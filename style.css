@@ -4867,3 +4867,46 @@ textarea {
 #gameCanvas {
   touch-action: none;
 }
+
+/* game room / iPhone blue selection fix */
+.game-room-head,
+.game-draw-panel,
+.game-fa-panel,
+.game-layer-panel,
+.game-draw-tools,
+.game-tool-actions,
+.game-layer-tools,
+.game-layer-actions,
+.game-canvas,
+.game-draw-panel *,
+.game-fa-panel * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.game-draw-panel input,
+.game-fa-panel input,
+.game-draw-panel label,
+.game-fa-panel label {
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.game-draw-panel input[type="range"],
+.game-fa-panel input[type="range"],
+.game-draw-panel input[type="color"],
+.game-fa-panel input[type="color"],
+.game-draw-panel input[type="checkbox"],
+.game-fa-panel input[type="checkbox"] {
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
+#gameCanvas {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
