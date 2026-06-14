@@ -528,141 +528,195 @@ function setupLayerEvents() {
   }
 }
 
-penModeBtn.addEventListener("click", () => {
-  setTool("pen");
-});
+if (penModeBtn) {
+  penModeBtn.addEventListener("click", () => {
+    setTool("pen");
+  });
+}
 
-eraserModeBtn.addEventListener("click", () => {
-  setTool("eraser");
-});
+if (eraserModeBtn) {
+  eraserModeBtn.addEventListener("click", () => {
+    setTool("eraser");
+  });
+}
 
-eyedropperModeBtn.addEventListener("click", () => {
-  setTool("eyedropper");
-});
+if (eyedropperModeBtn) {
+  eyedropperModeBtn.addEventListener("click", () => {
+    setTool("eyedropper");
+  });
+}
 
-clearBtn.addEventListener("click", () => {
-  if (!confirm("キャンバスをまっさらにしますか？")) return;
+if (clearBtn) {
+  clearBtn.addEventListener("click", () => {
+    if (!confirm("キャンバスをまっさらにしますか？")) return;
 
-  initCanvas();
-  hasDrawn = false;
-  clearEditingDraft();
+    initCanvas();
+    hasDrawn = false;
+    clearEditingDraft();
 
-  message.textContent = "キャンバスをまっさらにしました。";
-});
+    if (message) {
+      message.textContent = "キャンバスをまっさらにしました。";
+    }
+  });
+}
 
-undoBtn.addEventListener("click", () => {
-  if (history.length <= 1) {
-    message.textContent = "これ以上戻れません。";
-    return;
-  }
-
-  history.pop();
-
-  const previous = history[history.length - 1];
-
-  restoreLayerSnapshot(previous);
-  hasDrawn = true;
-
-  message.textContent = "1つ戻しました。";
-});
-
-saveDrawingBtn.addEventListener("click", async () => {
-  const user = auth.currentUser;
-
-  if (!user) {
-    message.textContent = "保存するにはログインが必要です。";
-    return;
-  }
-
-  if (!hasDrawn) {
-    message.textContent = "保存する前に、キャンバスに絵を描いてください。";
-    return;
-  }
-
-  try {
-    message.textContent = "保存できる下書き数を確認しています...";
-
-    const ok = await canSaveDrawing(user);
-
-    if (!ok) {
-      message.textContent =
-        `保存できるイラストは${MAX_DRAWINGS_PER_USER}件までです。不要な下書きを削除してください。`;
+if (undoBtn) {
+  undoBtn.addEventListener("click", () => {
+    if (history.length <= 1) {
+      if (message) {
+        message.textContent = "これ以上戻れません。";
+      }
 
       return;
     }
 
-    message.textContent = "下書きを保存しています...";
+    history.pop();
 
-    const imageData = getCanvasImageData();
+    const previous = history[history.length - 1];
 
-    const docRef = await addDoc(collection(db, "v2Drawings"), {
-      userId: user.uid,
-      imageData,
-      status: "draft",
-      isDeleted: false,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
+    restoreLayerSnapshot(previous);
+    hasDrawn = true;
 
-    setEditingDraft(docRef.id);
+    if (message) {
+      message.textContent = "1つ戻しました。";
+    }
+  });
+}
 
-    message.textContent = "新しい下書きとして保存しました。このまま続きから描けます。";
+if (saveDrawingBtn) {
+  saveDrawingBtn.addEventListener("click", async () => {
+    const user = auth.currentUser;
 
-    await loadDrawings();
-  } catch (error) {
-    console.error(error);
+    if (!user) {
+      if (message) {
+        message.textContent = "保存するにはログインが必要です。";
+      }
 
-    message.textContent =
-      "下書きの保存に失敗しました。少し時間を置いて、もう一度お試しください。";
-  }
-});
+      return;
+    }
 
-overwriteDrawingBtn.addEventListener("click", async () => {
-  const user = auth.currentUser;
+    if (!hasDrawn) {
+      if (message) {
+        message.textContent = "保存する前に、キャンバスに絵を描いてください。";
+      }
 
-  if (!user) {
-    message.textContent = "上書き保存するにはログインが必要です。";
-    return;
-  }
+      return;
+    }
 
-  if (!currentDrawingId) {
-    message.textContent = "上書きする下書きが選ばれていません。";
-    return;
-  }
+    try {
+      if (message) {
+        message.textContent = "保存できる下書き数を確認しています...";
+      }
 
-  if (!hasDrawn) {
-    message.textContent = "上書き保存する前に、キャンバスに絵を描いてください。";
-    return;
-  }
+      const ok = await canSaveDrawing(user);
 
-  try {
-    message.textContent = "下書きを上書き保存しています...";
+      if (!ok) {
+        if (message) {
+          message.textContent =
+            `保存できるイラストは${MAX_DRAWINGS_PER_USER}件までです。不要な下書きを削除してください。`;
+        }
 
-    const imageData = getCanvasImageData();
+        return;
+      }
 
-    await updateDoc(doc(db, "v2Drawings", currentDrawingId), {
-      imageData,
-      status: "draft",
-      isDeleted: false,
-      updatedAt: serverTimestamp()
-    });
+      if (message) {
+        message.textContent = "下書きを保存しています...";
+      }
 
-    message.textContent = "下書きを上書き保存しました。";
+      const imageData = getCanvasImageData();
 
-    await loadDrawings();
-  } catch (error) {
-    console.error(error);
+      const docRef = await addDoc(collection(db, "v2Drawings"), {
+        userId: user.uid,
+        imageData,
+        status: "draft",
+        isDeleted: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
 
-    message.textContent =
-      "上書き保存に失敗しました。少し時間を置いて、もう一度お試しください。";
-  }
-});
+      setEditingDraft(docRef.id);
+
+      if (message) {
+        message.textContent = "新しい下書きとして保存しました。このまま続きから描けます。";
+      }
+
+      await loadDrawings();
+    } catch (error) {
+      console.error(error);
+
+      if (message) {
+        message.textContent =
+          "下書きの保存に失敗しました。少し時間を置いて、もう一度お試しください。";
+      }
+    }
+  });
+}
+
+if (overwriteDrawingBtn) {
+  overwriteDrawingBtn.addEventListener("click", async () => {
+    const user = auth.currentUser;
+
+    if (!user) {
+      if (message) {
+        message.textContent = "上書き保存するにはログインが必要です。";
+      }
+
+      return;
+    }
+
+    if (!currentDrawingId) {
+      if (message) {
+        message.textContent = "上書きする下書きが選ばれていません。";
+      }
+
+      return;
+    }
+
+    if (!hasDrawn) {
+      if (message) {
+        message.textContent = "上書き保存する前に、キャンバスに絵を描いてください。";
+      }
+
+      return;
+    }
+
+    try {
+      if (message) {
+        message.textContent = "下書きを上書き保存しています...";
+      }
+
+      const imageData = getCanvasImageData();
+
+      await updateDoc(doc(db, "v2Drawings", currentDrawingId), {
+        imageData,
+        status: "draft",
+        isDeleted: false,
+        updatedAt: serverTimestamp()
+      });
+
+      if (message) {
+        message.textContent = "下書きを上書き保存しました。";
+      }
+
+      await loadDrawings();
+    } catch (error) {
+      console.error(error);
+
+      if (message) {
+        message.textContent =
+          "上書き保存に失敗しました。少し時間を置いて、もう一度お試しください。";
+      }
+    }
+  });
+}
 
 async function deleteDraft(drawingId) {
   if (!confirm("この下書きを削除しますか？")) return;
 
   try {
-    message.textContent = "下書きを削除しています...";
+    if (message) {
+      message.textContent = "下書きを削除しています...";
+    }
 
     await updateDoc(doc(db, "v2Drawings", drawingId), {
       isDeleted: true,
@@ -673,19 +727,25 @@ async function deleteDraft(drawingId) {
       clearEditingDraft();
     }
 
-    message.textContent = "下書きを削除しました。";
+    if (message) {
+      message.textContent = "下書きを削除しました。";
+    }
 
     await loadDrawings();
   } catch (error) {
     console.error(error);
 
-    message.textContent =
-      "下書きの削除に失敗しました。少し時間を置いて、もう一度お試しください。";
+    if (message) {
+      message.textContent =
+        "下書きの削除に失敗しました。少し時間を置いて、もう一度お試しください。";
+    }
   }
 }
 
 async function loadDrawings() {
   const user = auth.currentUser;
+
+  if (!drawingList) return;
 
   if (!user) {
     drawingList.innerHTML = `
@@ -697,123 +757,148 @@ async function loadDrawings() {
     return;
   }
 
-  const q = query(
-    collection(db, "v2Drawings"),
-    where("userId", "==", user.uid),
-    where("isDeleted", "==", false)
-  );
-
-  const snap = await getDocs(q);
-
-  if (snap.empty) {
+  try {
     drawingList.innerHTML = `
       <p class="mini-info">
-        まだ保存した下書きはありません。
+        下書きを読み込んでいます...
       </p>
     `;
 
-    return;
-  }
+    const q = query(
+      collection(db, "v2Drawings"),
+      where("userId", "==", user.uid),
+      where("isDeleted", "==", false)
+    );
 
-  drawingList.innerHTML = "";
+    const snap = await getDocs(q);
 
-  const drawings = [];
+    if (snap.empty) {
+      drawingList.innerHTML = `
+        <p class="mini-info">
+          まだ保存した下書きはありません。
+        </p>
+      `;
 
-  snap.forEach((docSnap) => {
-    drawings.push({
-      id: docSnap.id,
-      data: docSnap.data()
+      return;
+    }
+
+    drawingList.innerHTML = "";
+
+    const drawings = [];
+
+    snap.forEach((docSnap) => {
+      drawings.push({
+        id: docSnap.id,
+        data: docSnap.data()
+      });
     });
-  });
 
-  drawings.sort((a, b) => {
-    const aTime = a.data.createdAt?.seconds || 0;
-    const bTime = b.data.createdAt?.seconds || 0;
+    drawings.sort((a, b) => {
+      const aTime =
+        a.data.updatedAt?.seconds ||
+        a.data.createdAt?.seconds ||
+        0;
 
-    return bTime - aTime;
-  });
+      const bTime =
+        b.data.updatedAt?.seconds ||
+        b.data.createdAt?.seconds ||
+        0;
 
-  drawings.forEach((item) => {
-    const drawingData = item.data;
-    const drawingId = item.id;
+      return bTime - aTime;
+    });
 
-    const card = document.createElement("article");
+    drawings.forEach((item) => {
+      const drawingData = item.data;
+      const drawingId = item.id;
 
-    card.className = "drawing-card";
+      const card = document.createElement("article");
 
-    const canEdit = drawingData.status === "draft";
-    const isEditing = currentDrawingId === drawingId;
+      card.className = "drawing-card";
 
-    card.innerHTML = `
-      <img src="${drawingData.imageData}" alt="保存した絵">
+      const canEdit = drawingData.status === "draft";
+      const isEditing = currentDrawingId === drawingId;
 
+      card.innerHTML = `
+        <img src="${drawingData.imageData}" alt="保存した絵">
+
+        <p class="mini-info">
+          ${
+            drawingData.status === "adopted"
+              ? "キャラ登録済み"
+              : isEditing
+                ? "編集中の下書き"
+                : "下書き"
+          }
+        </p>
+
+        <div class="drawing-actions">
+          ${
+            canEdit
+              ? `
+                <a class="ghost-btn" href="/characters/new/?drawing=${drawingId}">
+                  この絵をキャラにする
+                </a>
+              `
+              : `
+                <span class="mini-info">登録済み</span>
+              `
+          }
+
+          ${
+            canEdit
+              ? `
+                <button class="ghost-btn" type="button" data-load="${drawingId}">
+                  続きを描く
+                </button>
+              `
+              : ""
+          }
+
+          ${
+            canEdit
+              ? `
+                <button class="danger-btn" type="button" data-delete="${drawingId}">
+                  削除
+                </button>
+              `
+              : ""
+          }
+        </div>
+      `;
+
+      drawingList.appendChild(card);
+
+      const loadBtn = card.querySelector("[data-load]");
+      const deleteBtn = card.querySelector("[data-delete]");
+
+      if (loadBtn) {
+        loadBtn.addEventListener("click", () => {
+          restoreImage(drawingData.imageData);
+          setEditingDraft(drawingId);
+
+          hasDrawn = true;
+
+          if (message) {
+            message.textContent = "下書きをキャンバスに戻しました。続きから描けます。";
+          }
+        });
+      }
+
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", () => {
+          deleteDraft(drawingId);
+        });
+      }
+    });
+  } catch (error) {
+    console.error(error);
+
+    drawingList.innerHTML = `
       <p class="mini-info">
-        ${
-          drawingData.status === "adopted"
-            ? "キャラ登録済み"
-            : isEditing
-              ? "編集中の下書き"
-              : "下書き"
-        }
+        下書きの読み込みに失敗しました。ページを再読み込みしてみてください。
       </p>
-
-      <div class="drawing-actions">
-        ${
-          canEdit
-            ? `
-              <a class="ghost-btn" href="/characters/new/?drawing=${drawingId}">
-                この絵をキャラにする
-              </a>
-            `
-            : `
-              <span class="mini-info">登録済み</span>
-            `
-        }
-
-        ${
-          canEdit
-            ? `
-              <button class="ghost-btn" type="button" data-load="${drawingId}">
-                続きを描く
-              </button>
-            `
-            : ""
-        }
-
-        ${
-          canEdit
-            ? `
-              <button class="danger-btn" type="button" data-delete="${drawingId}">
-                削除
-              </button>
-            `
-            : ""
-        }
-      </div>
     `;
-
-    drawingList.appendChild(card);
-
-    const loadBtn = card.querySelector("[data-load]");
-    const deleteBtn = card.querySelector("[data-delete]");
-
-    if (loadBtn) {
-      loadBtn.addEventListener("click", () => {
-        restoreImage(drawingData.imageData);
-        setEditingDraft(drawingId);
-
-        hasDrawn = true;
-
-        message.textContent = "下書きをキャンバスに戻しました。続きから描けます。";
-      });
-    }
-
-    if (deleteBtn) {
-      deleteBtn.addEventListener("click", () => {
-        deleteDraft(drawingId);
-      });
-    }
-  });
+  }
 }
 
 async function getMyDrawingCount(user) {
@@ -842,7 +927,7 @@ async function canSaveDrawing(user) {
   return true;
 }
 
-if (opacityValue) {
+if (opacityValue && penOpacity) {
   opacityValue.textContent = `${penOpacity.value}%`;
 
   penOpacity.addEventListener("input", () => {
@@ -857,11 +942,13 @@ onAuthStateChanged(auth, () => {
   loadDrawings().catch((error) => {
     console.error(error);
 
-    drawingList.innerHTML = `
-      <p class="mini-info">
-        下書きの読み込みに失敗しました。ページを再読み込みしてみてください。
-      </p>
-    `;
+    if (drawingList) {
+      drawingList.innerHTML = `
+        <p class="mini-info">
+          下書きの読み込みに失敗しました。ページを再読み込みしてみてください。
+        </p>
+      `;
+    }
   });
 });
 
