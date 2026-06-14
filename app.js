@@ -98,6 +98,7 @@ function renderHeader() {
           <a href="/draw/">描く</a>
           <a href="/events/">イベント</a>
           <a href="/games/">ゲーム</a>
+          <a href="/users/">ユーザー</a>
           <a href="/news/">お知らせ</a>
           <a href="/mypage/">マイページ</a>
           <a href="/settings/">設定</a>
