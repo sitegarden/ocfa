@@ -5001,24 +5001,26 @@ textarea {
   }
 }
 
-/* header / hamburger center fix */
+/* header / hamburger compact fix */
 .menu-toggle {
   display: inline-flex !important;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 7px !important;
-  width: 64px !important;
-  height: 64px !important;
+  gap: 5px !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
   padding: 0 !important;
-  line-height: 1 !important;
   box-sizing: border-box !important;
+  line-height: 1 !important;
 }
 
 .menu-toggle span {
   display: block !important;
-  width: 30px !important;
-  height: 6px !important;
+  width: 25px !important;
+  height: 4px !important;
   margin: 0 !important;
   padding: 0 !important;
   border-radius: 999px !important;
@@ -5027,7 +5029,7 @@ textarea {
 }
 
 .menu-toggle.is-open span:nth-child(1) {
-  transform: translateY(13px) rotate(45deg) !important;
+  transform: translateY(9px) rotate(45deg) !important;
 }
 
 .menu-toggle.is-open span:nth-child(2) {
@@ -5035,18 +5037,20 @@ textarea {
 }
 
 .menu-toggle.is-open span:nth-child(3) {
-  transform: translateY(-13px) rotate(-45deg) !important;
+  transform: translateY(-9px) rotate(-45deg) !important;
 }
 
 @media (max-width: 720px) {
   .menu-toggle {
-    width: 64px !important;
-    height: 64px !important;
-    border-radius: 24px !important;
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    border-radius: 18px !important;
   }
 
   .menu-toggle span {
-    width: 30px !important;
-    height: 6px !important;
+    width: 25px !important;
+    height: 4px !important;
   }
 }
