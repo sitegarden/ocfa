@@ -5391,3 +5391,98 @@ textarea {
   opacity: 0.65;
   pointer-events: none;
 }
+
+/* game room / guest handle */
+.guest-join-fields {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.guest-join-fields label {
+  display: grid;
+  gap: 6px;
+  font-weight: 900;
+}
+
+.guest-join-fields input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid rgba(101, 82, 140, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+  font: inherit;
+}
+
+.game-player-handle {
+  word-break: break-word;
+}
+
+/* game room / canvas guide */
+.game-canvas-guide {
+  margin: 14px 0;
+  border: 1px solid rgba(101, 82, 140, 0.16);
+  background:
+    linear-gradient(135deg, rgba(255, 247, 232, 0.94), rgba(255, 255, 255, 0.9));
+}
+
+.game-canvas-guide strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.98rem;
+}
+
+.game-canvas-guide p {
+  margin: 0;
+  color: var(--muted, #7d7284);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+/* game room / pen drawing selection fix */
+.game-room-page,
+.game-room-page *,
+.room-page,
+.room-page *,
+.game-room,
+.game-room *,
+.game-draw-panel,
+.game-draw-panel *,
+.game-fa-panel,
+.game-fa-panel *,
+.game-layer-panel,
+.game-layer-panel *,
+.game-tool-actions,
+.game-tool-actions *,
+.game-canvas,
+#gameCanvas {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+#gameCanvas {
+  display: block;
+  touch-action: none !important;
+  -ms-touch-action: none !important;
+  -webkit-user-drag: none;
+}
+
+.game-draw-panel input,
+.game-fa-panel input,
+.room-page input,
+.room-page textarea,
+.room-page select {
+  -webkit-user-select: auto !important;
+  user-select: auto !important;
+}
+
+@media (max-width: 640px) {
+  .game-canvas-guide {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+  }
+}
