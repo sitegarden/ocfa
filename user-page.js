@@ -69,20 +69,19 @@ async function getUserData() {
 }
 
 async function getPublicUsers() {
-  const q = query(
-    collection(db, "users"),
-    where("isPublic", "==", true),
-    where("isDeleted", "==", false)
-  );
-
-  const snap = await getDocs(q);
+  const snap = await getDocs(collection(db, "users"));
 
   const users = [];
 
   snap.forEach((docSnap) => {
+    const data = docSnap.data();
+
+    if (data.isDeleted === true) return;
+    if (data.isPublic === false) return;
+
     users.push({
       id: docSnap.id,
-      data: docSnap.data()
+      data
     });
   });
 
@@ -317,10 +316,10 @@ function renderUserList(users, characterCounts) {
 function renderUserPage(user, characters) {
   const data = user.data;
 
-  if (data.isDeleted === true || data.isPublic !== true) {
-    renderNotFound();
-    return;
-  }
+if (data.isDeleted === true || data.isPublic === false) {
+  renderNotFound();
+  return;
+}
 
   const displayName = getDisplayName(data);
   const profileText = data.profileText || "";
