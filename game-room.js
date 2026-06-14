@@ -48,6 +48,10 @@ let gameLastX = 0;
 let gameLastY = 0;
 let gameHasDrawn = false;
 
+/* 筆圧ペン途中停止対策 */
+let gameActivePointerId = null;
+let lastCanvasInputAt = 0;
+
 let layerCanvases = [];
 let layerContexts = [];
 let activeLayerIndex = 0;
@@ -79,6 +83,21 @@ function escapeHtml(text) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function normalizeGuestHandle(text) {
+  const value = String(text || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 40);
+
+  if (!value) return "";
+
+  if (value.startsWith("@")) {
+    return value;
+  }
+
+  return value;
 }
 
 function getGuestId() {
@@ -724,6 +743,7 @@ async function forceAdvanceByOwner() {
 
 async function joinAsGuest() {
   const nameInput = document.getElementById("guestName");
+  const handleInput = document.getElementById("guestHandle");
   const message = document.getElementById("roomMessage");
 
   const alreadyJoined = getMyPlayer();
@@ -752,7 +772,8 @@ async function joinAsGuest() {
     return;
   }
 
-  const name = nameInput.value.trim() || getAutoGuestName();
+  const name = nameInput?.value.trim() || getAutoGuestName();
+  const guestHandle = normalizeGuestHandle(handleInput?.value || "");
   const guestId = getGuestId();
 
   try {
@@ -765,6 +786,7 @@ async function joinAsGuest() {
       userId: "",
       guestId,
       name,
+      guestHandle,
       isGuest: true,
       isOwner: false,
       order: currentPlayers.length,
@@ -834,6 +856,7 @@ async function joinAsLoginUser() {
       userId: currentUser.uid,
       guestId: "",
       name,
+      guestHandle: "",
       isGuest: false,
       isOwner: currentRoom.data.ownerId === currentUser.uid,
       order: currentPlayers.length,
@@ -920,11 +943,22 @@ function renderPlayers() {
       ${currentPlayers
         .map((player) => {
           const data = player.data;
+          const guestHandle = data.guestHandle || "";
 
           return `
             <article class="player-card">
               <div>
                 <strong>${escapeHtml(data.name || "匿名")}</strong>
+
+                ${
+                  guestHandle
+                    ? `
+                      <p class="mini-info game-player-handle">
+                        ${escapeHtml(guestHandle)}
+                      </p>
+                    `
+                    : ""
+                }
 
                 <p class="mini-info">
                   ${
@@ -1001,15 +1035,33 @@ function renderJoinArea() {
           : `
             <p>ゲスト参加できます。名前なしの場合は匿名名になります。</p>
 
-            <label>
-              参加名
-              <input
-                id="guestName"
-                type="text"
-                maxlength="20"
-                placeholder="例：ゼロ"
-              >
-            </label>
+            <div class="guest-join-fields">
+              <label>
+                参加名
+                <input
+                  id="guestName"
+                  type="text"
+                  maxlength="20"
+                  placeholder="例：ゼロ"
+                  autocomplete="off"
+                >
+              </label>
+
+              <label>
+                ID・SNSアカウント（任意）
+                <input
+                  id="guestHandle"
+                  type="text"
+                  maxlength="40"
+                  placeholder="@example / X ID / Discord名など"
+                  autocomplete="off"
+                >
+              </label>
+
+              <p class="mini-info">
+                入力すると参加者一覧に表示されます。誰かわかるためのメモなので、空欄でも参加できます。
+              </p>
+            </div>
 
             <div class="actions">
               <button id="guestJoinBtn" class="primary-btn" type="button">
@@ -1212,6 +1264,22 @@ function renderLayerTools() {
 
       <p id="layerStatusText" class="mini-info">
         現在：レイヤー1（下・表示中）
+      </p>
+    </div>
+  `;
+}
+
+function renderCanvasGuide(type = "oc") {
+  const drawText = type === "fa"
+    ? "下のキャンバスにファンアートを描いてください。"
+    : "下のキャンバスに自分のOCを描いてください。";
+
+  return `
+    <div class="panel-soft game-canvas-guide">
+      <strong>描画キャンバスはこの下に表示されます</strong>
+      <p>
+        残り時間が表示されたら、${drawText}
+        スマホでは少し下にスクロールすると描画エリアがあります。
       </p>
     </div>
   `;
@@ -1448,6 +1516,8 @@ async function renderGameStageArea() {
           </div>
         </div>
 
+        ${renderCanvasGuide("fa")}
+
         ${renderLayerTools()}
 
         <canvas
@@ -1547,6 +1617,8 @@ async function renderGameStageArea() {
           <span id="originalTimerBar"></span>
         </div>
       </div>
+
+      ${renderCanvasGuide("oc")}
 
       ${renderLayerTools()}
 
@@ -2075,7 +2147,6 @@ function startRealtimeListeners() {
     }
   );
 }
-
 
 
 
