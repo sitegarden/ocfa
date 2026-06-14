@@ -4181,3 +4181,106 @@ textarea {
     width: 100%;
   }
 }
+
+/* draw / compact tool UI fix */
+.draw-tool-grid {
+  gap: 10px;
+}
+
+.draw-tool-panel {
+  padding: 10px;
+  border-radius: 14px;
+}
+
+.draw-tool-panel h3 {
+  margin-bottom: 8px;
+  font-size: 0.92rem;
+}
+
+.tool-mode,
+.draw-layer-buttons,
+.draw-layer-actions,
+.draw-sub-actions {
+  gap: 7px;
+}
+
+.tool-mode button,
+.layer-btn,
+.draw-layer-actions button,
+.draw-sub-actions button {
+  padding: 7px 10px;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  min-height: 36px;
+}
+
+.canvas-tools {
+  gap: 8px;
+}
+
+.canvas-tools label {
+  min-width: 110px;
+  font-size: 0.82rem;
+}
+
+.pressure-toggle {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid rgba(101, 82, 140, 0.18);
+  border-radius: 999px;
+  background: #fffdf8;
+  color: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.pressure-toggle input {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .draw-tool-grid {
+    gap: 9px;
+  }
+
+  .draw-tool-panel {
+    padding: 9px;
+    border-radius: 13px;
+  }
+
+  .tool-mode button,
+  .layer-btn,
+  .draw-layer-actions button,
+  .draw-sub-actions button {
+    flex: 0 1 auto;
+    padding: 7px 9px;
+    font-size: 0.8rem;
+    min-height: 34px;
+  }
+
+  .tool-mode,
+  .draw-layer-buttons,
+  .draw-layer-actions,
+  .draw-sub-actions {
+    justify-content: flex-start;
+  }
+
+  .canvas-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .pressure-toggle {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.8rem;
+  }
+}
