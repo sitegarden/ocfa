@@ -5216,3 +5216,62 @@ textarea {
     transform: translateY(-9px) rotate(-45deg) !important;
   }
 }
+
+
+/* event fanart / drawing UI fix */
+.fanart-save-area {
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid rgba(101, 82, 140, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.fanart-save-area .primary-btn,
+.fanart-save-area .ghost-btn {
+  width: auto;
+  max-width: 100%;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  min-height: 36px;
+}
+
+.fanart-save-area .message {
+  margin: 8px 0 0;
+}
+
+.fanart-draw-panel,
+.fanart-draw-panel *,
+.fanart-reference-panel,
+.canvas-wrap,
+.canvas-wrap *,
+#fanartCanvas {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#fanartCanvas {
+  touch-action: none;
+}
+
+.fanart-draw-panel input[type="range"],
+.fanart-draw-panel input[type="color"],
+.fanart-draw-panel input[type="checkbox"] {
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
+@media (max-width: 640px) {
+  .fanart-save-area {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+
+  .fanart-save-area .primary-btn,
+  .fanart-save-area .ghost-btn {
+    width: 100%;
+  }
+}
