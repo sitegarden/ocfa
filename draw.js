@@ -36,41 +36,176 @@ const message = document.getElementById("message");
 const drawingList = document.getElementById("drawingList");
 const opacityValue = document.getElementById("opacityValue");
 
+const layerBtn0 = document.getElementById("layerBtn0");
+const layerBtn1 = document.getElementById("layerBtn1");
+const toggleLayerBtn = document.getElementById("toggleLayerBtn");
+const clearLayerBtn = document.getElementById("clearLayerBtn");
+const layerStatusText = document.getElementById("layerStatusText");
+const pressureToggle = document.getElementById("pressureToggle");
+
 const MAX_DRAWINGS_PER_USER = 100;
+const MAX_HISTORY = 30;
+const LAYER_COUNT = 2;
 
 let drawing = false;
 let lastX = 0;
 let lastY = 0;
 let hasDrawn = false;
+
 let history = [];
 let currentTool = "pen";
 let currentDrawingId = null;
 
-function initCanvas() {
+let activeLayerIndex = 0;
+let layerCanvases = [];
+let layerContexts = [];
+let layerVisible = [true, true];
+
+function createLayerCanvas() {
+  const layerCanvas = document.createElement("canvas");
+
+  layerCanvas.width = canvas.width;
+  layerCanvas.height = canvas.height;
+
+  const layerCtx = layerCanvas.getContext("2d");
+
+  return {
+    canvas: layerCanvas,
+    ctx: layerCtx
+  };
+}
+
+function initLayers() {
+  layerCanvases = [];
+  layerContexts = [];
+  layerVisible = [true, true];
+  activeLayerIndex = 0;
+
+  for (let i = 0; i < LAYER_COUNT; i++) {
+    const layer = createLayerCanvas();
+
+    layerCanvases.push(layer.canvas);
+    layerContexts.push(layer.ctx);
+  }
+}
+
+function getActiveLayerCtx() {
+  return layerContexts[activeLayerIndex] || null;
+}
+
+function redrawCanvas() {
   ctx.fillStyle = "#fffdf8";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
+  layerCanvases.forEach((layerCanvas, index) => {
+    if (!layerVisible[index]) return;
 
-  history = [];
-  saveHistory();
+    ctx.drawImage(layerCanvas, 0, 0);
+  });
+}
+
+function getLayerSnapshot() {
+  return {
+    layers: layerCanvases.map((layerCanvas) => {
+      return layerCanvas.toDataURL("image/png");
+    }),
+    visible: [...layerVisible],
+    active: activeLayerIndex
+  };
 }
 
 function saveHistory() {
-  history.push(canvas.toDataURL("image/jpeg", 0.82));
+  history.push(getLayerSnapshot());
 
-  if (history.length > 20) {
+  if (history.length > MAX_HISTORY) {
     history.shift();
   }
+}
+
+function restoreLayerSnapshot(snapshot) {
+  if (!snapshot) return;
+
+  const layerImages = snapshot.layers || [];
+  let loadedCount = 0;
+
+  layerVisible = Array.isArray(snapshot.visible)
+    ? [...snapshot.visible]
+    : [true, true];
+
+  activeLayerIndex = typeof snapshot.active === "number"
+    ? snapshot.active
+    : 0;
+
+  if (!layerImages.length) {
+    redrawCanvas();
+    updateLayerUi();
+    return;
+  }
+
+  layerCanvases.forEach((layerCanvas, index) => {
+    const layerCtx = layerContexts[index];
+
+    layerCtx.clearRect(0, 0, layerCanvas.width, layerCanvas.height);
+
+    const dataUrl = layerImages[index];
+
+    if (!dataUrl) {
+      loadedCount++;
+
+      if (loadedCount >= layerImages.length) {
+        redrawCanvas();
+        updateLayerUi();
+      }
+
+      return;
+    }
+
+    const img = new Image();
+
+    img.onload = () => {
+      layerCtx.clearRect(0, 0, layerCanvas.width, layerCanvas.height);
+      layerCtx.drawImage(img, 0, 0, layerCanvas.width, layerCanvas.height);
+
+      loadedCount++;
+
+      if (loadedCount >= layerImages.length) {
+        redrawCanvas();
+        updateLayerUi();
+      }
+    };
+
+    img.src = dataUrl;
+  });
+}
+
+function initCanvas() {
+  initLayers();
+  redrawCanvas();
+
+  drawing = false;
+  hasDrawn = false;
+  history = [];
+
+  saveHistory();
+  updateLayerUi();
 }
 
 function restoreImage(dataUrl) {
   const img = new Image();
 
   img.onload = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    initLayers();
+
+    const baseCtx = layerContexts[0];
+
+    baseCtx.clearRect(0, 0, canvas.width, canvas.height);
+    baseCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    activeLayerIndex = 0;
+    layerVisible = [true, true];
+
+    redrawCanvas();
+    updateLayerUi();
 
     history = [];
     saveHistory();
@@ -81,12 +216,23 @@ function restoreImage(dataUrl) {
 
 function getPoint(e) {
   const rect = canvas.getBoundingClientRect();
-  const touch = e.touches ? e.touches[0] : e;
+  const source = e.touches ? e.touches[0] : e;
 
   return {
-    x: ((touch.clientX - rect.left) / rect.width) * canvas.width,
-    y: ((touch.clientY - rect.top) / rect.height) * canvas.height
+    x: ((source.clientX - rect.left) / rect.width) * canvas.width,
+    y: ((source.clientY - rect.top) / rect.height) * canvas.height,
+    pressure: getPressure(e)
   };
+}
+
+function getPressure(e) {
+  if (!pressureToggle?.checked) return 1;
+
+  if (typeof e.pressure === "number" && e.pressure > 0) {
+    return Math.max(0.25, Math.min(1.8, e.pressure * 1.6));
+  }
+
+  return 1;
 }
 
 function rgbToHex(r, g, b) {
@@ -100,6 +246,8 @@ function rgbToHex(r, g, b) {
 
 function pickColor(e) {
   e.preventDefault();
+
+  redrawCanvas();
 
   const point = getPoint(e);
 
@@ -138,6 +286,30 @@ function setTool(tool) {
   }
 }
 
+function updateLayerUi() {
+  if (layerBtn0) {
+    layerBtn0.classList.toggle("is-active", activeLayerIndex === 0);
+    layerBtn0.classList.toggle("is-hidden-layer", layerVisible[0] === false);
+  }
+
+  if (layerBtn1) {
+    layerBtn1.classList.toggle("is-active", activeLayerIndex === 1);
+    layerBtn1.classList.toggle("is-hidden-layer", layerVisible[1] === false);
+  }
+
+  if (layerStatusText) {
+    const layerName = activeLayerIndex === 0
+      ? "レイヤー1（下）"
+      : "レイヤー2（上）";
+
+    const visibleText = layerVisible[activeLayerIndex]
+      ? "表示中"
+      : "非表示";
+
+    layerStatusText.textContent = `現在：${layerName} / ${visibleText}`;
+  }
+}
+
 function startDraw(e) {
   e.preventDefault();
 
@@ -146,11 +318,22 @@ function startDraw(e) {
     return;
   }
 
+  if (!layerVisible[activeLayerIndex]) {
+    message.textContent = "非表示中のレイヤーには描けません。";
+    return;
+  }
+
   const point = getPoint(e);
 
   drawing = true;
   lastX = point.x;
   lastY = point.y;
+
+  saveHistory();
+
+  if (canvas.setPointerCapture && e.pointerId !== undefined) {
+    canvas.setPointerCapture(e.pointerId);
+  }
 }
 
 function draw(e) {
@@ -159,50 +342,63 @@ function draw(e) {
   e.preventDefault();
 
   const point = getPoint(e);
+  const targetCtx = getActiveLayerCtx();
+
+  if (!targetCtx) return;
+
+  const pressure = point.pressure;
+
+  targetCtx.save();
+
+  targetCtx.lineCap = "round";
+  targetCtx.lineJoin = "round";
 
   if (currentTool === "eraser") {
-    ctx.globalAlpha = 1;
-    ctx.strokeStyle = "#fffdf8";
-    ctx.lineWidth = Number(eraserSize.value);
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+    targetCtx.globalAlpha = 1;
+    targetCtx.globalCompositeOperation = "destination-out";
+    targetCtx.strokeStyle = "rgba(0, 0, 0, 1)";
+    targetCtx.lineWidth = Math.max(1, Number(eraserSize.value) * pressure);
   } else {
     const opacity = Number(penOpacity.value) / 100;
 
-    ctx.globalAlpha = opacity;
-    ctx.strokeStyle = penColor.value;
-
-    if (opacity < 1) {
-      ctx.lineCap = "butt";
-      ctx.lineWidth = Math.max(1, Number(penSize.value) * 0.9);
-    } else {
-      ctx.lineCap = "round";
-      ctx.lineWidth = Number(penSize.value);
-    }
-
-    ctx.lineJoin = "round";
+    targetCtx.globalAlpha = opacity;
+    targetCtx.globalCompositeOperation = "source-over";
+    targetCtx.strokeStyle = penColor.value;
+    targetCtx.lineWidth = Math.max(1, Number(penSize.value) * pressure);
   }
 
-  ctx.beginPath();
-  ctx.moveTo(lastX, lastY);
-  ctx.lineTo(point.x, point.y);
-  ctx.stroke();
+  targetCtx.beginPath();
+  targetCtx.moveTo(lastX, lastY);
+  targetCtx.lineTo(point.x, point.y);
+  targetCtx.stroke();
 
-  ctx.globalAlpha = 1;
+  targetCtx.restore();
 
   lastX = point.x;
   lastY = point.y;
   hasDrawn = true;
+
+  redrawCanvas();
 }
 
-function stopDraw() {
+function stopDraw(e) {
   if (!drawing) return;
 
   drawing = false;
-  saveHistory();
+  redrawCanvas();
+
+  if (canvas.releasePointerCapture && e?.pointerId !== undefined) {
+    try {
+      canvas.releasePointerCapture(e.pointerId);
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }
 
 function getCanvasImageData() {
+  redrawCanvas();
+
   return canvas.toDataURL("image/jpeg", 0.82);
 }
 
@@ -222,14 +418,77 @@ function clearEditingDraft() {
   }
 }
 
-canvas.addEventListener("mousedown", startDraw);
-canvas.addEventListener("mousemove", draw);
-canvas.addEventListener("mouseup", stopDraw);
-canvas.addEventListener("mouseleave", stopDraw);
+function setupCanvasEvents() {
+  if (window.PointerEvent) {
+    canvas.addEventListener("pointerdown", startDraw);
+    canvas.addEventListener("pointermove", draw);
+    canvas.addEventListener("pointerup", stopDraw);
+    canvas.addEventListener("pointercancel", stopDraw);
+    canvas.addEventListener("pointerleave", stopDraw);
+    return;
+  }
 
-canvas.addEventListener("touchstart", startDraw, { passive: false });
-canvas.addEventListener("touchmove", draw, { passive: false });
-canvas.addEventListener("touchend", stopDraw);
+  canvas.addEventListener("mousedown", startDraw);
+  canvas.addEventListener("mousemove", draw);
+  canvas.addEventListener("mouseup", stopDraw);
+  canvas.addEventListener("mouseleave", stopDraw);
+
+  canvas.addEventListener("touchstart", startDraw, { passive: false });
+  canvas.addEventListener("touchmove", draw, { passive: false });
+  canvas.addEventListener("touchend", stopDraw);
+  canvas.addEventListener("touchcancel", stopDraw);
+}
+
+function setupLayerEvents() {
+  if (layerBtn0) {
+    layerBtn0.addEventListener("click", () => {
+      activeLayerIndex = 0;
+      updateLayerUi();
+    });
+  }
+
+  if (layerBtn1) {
+    layerBtn1.addEventListener("click", () => {
+      activeLayerIndex = 1;
+      updateLayerUi();
+    });
+  }
+
+  if (toggleLayerBtn) {
+    toggleLayerBtn.addEventListener("click", () => {
+      layerVisible[activeLayerIndex] = !layerVisible[activeLayerIndex];
+
+      redrawCanvas();
+      updateLayerUi();
+
+      message.textContent = layerVisible[activeLayerIndex]
+        ? "選択中のレイヤーを表示しました。"
+        : "選択中のレイヤーを非表示にしました。";
+    });
+  }
+
+  if (clearLayerBtn) {
+    clearLayerBtn.addEventListener("click", () => {
+      const layerName = activeLayerIndex === 0
+        ? "レイヤー1"
+        : "レイヤー2";
+
+      if (!confirm(`${layerName}を消しますか？`)) return;
+
+      const targetCtx = getActiveLayerCtx();
+
+      if (!targetCtx) return;
+
+      saveHistory();
+
+      targetCtx.clearRect(0, 0, canvas.width, canvas.height);
+      redrawCanvas();
+
+      hasDrawn = true;
+      message.textContent = `${layerName}を消しました。`;
+    });
+  }
+}
 
 penModeBtn.addEventListener("click", () => {
   setTool("pen");
@@ -254,12 +513,19 @@ clearBtn.addEventListener("click", () => {
 });
 
 undoBtn.addEventListener("click", () => {
-  if (history.length <= 1) return;
+  if (history.length <= 1) {
+    message.textContent = "これ以上戻れません。";
+    return;
+  }
 
   history.pop();
 
   const previous = history[history.length - 1];
-  restoreImage(previous);
+
+  restoreLayerSnapshot(previous);
+  hasDrawn = true;
+
+  message.textContent = "1つ戻しました。";
 });
 
 saveDrawingBtn.addEventListener("click", async () => {
@@ -283,6 +549,7 @@ saveDrawingBtn.addEventListener("click", async () => {
     if (!ok) {
       message.textContent =
         `保存できるイラストは${MAX_DRAWINGS_PER_USER}件までです。不要な下書きを削除してください。`;
+
       return;
     }
 
@@ -301,12 +568,12 @@ saveDrawingBtn.addEventListener("click", async () => {
 
     setEditingDraft(docRef.id);
 
-    message.textContent =
-      "新しい下書きとして保存しました。このまま続きから描けます。";
+    message.textContent = "新しい下書きとして保存しました。このまま続きから描けます。";
 
     await loadDrawings();
   } catch (error) {
     console.error(error);
+
     message.textContent =
       "下書きの保存に失敗しました。少し時間を置いて、もう一度お試しください。";
   }
@@ -347,6 +614,7 @@ overwriteDrawingBtn.addEventListener("click", async () => {
     await loadDrawings();
   } catch (error) {
     console.error(error);
+
     message.textContent =
       "上書き保存に失敗しました。少し時間を置いて、もう一度お試しください。";
   }
@@ -372,6 +640,7 @@ async function deleteDraft(drawingId) {
     await loadDrawings();
   } catch (error) {
     console.error(error);
+
     message.textContent =
       "下書きの削除に失敗しました。少し時間を置いて、もう一度お試しください。";
   }
@@ -382,86 +651,106 @@ async function loadDrawings() {
 
   if (!user) {
     drawingList.innerHTML = `
-      <p>ログインすると、保存した下書きをここで確認できます。</p>
+      <p class="mini-info">
+        ログインすると、保存した下書きをここで確認できます。
+      </p>
     `;
+
     return;
   }
 
   const q = query(
-  collection(db, "v2Drawings"),
-  where("userId", "==", user.uid),
-  where("isDeleted", "==", false)
-);
+    collection(db, "v2Drawings"),
+    where("userId", "==", user.uid),
+    where("isDeleted", "==", false)
+  );
 
   const snap = await getDocs(q);
 
   if (snap.empty) {
     drawingList.innerHTML = `
-      <p>まだ保存した下書きはありません。</p>
+      <p class="mini-info">
+        まだ保存した下書きはありません。
+      </p>
     `;
+
     return;
   }
 
   drawingList.innerHTML = "";
 
-const drawings = [];
+  const drawings = [];
 
-snap.forEach((docSnap) => {
-  drawings.push({
-    id: docSnap.id,
-    data: docSnap.data()
+  snap.forEach((docSnap) => {
+    drawings.push({
+      id: docSnap.id,
+      data: docSnap.data()
+    });
   });
-});
 
-drawings.sort((a, b) => {
-  const aTime = a.data.createdAt?.seconds || 0;
-  const bTime = b.data.createdAt?.seconds || 0;
-  return bTime - aTime;
-});
+  drawings.sort((a, b) => {
+    const aTime = a.data.createdAt?.seconds || 0;
+    const bTime = b.data.createdAt?.seconds || 0;
 
-drawings.forEach((item) => {
-  const drawingData = item.data;
-  const drawingId = item.id;
+    return bTime - aTime;
+  });
+
+  drawings.forEach((item) => {
+    const drawingData = item.data;
+    const drawingId = item.id;
 
     const card = document.createElement("article");
+
     card.className = "drawing-card";
 
     const canEdit = drawingData.status === "draft";
     const isEditing = currentDrawingId === drawingId;
 
     card.innerHTML = `
-      <img src="${drawingData.imageData}" alt="保存した下書き">
+      <img src="${drawingData.imageData}" alt="保存した絵">
 
-      <div class="drawing-card-body">
-        <p class="mini-info">
-          ${
-            drawingData.status === "adopted"
-              ? "キャラ登録済み"
-              : isEditing
-                ? "編集中の下書き"
-                : "下書き"
-          }
-        </p>
+      <p class="mini-info">
+        ${
+          drawingData.status === "adopted"
+            ? "キャラ登録済み"
+            : isEditing
+              ? "編集中の下書き"
+              : "下書き"
+        }
+      </p>
 
-        <div class="drawing-card-actions">
-          ${
-            canEdit
-              ? `<a class="primary-btn" href="/characters/new/?drawing=${drawingId}">この絵をキャラにする</a>`
-              : `<span class="ghost-label">登録済み</span>`
-          }
+      <div class="drawing-actions">
+        ${
+          canEdit
+            ? `
+              <a class="ghost-btn" href="/characters/new/?drawing=${drawingId}">
+                この絵をキャラにする
+              </a>
+            `
+            : `
+              <span class="mini-info">登録済み</span>
+            `
+        }
 
-          ${
-            canEdit
-              ? `<button type="button" data-load="${drawingId}">続きを描く</button>`
-              : ""
-          }
+        ${
+          canEdit
+            ? `
+              <button class="ghost-btn" type="button" data-load="${drawingId}">
+                続きを描く
+              </button>
+            `
+            : ""
+        }
 
-          ${
-            canEdit
-              ? `<button type="button" class="danger-btn" data-delete="${drawingId}">削除</button>`
-              : ""
-          }
-        </div>
+        ${
+          canEdit
+            ? `
+              <button class="danger-btn" type="button" data-delete="${drawingId}">
+                削除
+              </button>
+            `
+            : ""
+        }
       </div>
     `;
 
@@ -476,8 +765,8 @@ drawings.forEach((item) => {
         setEditingDraft(drawingId);
 
         hasDrawn = true;
-        message.textContent =
-          "下書きをキャンバスに戻しました。続きから描けます。";
+
+        message.textContent = "下書きをキャンバスに戻しました。続きから描けます。";
       });
     }
 
@@ -488,24 +777,6 @@ drawings.forEach((item) => {
     }
   });
 }
-
-if (opacityValue) {
-  opacityValue.textContent = `${penOpacity.value}%`;
-
-  penOpacity.addEventListener("input", () => {
-    opacityValue.textContent = `${penOpacity.value}%`;
-  });
-}
-
-onAuthStateChanged(auth, () => {
-  loadDrawings().catch((error) => {
-    console.error(error);
-
-    drawingList.innerHTML = `
-      <p>下書きの読み込みに失敗しました。ページを再読み込みしてみてください。</p>
-    `;
-  });
-});
 
 async function getMyDrawingCount(user) {
   const q = query(
@@ -533,4 +804,28 @@ async function canSaveDrawing(user) {
   return true;
 }
 
+if (opacityValue) {
+  opacityValue.textContent = `${penOpacity.value}%`;
+
+  penOpacity.addEventListener("input", () => {
+    opacityValue.textContent = `${penOpacity.value}%`;
+  });
+}
+
+setupCanvasEvents();
+setupLayerEvents();
+
+onAuthStateChanged(auth, () => {
+  loadDrawings().catch((error) => {
+    console.error(error);
+
+    drawingList.innerHTML = `
+      <p class="mini-info">
+        下書きの読み込みに失敗しました。ページを再読み込みしてみてください。
+      </p>
+    `;
+  });
+});
+
 initCanvas();
+setTool("pen");
