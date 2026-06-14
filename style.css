@@ -4284,3 +4284,27 @@ textarea {
     font-size: 0.8rem;
   }
 }
+
+.draw-danger-panel {
+  border-color: rgba(190, 80, 80, 0.22);
+  background: rgba(255, 248, 248, 0.8);
+}
+
+.draw-danger-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.draw-danger-actions .danger-btn {
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  min-height: 34px;
+}
+
+@media (max-width: 640px) {
+  .draw-danger-actions .danger-btn {
+    width: auto;
+    flex: 0 1 auto;
+  }
+}
