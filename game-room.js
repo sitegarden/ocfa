@@ -310,6 +310,20 @@ function getOriginalByPlayerId(playerId) {
   return getLatestItem(originals);
 }
 
+
+function getPlayerCreditName(player) {
+  if (!player) return "匿名";
+
+  const name = player.data.name || "匿名";
+
+  if (player.data.isGuest === true && player.data.guestHandle) {
+    return `${name} ${player.data.guestHandle}`;
+  }
+
+  return name;
+}
+
+
 function getMyFanartForCurrentRound(myPlayer, targetPlayer) {
   if (!myPlayer || !targetPlayer) return null;
 
@@ -2272,6 +2286,10 @@ function updateLayerUi() {
   }
 }
 
+function canSwitchLayerNow() {
+  return Date.now() - lastCanvasInputAt > 500;
+}
+
 function setupLayerButtons() {
   const layerBtn0 = document.getElementById("layerBtn0");
   const layerBtn1 = document.getElementById("layerBtn1");
@@ -2300,28 +2318,42 @@ function setupLayerButtons() {
   }
 
   if (penToolBtn) {
-    penToolBtn.addEventListener("click", () => {
+    penToolBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
       currentTool = "pen";
       updateToolButtons();
     });
   }
 
   if (eraserToolBtn) {
-    eraserToolBtn.addEventListener("click", () => {
+    eraserToolBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
       currentTool = "eraser";
       updateToolButtons();
     });
   }
 
   if (fillToolBtn) {
-    fillToolBtn.addEventListener("click", () => {
+    fillToolBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
       currentTool = "fill";
       updateToolButtons();
     });
   }
 
   if (undoLayerBtn) {
-    undoLayerBtn.addEventListener("click", undoActiveLayer);
+    undoLayerBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      undoActiveLayer();
+    });
   }
 
   if (gamePressureToggle) {
@@ -2333,21 +2365,36 @@ function setupLayerButtons() {
   }
 
   if (layerBtn0) {
-    layerBtn0.addEventListener("click", () => {
+    layerBtn0.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!canSwitchLayerNow()) return;
+
       activeLayerIndex = 0;
       updateLayerUi();
     });
   }
 
   if (layerBtn1) {
-    layerBtn1.addEventListener("click", () => {
+    layerBtn1.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!canSwitchLayerNow()) return;
+
       activeLayerIndex = 1;
       updateLayerUi();
     });
   }
 
   if (toggleLayerBtn) {
-    toggleLayerBtn.addEventListener("click", () => {
+    toggleLayerBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!canSwitchLayerNow()) return;
+
       layerVisible[activeLayerIndex] = !layerVisible[activeLayerIndex];
 
       redrawGameCanvas();
@@ -2358,7 +2405,11 @@ function setupLayerButtons() {
   }
 
   if (clearLayerBtn) {
-    clearLayerBtn.addEventListener("click", () => {
+    clearLayerBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!canSwitchLayerNow()) return;
       if (!confirm(`レイヤー${activeLayerIndex + 1}を消しますか？`)) return;
 
       const targetCtx = getActiveLayerCtx();
@@ -2388,6 +2439,32 @@ function setupLayerButtons() {
   updateToolButtons();
 }
 
+function setupGameCanvasProtection() {
+  if (window.ocfaGameCanvasProtectionReady) return;
+
+  window.ocfaGameCanvasProtectionReady = true;
+
+  document.addEventListener("selectstart", (event) => {
+    if (
+      event.target.closest(
+        "#gameCanvas, .game-canvas, .game-draw-panel, .game-fa-panel, .game-layer-panel, .game-tool-actions"
+      )
+    ) {
+      event.preventDefault();
+    }
+  });
+
+  document.addEventListener("contextmenu", (event) => {
+    if (
+      event.target.closest(
+        "#gameCanvas, .game-canvas, .game-draw-panel, .game-fa-panel"
+      )
+    ) {
+      event.preventDefault();
+    }
+  });
+}
+
 function initGameCanvas() {
   gameCanvas = document.getElementById("gameCanvas");
 
@@ -2397,31 +2474,49 @@ function initGameCanvas() {
 
   gameDrawing = false;
   gameHasDrawn = false;
+  gameActivePointerId = null;
+  lastCanvasInputAt = 0;
+
+  gameCanvas.setAttribute("touch-action", "none");
 
   initGameLayers();
 
   if (window.PointerEvent) {
-    gameCanvas.addEventListener("pointerdown", startGameDraw);
-    gameCanvas.addEventListener("pointermove", drawGameCanvas);
-    gameCanvas.addEventListener("pointerup", stopGameDraw);
-    gameCanvas.addEventListener("pointercancel", stopGameDraw);
-    gameCanvas.addEventListener("pointerleave", stopGameDraw);
+    gameCanvas.addEventListener("pointerdown", startGameDraw, { passive: false });
+    gameCanvas.addEventListener("pointermove", drawGameCanvas, { passive: false });
+
+    window.addEventListener("pointerup", stopGameDraw, { passive: false });
+    window.addEventListener("pointercancel", stopGameDraw, { passive: false });
+
+    /*
+      pointerleaveで止めると、筆圧ペンやiPadで線が途中切れしやすい。
+      setPointerCapture + window pointerup で終了を拾う。
+    */
   } else {
     gameCanvas.addEventListener("mousedown", startGameDraw);
     gameCanvas.addEventListener("mousemove", drawGameCanvas);
-    gameCanvas.addEventListener("mouseup", stopGameDraw);
-    gameCanvas.addEventListener("mouseleave", stopGameDraw);
+    window.addEventListener("mouseup", stopGameDraw);
 
     gameCanvas.addEventListener("touchstart", startGameDraw, { passive: false });
     gameCanvas.addEventListener("touchmove", drawGameCanvas, { passive: false });
-    gameCanvas.addEventListener("touchend", stopGameDraw);
-    gameCanvas.addEventListener("touchcancel", stopGameDraw);
+    window.addEventListener("touchend", stopGameDraw, { passive: false });
+    window.addEventListener("touchcancel", stopGameDraw, { passive: false });
   }
 
   setupLayerButtons();
+  setupGameCanvasProtection();
 }
 
 function startGameDraw(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  lastCanvasInputAt = Date.now();
+
+  if (e.pointerId !== undefined) {
+    gameActivePointerId = e.pointerId;
+  }
+
   if (shouldIgnoreGameCanvasInput(e)) {
     gameDrawing = false;
 
@@ -2433,8 +2528,6 @@ function startGameDraw(e) {
 
     return;
   }
-
-  e.preventDefault();
 
   if (!layerVisible[activeLayerIndex]) {
     const roomMessage = document.getElementById("roomMessage");
@@ -2471,12 +2564,23 @@ function startGameDraw(e) {
 function drawGameCanvas(e) {
   if (!gameDrawing) return;
 
+  e.preventDefault();
+  e.stopPropagation();
+
+  lastCanvasInputAt = Date.now();
+
+  if (
+    gameActivePointerId !== null
+    && e.pointerId !== undefined
+    && e.pointerId !== gameActivePointerId
+  ) {
+    return;
+  }
+
   if (shouldIgnoreGameCanvasInput(e)) {
     gameDrawing = false;
     return;
   }
-
-  e.preventDefault();
 
   const point = getGamePoint(e);
   const targetCtx = getActiveLayerCtx();
@@ -2522,9 +2626,21 @@ function drawGameCanvas(e) {
 }
 
 function stopGameDraw(e) {
-  if (!gameDrawing) return;
+  if (e) {
+    e.preventDefault?.();
+    e.stopPropagation?.();
+  }
+
+  lastCanvasInputAt = Date.now();
+
+  if (!gameDrawing) {
+    gameActivePointerId = null;
+    return;
+  }
 
   gameDrawing = false;
+  gameActivePointerId = null;
+
   saveCurrentGameDraft();
 
   if (gameCanvas?.releasePointerCapture && e?.pointerId !== undefined) {
@@ -2928,12 +3044,12 @@ async function submitOriginalOc(isAutoSubmit = false) {
     }
 
     if (isAutoSubmit && !gameHasDrawn) {
-      drawTimeUpCard(myPlayer.data.name || "匿名", "OC");
+      drawTimeUpCard(getPlayerCreditName(myPlayer), "OC");
     } else {
       redrawGameCanvas();
     }
 
-    addWatermarkToGameCanvas(myPlayer.data.name || "匿名");
+    addWatermarkToGameCanvas(getPlayerCreditName(myPlayer));
 
     const imageData = getGameCanvasImageData();
 
@@ -3076,12 +3192,12 @@ async function submitFanart(isAutoSubmit = false) {
     }
 
     if (isAutoSubmit && !gameHasDrawn) {
-      drawTimeUpCard(myPlayer.data.name || "匿名", "FA");
+      drawTimeUpCard(getPlayerCreditName(myPlayer), "FA");
     } else {
       redrawGameCanvas();
     }
 
-    addWatermarkToGameCanvas(myPlayer.data.name || "匿名");
+    addWatermarkToGameCanvas(getPlayerCreditName(myPlayer));
 
     const imageData = getGameCanvasImageData();
 
