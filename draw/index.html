@@ -76,35 +76,35 @@
       <summary>ペン設定</summary>
 
       <div class="canvas-tools">
-        <label>
-          色
-          <input id="penColor" type="color" value="#3c342e">
-        </label>
+  <label class="draw-control">
+    <span>色</span>
+    <input id="penColor" type="color" value="#3c342e">
+  </label>
 
-        <label>
-          ペン太さ
-          <input id="penSize" type="range" min="1" max="30" value="6">
-        </label>
+  <label class="draw-control">
+    <span>ペン太さ</span>
+    <input id="penSize" type="range" min="1" max="30" value="6">
+  </label>
 
-        <label>
-          透明度 <span id="opacityValue">100%</span>
-          <input id="penOpacity" type="range" min="10" max="100" value="100">
-        </label>
+  <label class="draw-control">
+    <span>透明度 <b id="opacityValue">100%</b></span>
+    <input id="penOpacity" type="range" min="10" max="100" value="100">
+  </label>
 
-        <label>
-          消しゴム太さ
-          <input id="eraserSize" type="range" min="4" max="80" value="24">
-        </label>
+  <label class="draw-control">
+    <span>消しゴム太さ</span>
+    <input id="eraserSize" type="range" min="4" max="80" value="24">
+  </label>
 
-        <label class="pressure-toggle">
-          <input id="pressureToggle" type="checkbox">
-          <span>筆圧を使う</span>
-        </label>
+  <label class="pressure-toggle">
+    <input id="pressureToggle" type="checkbox">
+    <span>筆圧を使う</span>
+  </label>
 
-        <p class="mini-info">
-          筆圧は対応端末のみ有効です。ON中はキャンバスではペン入力のみ描画します。
-        </p>
-      </div>
+  <p class="mini-info">
+    筆圧は対応端末のみ有効です。ON中はキャンバスではペン入力のみ描画します。
+  </p>
+</div>
     </details>
 
     <details class="draw-tool-panel draw-layer-panel">
