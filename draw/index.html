@@ -28,133 +28,137 @@
 
     <section class="draw-layout">
       <section class="panel draw-main-panel">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">Canvas</p>
-            <h2>キャンバス</h2>
-          </div>
-        </div>
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Canvas</p>
+      <h2>キャンバス</h2>
+    </div>
+  </div>
 
-        <div class="draw-tool-grid">
-          <section class="draw-tool-panel">
-            <h3>描く</h3>
+  <div class="canvas-wrap">
+    <canvas id="drawCanvas" width="768" height="768"></canvas>
+  </div>
 
-            <div class="tool-mode">
-              <button id="penModeBtn" class="tool-active" type="button">
-                ペン
-              </button>
-
-              <button id="eraserModeBtn" type="button">
-                消しゴム
-              </button>
-
-              <button id="eyedropperModeBtn" type="button">
-                スポイト
-              </button>
-            </div>
-          </section>
-
-          <section class="draw-tool-panel">
-            <h3>ペン設定</h3>
-
-            <div class="canvas-tools">
-              <label>
-                色
-                <input id="penColor" type="color" value="#3c342e">
-              </label>
-
-              <label>
-                ペン太さ
-                <input id="penSize" type="range" min="1" max="30" value="6">
-              </label>
-
-              <label>
-                透明度 <span id="opacityValue">100%</span>
-                <input id="penOpacity" type="range" min="10" max="100" value="100">
-              </label>
-
-              <label>
-                消しゴム太さ
-                <input id="eraserSize" type="range" min="4" max="80" value="24">
-              </label>
-
-              <label class="pressure-toggle">
-                <input id="pressureToggle" type="checkbox">
-                筆圧を使う（対応端末のみ）
-              </label>
-            </div>
-          </section>
-
-          <section class="draw-tool-panel draw-layer-panel">
-            <h3>レイヤー</h3>
-
-            <div class="draw-layer-buttons">
-              <button id="layerBtn1" class="layer-btn" type="button">
-                レイヤー2（上）
-              </button>
-
-              <button id="layerBtn0" class="layer-btn is-active" type="button">
-                レイヤー1（下）
-              </button>
-            </div>
-
-            <div class="draw-layer-actions">
-              <button id="toggleLayerBtn" class="ghost-btn" type="button">
-                表示/非表示
-              </button>
-
-              <button id="clearLayerBtn" class="danger-btn" type="button">
-                選択中を消す
-              </button>
-            </div>
-
-            <p id="layerStatusText" class="mini-info">
-              現在：レイヤー1（下） / 表示中
-            </p>
-          </section>
-
-          <section class="draw-tool-panel">
-  <h3>操作</h3>
-
-  <div class="draw-sub-actions">
-    <button id="undoBtn" class="ghost-btn" type="button">
-      戻す
+  <div class="draw-actions draw-save-area">
+    <button id="saveDrawingBtn" class="primary-btn" type="button">
+      新しい下書きとして保存
     </button>
+
+    <button id="overwriteDrawingBtn" class="ghost-btn" type="button" hidden>
+      この下書きに上書き保存
+    </button>
+
+    <p id="message" class="message"></p>
+  </div>
+
+  <div class="draw-tool-stack">
+    <details class="draw-tool-panel" open>
+      <summary>描く</summary>
+
+      <div class="tool-mode">
+        <button id="penModeBtn" class="tool-active" type="button">
+          ペン
+        </button>
+
+        <button id="eraserModeBtn" type="button">
+          消しゴム
+        </button>
+
+        <button id="eyedropperModeBtn" type="button">
+          スポイト
+        </button>
+      </div>
+    </details>
+
+    <details class="draw-tool-panel">
+      <summary>ペン設定</summary>
+
+      <div class="canvas-tools">
+        <label>
+          色
+          <input id="penColor" type="color" value="#3c342e">
+        </label>
+
+        <label>
+          ペン太さ
+          <input id="penSize" type="range" min="1" max="30" value="6">
+        </label>
+
+        <label>
+          透明度 <span id="opacityValue">100%</span>
+          <input id="penOpacity" type="range" min="10" max="100" value="100">
+        </label>
+
+        <label>
+          消しゴム太さ
+          <input id="eraserSize" type="range" min="4" max="80" value="24">
+        </label>
+
+        <label class="pressure-toggle">
+          <input id="pressureToggle" type="checkbox">
+          <span>筆圧を使う</span>
+        </label>
+
+        <p class="mini-info">
+          筆圧は対応端末のみ有効です。ON中はキャンバスではペン入力のみ描画します。
+        </p>
+      </div>
+    </details>
+
+    <details class="draw-tool-panel draw-layer-panel">
+      <summary>レイヤー</summary>
+
+      <div class="draw-layer-buttons">
+        <button id="layerBtn1" class="layer-btn" type="button">
+          レイヤー2（上）
+        </button>
+
+        <button id="layerBtn0" class="layer-btn is-active" type="button">
+          レイヤー1（下）
+        </button>
+      </div>
+
+      <div class="draw-layer-actions">
+        <button id="toggleLayerBtn" class="ghost-btn" type="button">
+          表示/非表示
+        </button>
+
+        <button id="clearLayerBtn" class="danger-btn" type="button">
+          選択中を消す
+        </button>
+      </div>
+
+      <p id="layerStatusText" class="mini-info">
+        現在：レイヤー1（下） / 表示中
+      </p>
+    </details>
+
+    <details class="draw-tool-panel">
+      <summary>操作</summary>
+
+      <div class="draw-sub-actions">
+        <button id="undoBtn" class="ghost-btn" type="button">
+          戻す
+        </button>
+      </div>
+    </details>
+
+    <details class="draw-tool-panel draw-danger-panel">
+      <summary>危険な操作</summary>
+
+      <p class="mini-info">
+        全消しはキャンバス全体を消します。誤タップ防止のため折りたたんでいます。
+      </p>
+
+      <div class="draw-danger-actions">
+        <button id="clearBtn" class="danger-btn" type="button">
+          全消し
+        </button>
+      </div>
+    </details>
   </div>
 </section>
-
-<section class="draw-tool-panel draw-danger-panel">
-  <h3>危険な操作</h3>
-
-  <p class="mini-info">
-    全消しはキャンバス全体を消します。
-  </p>
-
-  <div class="draw-danger-actions">
-    <button id="clearBtn" class="danger-btn" type="button">
-      全消し
-    </button>
-  </div>
-</section>
-        </div>
-
-        <div class="canvas-wrap">
-          <canvas id="drawCanvas" width="768" height="768"></canvas>
-        </div>
-
-        <div class="draw-actions">
-          <button id="saveDrawingBtn" class="primary-btn" type="button">
-            新しい下書きとして保存
-          </button>
-
-          <button id="overwriteDrawingBtn" class="ghost-btn" type="button" hidden>
-            この下書きに上書き保存
-          </button>
-
-          <p id="message" class="message"></p>
-        </div>
-      </section>
-
+      
       <section class="panel">
         <h2>保存した絵</h2>
         <p>
