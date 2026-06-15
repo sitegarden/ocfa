@@ -52,6 +52,10 @@ let gameHasDrawn = false;
 let gameActivePointerId = null;
 let lastCanvasInputAt = 0;
 
+/* 筆圧を使いやすくするための補正用 */
+let gameLastPressure = 0.5;
+let gameSmoothedPressure = 0.5;
+
 let layerCanvases = [];
 let layerContexts = [];
 let activeLayerIndex = 0;
@@ -65,10 +69,22 @@ let submittingFanart = false;
 let currentTool = "pen";
 let layerHistory = [[], []];
 
+/*
+  筆圧ONでも細くなりすぎないようにする
+  OFFなら普通のブラシとして描ける
+*/
 let pressureEnabled = false;
 
 const MAX_LAYER_HISTORY = 20;
 const TIME_UP_GRACE_MS = 7000;
+
+/* 筆圧補正 */
+const MIN_PRESSURE = 0.45;
+const MAX_PRESSURE = 1.0;
+const PRESSURE_SMOOTHING = 0.55;
+
+/* キャンバス */
+const GAME_CANVAS_SIZE = 768;
 
 function wait(ms) {
   return new Promise((resolve) => {
@@ -314,7 +330,6 @@ function getOriginalByPlayerId(playerId) {
   return getLatestItem(originals);
 }
 
-
 function getPlayerCreditName(player) {
   if (!player) return "匿名";
 
@@ -326,7 +341,6 @@ function getPlayerCreditName(player) {
 
   return name;
 }
-
 
 function getMyFanartForCurrentRound(myPlayer, targetPlayer) {
   if (!myPlayer || !targetPlayer) return null;
@@ -345,8 +359,8 @@ function getMyFanartForCurrentRound(myPlayer, targetPlayer) {
 
 function createTimeUpImageData(name, label = "OC") {
   const canvas = document.createElement("canvas");
-  canvas.width = 768;
-  canvas.height = 768;
+  canvas.width = GAME_CANVAS_SIZE;
+  canvas.height = GAME_CANVAS_SIZE;
 
   const ctx = canvas.getContext("2d");
 
@@ -1101,7 +1115,6 @@ function renderJoinArea() {
 
 
 
-
 function isDrawingCanvasVisible() {
   return Boolean(document.getElementById("gameCanvas"));
 }
@@ -1212,61 +1225,85 @@ function renderOwnerArea() {
 
 function renderLayerTools() {
   return `
-    <div class="game-draw-tools">
-      <label class="game-color-tool">
-        色
-        <input id="gamePenColor" type="color" value="#2b2430">
-      </label>
+    <div class="game-draw-toolbar" aria-label="描画ツール">
+      <div class="game-draw-tools">
+        <label class="game-color-tool">
+          <span>色</span>
+          <input id="gamePenColor" type="color" value="#2b2430">
+        </label>
 
-      <label class="game-size-tool">
-        太さ
-        <input id="gamePenSize" type="range" min="1" max="24" value="5">
-        <span id="gamePenSizeText">5</span>
-      </label>
-    </div>
+        <label class="game-size-tool">
+          <span>太さ</span>
+          <input id="gamePenSize" type="range" min="1" max="28" value="6">
+          <strong id="gamePenSizeText">6</strong>
+        </label>
+      </div>
 
-    <div class="game-tool-actions">
-      <button id="penToolBtn" type="button" class="is-active">
-        ペン
-      </button>
+      <div class="game-tool-actions">
+        <button id="penToolBtn" type="button" class="is-active">
+          ペン
+        </button>
 
-      <button id="eraserToolBtn" type="button">
-        消しゴム
-      </button>
+        <button id="eraserToolBtn" type="button">
+          消しゴム
+        </button>
 
-      <button id="fillToolBtn" type="button">
-        塗りつぶし
-      </button>
+        <button id="fillToolBtn" type="button">
+          塗りつぶし
+        </button>
 
-      <button id="undoLayerBtn" type="button">
-        1つ戻る
-      </button>
+        <button id="undoLayerBtn" type="button">
+          1つ戻る
+        </button>
+      </div>
 
-      <label class="game-pressure-toggle">
-        <input
-          id="gamePressureToggle"
-          type="checkbox"
-          ${pressureEnabled ? "checked" : ""}
-        >
-        <span>
-          筆圧ON
-          <small>対応ペンのみ</small>
-        </span>
-      </label>
+      <div class="game-pressure-box">
+        <label class="game-pressure-toggle">
+          <input
+            id="gamePressureToggle"
+            type="checkbox"
+            ${pressureEnabled ? "checked" : ""}
+          >
+          <span>
+            筆圧を使う
+            <small>Apple Pencilなど対応ペンのみ</small>
+          </span>
+        </label>
+
+        <p class="mini-info">
+          書きにくい時はOFF推奨です。OFFでもなめらかに描けます。
+        </p>
+      </div>
     </div>
 
     <div class="game-layer-panel">
-      <p class="mini-info">レイヤーは「上」から順に表示されます。</p>
+      <div class="game-layer-head">
+        <div>
+          <p class="eyebrow">Layer</p>
+          <h3>レイヤー</h3>
+        </div>
+
+        <p id="layerStatusText" class="mini-info">
+          現在：レイヤー1（下・表示中）
+        </p>
+      </div>
+
+      <p class="mini-info">
+        レイヤー2は上、レイヤー1は下に重なります。
+        色塗りや下書きを分けたい時に使えます。
+      </p>
 
       <div class="game-layer-tools">
         <button id="layerBtn1" type="button" class="layer-btn layer-top">
           <span class="layer-order">上</span>
-          レイヤー2
+          <strong>レイヤー2</strong>
+          <small>線画・仕上げ向き</small>
         </button>
 
         <button id="layerBtn0" type="button" class="layer-btn layer-bottom is-active">
           <span class="layer-order">下</span>
-          レイヤー1
+          <strong>レイヤー1</strong>
+          <small>下書き・色向き</small>
         </button>
       </div>
 
@@ -1279,10 +1316,6 @@ function renderLayerTools() {
           選択中を消す
         </button>
       </div>
-
-      <p id="layerStatusText" class="mini-info">
-        現在：レイヤー1（下・表示中）
-      </p>
     </div>
   `;
 }
@@ -1292,13 +1325,21 @@ function renderCanvasGuide(type = "oc") {
     ? "下のキャンバスにファンアートを描いてください。"
     : "下のキャンバスに自分のOCを描いてください。";
 
+  const label = type === "fa"
+    ? "FAを描く場所"
+    : "OCを描く場所";
+
   return `
-    <div class="panel-soft game-canvas-guide">
-      <strong>描画キャンバスはこの下に表示されます</strong>
-      <p>
-        残り時間が表示されたら、${drawText}
-        スマホでは少し下にスクロールすると描画エリアがあります。
-      </p>
+    <div class="game-canvas-guide">
+      <div class="game-canvas-guide-icon">↓</div>
+
+      <div>
+        <strong>${label}はこの下です</strong>
+        <p>
+          ${drawText}
+          スマホではこのまま少し下へスクロールすると、大きな白い描画エリアがあります。
+        </p>
+      </div>
     </div>
   `;
 }
@@ -1500,7 +1541,7 @@ async function renderGameStageArea() {
     }
 
     return `
-      <section class="panel game-fa-panel">
+      <section class="panel game-draw-panel game-fa-panel">
         <p class="eyebrow">Fan Art Turn</p>
         <h2>${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCを描く</h2>
 
@@ -1538,12 +1579,18 @@ async function renderGameStageArea() {
 
         ${renderLayerTools()}
 
-        <canvas
-          id="gameCanvas"
-          class="game-canvas"
-          width="768"
-          height="768"
-        ></canvas>
+        <div class="game-canvas-wrap">
+          <canvas
+            id="gameCanvas"
+            class="game-canvas"
+            width="768"
+            height="768"
+          ></canvas>
+        </div>
+
+        <p class="mini-info game-canvas-help">
+          指やペンで白いエリアに描けます。画面が動く場合は、キャンバス内から描き始めてください。
+        </p>
 
         <div class="actions">
           <button id="submitFanartBtn" class="primary-btn" type="button">
@@ -1640,12 +1687,18 @@ async function renderGameStageArea() {
 
       ${renderLayerTools()}
 
-      <canvas
-        id="gameCanvas"
-        class="game-canvas"
-        width="768"
-        height="768"
-      ></canvas>
+      <div class="game-canvas-wrap">
+        <canvas
+          id="gameCanvas"
+          class="game-canvas"
+          width="768"
+          height="768"
+        ></canvas>
+      </div>
+
+      <p class="mini-info game-canvas-help">
+        指やペンで白いエリアに描けます。画面が動く場合は、キャンバス内から描き始めてください。
+      </p>
 
       <div class="actions">
         <button id="submitOriginalBtn" class="primary-btn" type="button">
@@ -2181,7 +2234,6 @@ function startRealtimeListeners() {
 
 
 
-
 function getGamePressure(e) {
   if (!pressureEnabled) return 1;
 
@@ -2189,11 +2241,21 @@ function getGamePressure(e) {
     return 0;
   }
 
-  if (typeof e.pressure === "number" && e.pressure > 0) {
-    return Math.max(0.25, Math.min(1.8, e.pressure * 1.6));
-  }
+  const rawPressure =
+    typeof e.pressure === "number" && e.pressure > 0
+      ? e.pressure
+      : 0.5;
 
-  return 1;
+  const correctedPressure = Math.max(
+    MIN_PRESSURE,
+    Math.min(MAX_PRESSURE, rawPressure * 1.35)
+  );
+
+  gameSmoothedPressure =
+    gameSmoothedPressure * PRESSURE_SMOOTHING
+    + correctedPressure * (1 - PRESSURE_SMOOTHING);
+
+  return gameSmoothedPressure;
 }
 
 function shouldIgnoreGameCanvasInput(e) {
@@ -2219,7 +2281,12 @@ function createLayerCanvas() {
   layerCanvas.width = gameCanvas.width;
   layerCanvas.height = gameCanvas.height;
 
-  const layerCtx = layerCanvas.getContext("2d");
+  const layerCtx = layerCanvas.getContext("2d", {
+    willReadFrequently: true
+  });
+
+  layerCtx.lineCap = "round";
+  layerCtx.lineJoin = "round";
 
   return {
     canvas: layerCanvas,
@@ -2234,6 +2301,8 @@ function initGameLayers() {
   layerVisible = [true, true];
   currentTool = "pen";
   layerHistory = [[], []];
+  gameLastPressure = 0.5;
+  gameSmoothedPressure = 0.5;
 
   for (let i = 0; i < 2; i++) {
     const layer = createLayerCanvas();
@@ -2249,6 +2318,10 @@ function initGameLayers() {
 function redrawGameCanvas() {
   if (!gameCtx || !gameCanvas) return;
 
+  gameCtx.save();
+
+  gameCtx.globalCompositeOperation = "source-over";
+  gameCtx.globalAlpha = 1;
   gameCtx.fillStyle = "#fffdf8";
   gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
 
@@ -2257,6 +2330,8 @@ function redrawGameCanvas() {
 
     gameCtx.drawImage(layerCanvas, 0, 0);
   });
+
+  gameCtx.restore();
 }
 
 function getActiveLayerCtx() {
@@ -2276,11 +2351,19 @@ function updateLayerUi() {
   if (layerBtn0) {
     layerBtn0.classList.toggle("is-active", activeLayerIndex === 0);
     layerBtn0.classList.toggle("is-hidden-layer", layerVisible[0] === false);
+    layerBtn0.setAttribute(
+      "aria-pressed",
+      activeLayerIndex === 0 ? "true" : "false"
+    );
   }
 
   if (layerBtn1) {
     layerBtn1.classList.toggle("is-active", activeLayerIndex === 1);
     layerBtn1.classList.toggle("is-hidden-layer", layerVisible[1] === false);
+    layerBtn1.setAttribute(
+      "aria-pressed",
+      activeLayerIndex === 1 ? "true" : "false"
+    );
   }
 
   if (layerStatusText) {
@@ -2291,7 +2374,7 @@ function updateLayerUi() {
 }
 
 function canSwitchLayerNow() {
-  return Date.now() - lastCanvasInputAt > 500;
+  return !gameDrawing;
 }
 
 function setupLayerButtons() {
@@ -2365,6 +2448,8 @@ function setupLayerButtons() {
 
     gamePressureToggle.addEventListener("change", () => {
       pressureEnabled = gamePressureToggle.checked;
+      gameLastPressure = 0.5;
+      gameSmoothedPressure = 0.5;
     });
   }
 
@@ -2441,6 +2526,7 @@ function setupLayerButtons() {
   }
 
   updateToolButtons();
+  updateLayerUi();
 }
 
 function setupGameCanvasProtection() {
@@ -2449,9 +2535,11 @@ function setupGameCanvasProtection() {
   window.ocfaGameCanvasProtectionReady = true;
 
   document.addEventListener("selectstart", (event) => {
+    const target = event.target;
+
     if (
-      event.target.closest(
-        "#gameCanvas, .game-canvas, .game-draw-panel, .game-fa-panel, .game-layer-panel, .game-tool-actions"
+      target.closest(
+        "#gameCanvas, .game-canvas, .game-canvas-wrap, .game-draw-panel, .game-fa-panel, .game-layer-panel, .game-tool-actions, .game-draw-toolbar"
       )
     ) {
       event.preventDefault();
@@ -2459,9 +2547,23 @@ function setupGameCanvasProtection() {
   });
 
   document.addEventListener("contextmenu", (event) => {
+    const target = event.target;
+
     if (
-      event.target.closest(
-        "#gameCanvas, .game-canvas, .game-draw-panel, .game-fa-panel"
+      target.closest(
+        "#gameCanvas, .game-canvas, .game-canvas-wrap, .game-draw-panel, .game-fa-panel, .game-layer-panel, .game-tool-actions, .game-draw-toolbar"
+      )
+    ) {
+      event.preventDefault();
+    }
+  });
+
+  document.addEventListener("dragstart", (event) => {
+    const target = event.target;
+
+    if (
+      target.closest(
+        "#gameCanvas, .game-canvas, .game-canvas-wrap, .game-draw-panel, .game-fa-panel"
       )
     ) {
       event.preventDefault();
@@ -2474,37 +2576,103 @@ function initGameCanvas() {
 
   if (!gameCanvas) return;
 
-  gameCtx = gameCanvas.getContext("2d");
+  gameCtx = gameCanvas.getContext("2d", {
+    willReadFrequently: true
+  });
 
   gameDrawing = false;
   gameHasDrawn = false;
   gameActivePointerId = null;
   lastCanvasInputAt = 0;
+  gameLastPressure = 0.5;
+  gameSmoothedPressure = 0.5;
+
+  gameCanvas.width = GAME_CANVAS_SIZE;
+  gameCanvas.height = GAME_CANVAS_SIZE;
 
   gameCanvas.setAttribute("touch-action", "none");
+  gameCanvas.style.touchAction = "none";
+  gameCanvas.style.webkitUserSelect = "none";
+  gameCanvas.style.userSelect = "none";
+  gameCanvas.style.webkitTouchCallout = "none";
+  gameCanvas.style.webkitTapHighlightColor = "transparent";
 
   initGameLayers();
 
+  if (window.ocfaGameCanvasAbortController) {
+    window.ocfaGameCanvasAbortController.abort();
+  }
+
+  window.ocfaGameCanvasAbortController = new AbortController();
+
+  const signal = window.ocfaGameCanvasAbortController.signal;
+
   if (window.PointerEvent) {
-    gameCanvas.addEventListener("pointerdown", startGameDraw, { passive: false });
-    gameCanvas.addEventListener("pointermove", drawGameCanvas, { passive: false });
+    gameCanvas.addEventListener(
+      "pointerdown",
+      startGameDraw,
+      { passive: false, signal }
+    );
 
-    window.addEventListener("pointerup", stopGameDraw, { passive: false });
-    window.addEventListener("pointercancel", stopGameDraw, { passive: false });
+    gameCanvas.addEventListener(
+      "pointermove",
+      drawGameCanvas,
+      { passive: false, signal }
+    );
 
-    /*
-      pointerleaveで止めると、筆圧ペンやiPadで線が途中切れしやすい。
-      setPointerCapture + window pointerup で終了を拾う。
-    */
+    window.addEventListener(
+      "pointerup",
+      stopGameDraw,
+      { passive: false, signal }
+    );
+
+    window.addEventListener(
+      "pointercancel",
+      stopGameDraw,
+      { passive: false, signal }
+    );
   } else {
-    gameCanvas.addEventListener("mousedown", startGameDraw);
-    gameCanvas.addEventListener("mousemove", drawGameCanvas);
-    window.addEventListener("mouseup", stopGameDraw);
+    gameCanvas.addEventListener(
+      "mousedown",
+      startGameDraw,
+      { signal }
+    );
 
-    gameCanvas.addEventListener("touchstart", startGameDraw, { passive: false });
-    gameCanvas.addEventListener("touchmove", drawGameCanvas, { passive: false });
-    window.addEventListener("touchend", stopGameDraw, { passive: false });
-    window.addEventListener("touchcancel", stopGameDraw, { passive: false });
+    gameCanvas.addEventListener(
+      "mousemove",
+      drawGameCanvas,
+      { signal }
+    );
+
+    window.addEventListener(
+      "mouseup",
+      stopGameDraw,
+      { signal }
+    );
+
+    gameCanvas.addEventListener(
+      "touchstart",
+      startGameDraw,
+      { passive: false, signal }
+    );
+
+    gameCanvas.addEventListener(
+      "touchmove",
+      drawGameCanvas,
+      { passive: false, signal }
+    );
+
+    window.addEventListener(
+      "touchend",
+      stopGameDraw,
+      { passive: false, signal }
+    );
+
+    window.addEventListener(
+      "touchcancel",
+      stopGameDraw,
+      { passive: false, signal }
+    );
   }
 
   setupLayerButtons();
@@ -2527,7 +2695,7 @@ function startGameDraw(e) {
     const roomMessage = document.getElementById("roomMessage");
 
     if (roomMessage) {
-      roomMessage.textContent = "筆圧ON中は、キャンバスではペン入力のみ描画できます。";
+      roomMessage.textContent = "筆圧ON中は、ペン入力のみ描画できます。指で描く場合は筆圧OFFにしてください。";
     }
 
     return;
@@ -2537,7 +2705,7 @@ function startGameDraw(e) {
     const roomMessage = document.getElementById("roomMessage");
 
     if (roomMessage) {
-      roomMessage.textContent = "非表示中のレイヤーには描けません。";
+      roomMessage.textContent = "非表示中のレイヤーには描けません。表示に戻すか、別レイヤーを選んでください。";
     }
 
     return;
@@ -2555,6 +2723,8 @@ function startGameDraw(e) {
   gameDrawing = true;
   gameLastX = point.x;
   gameLastY = point.y;
+  gameLastPressure = point.pressure;
+  gameSmoothedPressure = point.pressure;
 
   if (gameCanvas.setPointerCapture && e.pointerId !== undefined) {
     try {
@@ -2594,9 +2764,16 @@ function drawGameCanvas(e) {
 
   if (!targetCtx) return;
 
-  const pressure = point.pressure;
+  const baseSize = Number(gamePenSize?.value || 6);
+  const pressure = Math.max(MIN_PRESSURE, Math.min(MAX_PRESSURE, point.pressure));
 
   if (pressure <= 0) {
+    return;
+  }
+
+  const distance = Math.hypot(point.x - gameLastX, point.y - gameLastY);
+
+  if (distance < 0.5) {
     return;
   }
 
@@ -2604,7 +2781,7 @@ function drawGameCanvas(e) {
 
   targetCtx.lineCap = "round";
   targetCtx.lineJoin = "round";
-  targetCtx.lineWidth = Math.max(1, Number(gamePenSize?.value || 5) * pressure);
+  targetCtx.lineWidth = Math.max(1, baseSize * pressure);
 
   if (currentTool === "eraser") {
     targetCtx.globalCompositeOperation = "destination-out";
@@ -2614,19 +2791,23 @@ function drawGameCanvas(e) {
     targetCtx.strokeStyle = gamePenColor?.value || "#2b2430";
   }
 
+  const midX = (gameLastX + point.x) / 2;
+  const midY = (gameLastY + point.y) / 2;
+
   targetCtx.beginPath();
   targetCtx.moveTo(gameLastX, gameLastY);
-  targetCtx.lineTo(point.x, point.y);
+  targetCtx.quadraticCurveTo(gameLastX, gameLastY, midX, midY);
   targetCtx.stroke();
 
   targetCtx.restore();
 
   gameLastX = point.x;
   gameLastY = point.y;
+  gameLastPressure = pressure;
   gameHasDrawn = true;
 
   redrawGameCanvas();
-  saveCurrentGameDraft();
+  scheduleGameDraftSave();
 }
 
 function stopGameDraw(e) {
@@ -2645,6 +2826,7 @@ function stopGameDraw(e) {
   gameDrawing = false;
   gameActivePointerId = null;
 
+  redrawGameCanvas();
   saveCurrentGameDraft();
 
   if (gameCanvas?.releasePointerCapture && e?.pointerId !== undefined) {
@@ -2658,6 +2840,8 @@ function stopGameDraw(e) {
 
 function addWatermarkToGameCanvas(name) {
   if (!gameCtx || !gameCanvas) return;
+
+  redrawGameCanvas();
 
   gameCtx.save();
 
@@ -2674,6 +2858,8 @@ function addWatermarkToGameCanvas(name) {
 
 function getGameCanvasImageData() {
   if (!gameCanvas) return "";
+
+  redrawGameCanvas();
 
   return gameCanvas.toDataURL("image/jpeg", 0.82);
 }
@@ -2700,6 +2886,14 @@ function saveCurrentGameDraft() {
   if (status !== "drawing_oc" && status !== "drawing_fa") return;
 
   saveGameDraft(getCurrentDraftType());
+}
+
+function scheduleGameDraftSave() {
+  clearTimeout(window.ocfaGameDraftSaveTimer);
+
+  window.ocfaGameDraftSaveTimer = setTimeout(() => {
+    saveCurrentGameDraft();
+  }, 220);
 }
 
 function saveGameDraft(type = "oc") {
@@ -2740,7 +2934,18 @@ function loadGameDraft(type = "oc") {
     const image = new Image();
 
     image.onload = () => {
-      const targetCtx = getActiveLayerCtx();
+      layerCanvases.forEach((layerCanvas) => {
+        const ctx = layerCanvas.getContext("2d", {
+          willReadFrequently: true
+        });
+
+        ctx.clearRect(0, 0, layerCanvas.width, layerCanvas.height);
+      });
+
+      activeLayerIndex = 0;
+      layerVisible = [true, true];
+
+      const targetCtx = layerContexts[0];
 
       if (!targetCtx) return;
 
@@ -2749,6 +2954,7 @@ function loadGameDraft(type = "oc") {
 
       gameHasDrawn = true;
       redrawGameCanvas();
+      updateLayerUi();
     };
 
     image.src = imageData;
@@ -2856,7 +3062,9 @@ function drawTimeUpCard(name, label = "OC") {
   if (!gameCtx || !gameCanvas) return;
 
   layerCanvases.forEach((layerCanvas) => {
-    const ctx = layerCanvas.getContext("2d");
+    const ctx = layerCanvas.getContext("2d", {
+      willReadFrequently: true
+    });
 
     ctx.clearRect(0, 0, layerCanvas.width, layerCanvas.height);
   });
@@ -3093,6 +3301,7 @@ async function submitOriginalOc(isAutoSubmit = false) {
     });
 
     clearOriginalTimer();
+    clearGameDraft("oc");
 
     if (message) {
       message.textContent = isAutoSubmit
@@ -3248,6 +3457,7 @@ async function submitFanart(isAutoSubmit = false) {
     });
 
     clearFanartTimer();
+    clearGameDraft("fa");
 
     if (message) {
       message.textContent = isAutoSubmit
@@ -3358,7 +3568,7 @@ function undoActiveLayer() {
 }
 
 function hexToRgba(hex) {
-  const cleanHex = hex.replace("#", "");
+  const cleanHex = String(hex || "#2b2430").replace("#", "");
 
   const r = parseInt(cleanHex.slice(0, 2), 16);
   const g = parseInt(cleanHex.slice(2, 4), 16);
