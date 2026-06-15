@@ -54,10 +54,38 @@ function renderUserIcon(userData, className = "user-page-icon") {
   `;
 }
 
+async function resolveUserId(rawId) {
+  if (!rawId) return "";
+
+  const normalizedId = String(rawId).trim().replace(/^@+/, "").toLowerCase();
+
+  // まず users/{uid} として読む
+  const directUserRef = doc(db, "users", normalizedId);
+  const directUserSnap = await getDoc(directUserRef);
+
+  if (directUserSnap.exists()) {
+    return normalizedId;
+  }
+
+  // なければ handles/{handle} から uid を探す
+  const handleRef = doc(db, "handles", normalizedId);
+  const handleSnap = await getDoc(handleRef);
+
+  if (!handleSnap.exists()) {
+    return "";
+  }
+
+  return handleSnap.data().uid || "";
+}
+
 async function getUserData() {
   if (!userId) return null;
 
-  const userRef = doc(db, "users", userId);
+  const resolvedUid = await resolveUserId(userId);
+
+  if (!resolvedUid) return null;
+
+  const userRef = doc(db, "users", resolvedUid);
   const snap = await getDoc(userRef);
 
   if (!snap.exists()) return null;
@@ -378,7 +406,7 @@ async function initUserList() {
 
   try {
     const users = await getPublicUsers();
-    const characterCounts = await getPublicCharacterCounts(users);
+    const characters = await getPublicCharacters(user.id);
 
     renderUserList(users, characterCounts);
   } catch (error) {
