@@ -80,8 +80,8 @@ function renderHeader() {
   if (!siteHeader) return;
 
   siteHeader.innerHTML = `
-    <div class="header-inner">
-      <a class="site-logo" href="/">OCFA</a>
+    <div class="site-header-inner">
+      <a class="logo" href="/">OCFA</a>
 
       <button
         id="menuToggle"
@@ -95,38 +95,49 @@ function renderHeader() {
         <span></span>
       </button>
 
-      <nav id="headerMenu" class="header-menu">
-        <a href="/characters/">キャラ一覧</a>
-        <a href="/draw/">描く</a>
-        <a href="/events/">イベント</a>
-        <a href="/games/">ゲーム</a>
-        <a href="/users/">ユーザー</a>
-        <a href="/notices/">お知らせ</a>
-        <a href="/mypage/">マイページ</a>
-        <a href="/settings/">設定</a>
-      </nav>
+      <div id="headerMenu" class="header-menu">
+        <nav class="nav">
+          <a href="/characters/">キャラ一覧</a>
+          <a href="/draw/">描く</a>
+          <a href="/events/">イベント</a>
+          <a href="/games/">ゲーム</a>
+          <a href="/users/">ユーザー</a>
+          <a href="/notices/">お知らせ</a>
+          <a href="/mypage/">マイページ</a>
+          <a href="/settings/">設定</a>
+        </nav>
 
-      <div class="auth-area">
-        <span id="userName">確認中...</span>
-        <button id="loginBtn" type="button">ログイン</button>
-        <button id="logoutBtn" type="button" hidden>ログアウト</button>
+        <div class="auth-box">
+          <span id="userName">確認中...</span>
+          <button id="loginBtn" type="button">ログイン</button>
+          <button id="logoutBtn" type="button" hidden>ログアウト</button>
+
+          <div id="loginPanel" class="login-panel" hidden>
+            <button id="googleLoginBtn" class="google-login-btn" type="button">
+              Googleでログイン
+            </button>
+
+            <div class="login-divider">または</div>
+
+            <label>
+              メールアドレス
+              <input id="emailInput" type="email" autocomplete="email">
+            </label>
+
+            <label>
+              パスワード
+              <input id="passwordInput" type="password" autocomplete="current-password">
+            </label>
+
+            <div class="login-actions">
+              <button id="emailLoginBtn" type="button">ログイン</button>
+              <button id="emailRegisterBtn" type="button">新規登録</button>
+            </div>
+
+            <p id="loginMessage" class="login-message"></p>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <div id="loginPanel" class="login-panel" hidden>
-      <button id="googleLoginBtn" type="button">Googleでログイン</button>
-
-      <div class="login-divider">または</div>
-
-      <input id="emailInput" type="email" placeholder="メールアドレス" autocomplete="email">
-      <input id="passwordInput" type="password" placeholder="パスワード" autocomplete="current-password">
-
-      <div class="login-actions">
-        <button id="emailLoginBtn" type="button">メールでログイン</button>
-        <button id="emailRegisterBtn" type="button">新規登録</button>
-      </div>
-
-      <p id="loginMessage" class="form-message"></p>
     </div>
   `;
 
@@ -144,6 +155,7 @@ function renderHeader() {
 
   menuToggle?.addEventListener("click", () => {
     const isOpen = headerMenu.classList.toggle("is-open");
+
     menuToggle.classList.toggle("is-open", isOpen);
     menuToggle.setAttribute("aria-expanded", String(isOpen));
     menuToggle.setAttribute(
