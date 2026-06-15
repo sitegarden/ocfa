@@ -3,9 +3,9 @@ import { auth, db } from "/firebase.js";
 import {
   doc,
   getDoc,
+  runTransaction,
   serverTimestamp,
-  setDoc,
-  updateDoc
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 import {
@@ -14,10 +14,14 @@ import {
 
 const settingsContent = document.getElementById("settingsContent");
 
+const HANDLE_MIN_LENGTH = 4;
+const HANDLE_MAX_LENGTH = 20;
+const HANDLE_CHANGE_INTERVAL_MS = 30 * 24 * 60 * 60 * 1000;
+
 let currentUser = null;
 
 function escapeHtml(text) {
-  return String(text)
+  return String(text || "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -37,7 +41,60 @@ function isValidHttpsUrl(url) {
 }
 
 function normalizeUrl(url) {
-  return url.trim();
+  return String(url || "").trim();
+}
+
+function normalizeHandle(handle) {
+  return String(handle || "")
+    .trim()
+    .replace(/^@+/, "")
+    .toLowerCase();
+}
+
+function isValidHandle(handle) {
+  return /^[a-z0-9_]+$/.test(handle)
+    && handle.length >= HANDLE_MIN_LENGTH
+    && handle.length <= HANDLE_MAX_LENGTH;
+}
+
+function timestampToMs(timestamp) {
+  if (!timestamp?.seconds) return 0;
+  return timestamp.seconds * 1000;
+}
+
+function getHandleRemainingText(handleUpdatedAt) {
+  const lastChangedMs = timestampToMs(handleUpdatedAt);
+
+  if (!lastChangedMs) return "";
+
+  const nextChangeMs = lastChangedMs + HANDLE_CHANGE_INTERVAL_MS;
+  const remainingMs = nextChangeMs - Date.now();
+
+  if (remainingMs <= 0) return "";
+
+  const remainingDays = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
+
+  return `次にIDを変更できるまで、あと約${remainingDays}日です。`;
+}
+
+function canChangeHandle(userData, nextHandle) {
+  const currentHandle = normalizeHandle(userData.handle || "");
+
+  if (nextHandle === currentHandle) {
+    return true;
+  }
+
+  if (!currentHandle) {
+    return true;
+  }
+
+  const lastChangedMs = timestampToMs(userData.handleUpdatedAt);
+
+  if (!lastChangedMs) {
+    return true;
+  }
+
+  return Date.now() - lastChangedMs >= HANDLE_CHANGE_INTERVAL_MS;
 }
 
 async function ensureUserDoc(user) {
@@ -50,14 +107,17 @@ async function ensureUserDoc(user) {
 
   const initialData = {
     uid: user.uid,
-    email: user.email,
+    email: user.email || "",
     displayName: user.displayName || "",
     photoURL: user.photoURL || "",
     role: "user",
+    uploadAllowed: false,
     handle: "",
+    handleUpdatedAt: null,
     profileText: "",
     genreText: "",
     linkUrl: "",
+    isPublic: true,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   };
@@ -67,15 +127,23 @@ async function ensureUserDoc(user) {
   return initialData;
 }
 
+function getPublicPageUrl() {
+  return `/users/?id=${encodeURIComponent(currentUser.uid)}`;
+}
+
 function renderSettings(userData) {
   const displayName = userData.displayName || currentUser.displayName || "";
+  const handle = userData.handle || "";
   const profileText = userData.profileText || "";
   const genreText = userData.genreText || "";
   const linkUrl = userData.linkUrl || "";
+  const publicPageUrl = getPublicPageUrl();
+  const handleRemainingText = getHandleRemainingText(userData.handleUpdatedAt);
 
   settingsContent.innerHTML = `
-    <form id="settingsForm" class="settings-layout">
-      <section class="panel">
+    <section class="settings-layout">
+      <form id="settingsForm" class="panel">
+        <p class="eyebrow">Profile</p>
         <h2>公開プロフィール</h2>
 
         <label>
@@ -83,31 +151,47 @@ function renderSettings(userData) {
           <input
             id="displayName"
             type="text"
-            maxlength="30"
+            maxlength="40"
             value="${escapeHtml(displayName)}"
-            placeholder="例：ゼロ"
-          >
+            required
+          />
         </label>
 
         <label>
+          ID
+          <input
+            id="handle"
+            type="text"
+            maxlength="${HANDLE_MAX_LENGTH}"
+            value="${escapeHtml(handle)}"
+            placeholder="例：ocfa_user"
+            autocomplete="off"
+          />
+        </label>
+
+        <p class="mini-info">
+          IDは4文字以上20文字以内、英数字と_のみ使えます。大文字は自動で小文字になります。
+          ${
+            handle
+              ? "IDの変更は基本1ヶ月に1回までです。"
+              : "初回設定はいつでもできます。"
+          }
+        </p>
+
+        ${
+          handleRemainingText
+            ? `<p class="status-pill muted-pill">${escapeHtml(handleRemainingText)}</p>`
+            : ""
+        }
+
+        <label>
           ひとこと紹介
-          <textarea
-            id="profileText"
-            rows="5"
-            maxlength="300"
-            placeholder="好きな創作、描いているもの、ひとことなど"
-          >${escapeHtml(profileText)}</textarea>
+          <textarea id="profileText" rows="5" maxlength="500">${escapeHtml(profileText)}</textarea>
         </label>
 
         <label>
           好きな創作ジャンル
-          <input
-            id="genreText"
-            type="text"
-            maxlength="80"
-            value="${escapeHtml(genreText)}"
-            placeholder="例：ファンタジー、学園、うちの子交流"
-          >
+          <textarea id="genreText" rows="4" maxlength="500">${escapeHtml(genreText)}</textarea>
         </label>
 
         <label>
@@ -116,49 +200,67 @@ function renderSettings(userData) {
             id="linkUrl"
             type="url"
             value="${escapeHtml(linkUrl)}"
-            placeholder="https://example.com"
-          >
+            placeholder="https://..."
+          />
         </label>
 
-        <p class="mini-info">
-          リンクは https:// から始まるURLのみ保存できます。
-        </p>
-
-        <button class="primary-btn" type="submit">保存する</button>
-        <p id="settingsMessage" class="message"></p>
-      </section>
-
-      <section class="panel">
-        <h2>公開ページ</h2>
-
-        <p>
-          あなたの公開ページでは、登録したキャラクターとプロフィールが表示されます。
-        </p>
-
-        <div class="profile-preview">
-          ${
-            currentUser.photoURL
-              ? `<img class="mypage-avatar" src="${currentUser.photoURL}" alt="">`
-              : `<div class="mypage-avatar placeholder">OC</div>`
-          }
-
-          <div>
-            <h3>${escapeHtml(displayName || "名前未設定")}</h3>
-            <p>${escapeHtml(profileText || "紹介文はまだありません。")}</p>
-          </div>
-        </div>
+        <p class="mini-info">リンクは https:// から始まるURLのみ保存できます。</p>
 
         <div class="actions">
-          <a class="ghost-btn" href="/users/?id=${currentUser.uid}">
-            公開ページを見る
-          </a>
+          <button class="primary-btn" type="submit">保存する</button>
+          <a class="ghost-btn" href="${publicPageUrl}">公開ページを見る</a>
         </div>
-      </section>
-    </form>
+
+        <p id="settingsMessage" class="message"></p>
+      </form>
+
+      <aside class="panel profile-preview">
+        ${
+          currentUser.photoURL
+            ? `<img class="mypage-avatar" src="${escapeHtml(currentUser.photoURL)}" alt="">`
+            : `<div class="mypage-avatar placeholder">OC</div>`
+        }
+
+        <div>
+          <p class="eyebrow">Public Page</p>
+          <h3>${escapeHtml(displayName || "名前未設定")}</h3>
+
+          ${
+            handle
+              ? `<p class="mini-info">@${escapeHtml(handle)}</p>`
+              : `<p class="mini-info">ID未設定</p>`
+          }
+
+          <p>${escapeHtml(profileText || "紹介文はまだありません。")}</p>
+
+          ${
+            genreText
+              ? `<p class="mini-info">${escapeHtml(genreText)}</p>`
+              : ""
+          }
+
+          ${
+            linkUrl
+              ? `<a class="text-link" href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener noreferrer">リンクを見る</a>`
+              : ""
+          }
+        </div>
+      </aside>
+    </section>
   `;
 
   const form = document.getElementById("settingsForm");
   const message = document.getElementById("settingsMessage");
+
+  const handleInput = document.getElementById("handle");
+
+  handleInput.addEventListener("input", () => {
+    const normalized = normalizeHandle(handleInput.value);
+
+    if (handleInput.value !== normalized) {
+      handleInput.value = normalized;
+    }
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -169,12 +271,24 @@ function renderSettings(userData) {
     const linkUrlInput = document.getElementById("linkUrl");
 
     const nextDisplayName = displayNameInput.value.trim();
+    const nextHandle = normalizeHandle(handleInput.value);
     const nextProfileText = profileTextInput.value.trim();
     const nextGenreText = genreTextInput.value.trim();
     const nextLinkUrl = normalizeUrl(linkUrlInput.value);
 
     if (!nextDisplayName) {
       message.textContent = "表示名を入力してください。";
+      return;
+    }
+
+    if (nextHandle && !isValidHandle(nextHandle)) {
+      message.textContent = "IDは4文字以上20文字以内、英数字と_のみ使えます。";
+      return;
+    }
+
+    if (!canChangeHandle(userData, nextHandle)) {
+      message.textContent = getHandleRemainingText(userData.handleUpdatedAt)
+        || "IDは基本1ヶ月に1回まで変更できます。";
       return;
     }
 
@@ -186,19 +300,70 @@ function renderSettings(userData) {
     try {
       message.textContent = "プロフィールを保存しています...";
 
-      await updateDoc(doc(db, "users", currentUser.uid), {
-        displayName: nextDisplayName,
-        profileText: nextProfileText,
-        genreText: nextGenreText,
-        linkUrl: nextLinkUrl,
-        updatedAt: serverTimestamp()
+      const userRef = doc(db, "users", currentUser.uid);
+
+      await runTransaction(db, async (transaction) => {
+        const latestUserSnap = await transaction.get(userRef);
+
+        if (!latestUserSnap.exists()) {
+          throw new Error("ユーザー情報が見つかりません。");
+        }
+
+        const latestUserData = latestUserSnap.data();
+        const currentHandle = normalizeHandle(latestUserData.handle || "");
+        const handleChanged = nextHandle !== currentHandle;
+
+        if (handleChanged && !canChangeHandle(latestUserData, nextHandle)) {
+          throw new Error(
+            getHandleRemainingText(latestUserData.handleUpdatedAt)
+            || "IDは基本1ヶ月に1回まで変更できます。"
+          );
+        }
+
+        if (nextHandle) {
+          const nextHandleRef = doc(db, "handles", nextHandle);
+          const nextHandleSnap = await transaction.get(nextHandleRef);
+
+          if (nextHandleSnap.exists()) {
+            const ownerUid = nextHandleSnap.data().uid;
+
+            if (ownerUid !== currentUser.uid) {
+              throw new Error("このIDはすでに使われています。");
+            }
+          }
+
+          transaction.set(nextHandleRef, {
+            uid: currentUser.uid,
+            handle: nextHandle,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        }
+
+        if (handleChanged && currentHandle) {
+          const oldHandleRef = doc(db, "handles", currentHandle);
+          transaction.delete(oldHandleRef);
+        }
+
+        transaction.update(userRef, {
+          displayName: nextDisplayName,
+          handle: nextHandle,
+          profileText: nextProfileText,
+          genreText: nextGenreText,
+          linkUrl: nextLinkUrl,
+          updatedAt: serverTimestamp(),
+          ...(handleChanged
+            ? { handleUpdatedAt: serverTimestamp() }
+            : {})
+        });
       });
 
       message.textContent = "プロフィールを保存しました。";
+
+      const refreshedSnap = await getDoc(doc(db, "users", currentUser.uid));
+      renderSettings(refreshedSnap.data());
     } catch (error) {
       console.error(error);
-      message.textContent =
-        "プロフィールの保存に失敗しました。少し時間を置いて、もう一度お試しください。";
+      message.textContent = error.message || "プロフィールの保存に失敗しました。";
     }
   });
 }
@@ -208,7 +373,7 @@ onAuthStateChanged(auth, async (user) => {
     settingsContent.innerHTML = `
       <section class="panel">
         <h1>ログインが必要です</h1>
-        <p>プロフィール設定を使うには、Googleログインしてください。</p>
+        <p>プロフィール設定を使うにはログインしてください。</p>
       </section>
     `;
     return;
