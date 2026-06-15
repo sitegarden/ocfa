@@ -1,18 +1,27 @@
-import { db } from "/firebase.js";
+import { auth, db } from "/firebase.js";
 
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   query,
+  serverTimestamp,
+  setDoc,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 const userPageContent = document.getElementById("userPageContent");
 
 const params = new URLSearchParams(location.search);
 const rawUserId = params.get("id");
+
+let currentViewer = null;
 
 function escapeHtml(text) {
   return String(text ?? "")
@@ -27,6 +36,13 @@ function nl2br(text) {
   return escapeHtml(text).replaceAll("\n", "<br>");
 }
 
+function normalizeHandle(handle) {
+  return String(handle || "")
+    .trim()
+    .replace(/^@+/, "")
+    .toLowerCase();
+}
+
 function getDisplayName(userData) {
   return userData.displayName || "名無し";
 }
@@ -35,11 +51,13 @@ function getCharacterImage(data) {
   return data.imageUrl || data.imageData || "";
 }
 
-function normalizeHandle(handle) {
-  return String(handle || "")
-    .trim()
-    .replace(/^@+/, "")
-    .toLowerCase();
+function waitAuthReady() {
+  return new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
 }
 
 function renderLoading(text = "読み込んでいます...") {
@@ -117,7 +135,7 @@ async function resolveUserId(rawId) {
 
   if (!originalId) return "";
 
-  // まずUIDとしてそのまま読む。ここで小文字化しない。
+  // UIDは大文字小文字があるので、そのまま読む
   const directUserRef = doc(db, "users", originalId);
   const directUserSnap = await getDoc(directUserRef);
 
@@ -125,7 +143,7 @@ async function resolveUserId(rawId) {
     return originalId;
   }
 
-  // UIDでなければhandleとして小文字化して探す。
+  // UIDでなければ、IDとして小文字化して handles から探す
   const handle = normalizeHandle(originalId);
   const handleRef = doc(db, "handles", handle);
   const handleSnap = await getDoc(handleRef);
@@ -205,6 +223,130 @@ async function getPublicCharacters(targetUserId) {
   });
 
   return characters;
+}
+
+function getFavoriteRef(targetUid) {
+  if (!currentViewer || !targetUid) return null;
+
+  return doc(
+    db,
+    "users",
+    currentViewer.uid,
+    "favorites",
+    targetUid
+  );
+}
+
+async function isFavoriteUser(targetUid) {
+  const favoriteRef = getFavoriteRef(targetUid);
+
+  if (!favoriteRef) return false;
+
+  const snap = await getDoc(favoriteRef);
+
+  return snap.exists();
+}
+
+async function addFavoriteUser(targetUid) {
+  const favoriteRef = getFavoriteRef(targetUid);
+
+  if (!favoriteRef) return;
+
+  await setDoc(favoriteRef, {
+    ownerUid: currentViewer.uid,
+    targetUid,
+    createdAt: serverTimestamp()
+  });
+}
+
+async function removeFavoriteUser(targetUid) {
+  const favoriteRef = getFavoriteRef(targetUid);
+
+  if (!favoriteRef) return;
+
+  await deleteDoc(favoriteRef);
+}
+
+function renderFavoriteControl(targetUid, isFavorite) {
+  if (!currentViewer) {
+    return `
+      <div class="favorite-area">
+        <p class="mini-info">ログインすると、このユーザーをお気に入りに保存できます。</p>
+      </div>
+    `;
+  }
+
+  if (currentViewer.uid === targetUid) {
+    return `
+      <div class="favorite-area">
+        <p class="mini-info">自分のページです。</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="favorite-area">
+      <button
+        id="favoriteUserBtn"
+        class="ghost-btn favorite-user-btn ${isFavorite ? "is-active" : ""}"
+        type="button"
+        data-favorite="${isFavorite ? "true" : "false"}"
+      >
+        ${isFavorite ? "★ お気に入り済み" : "☆ お気に入りに追加"}
+      </button>
+
+      <p id="favoriteMessage" class="mini-info"></p>
+    </div>
+  `;
+}
+
+function bindFavoriteButton(targetUid) {
+  const button = document.getElementById("favoriteUserBtn");
+  const message = document.getElementById("favoriteMessage");
+
+  if (!button) return;
+
+  button.addEventListener("click", async () => {
+    const isFavorite = button.dataset.favorite === "true";
+
+    try {
+      button.disabled = true;
+
+      if (message) {
+        message.textContent = isFavorite
+          ? "お気に入りを解除しています..."
+          : "お気に入りに追加しています...";
+      }
+
+      if (isFavorite) {
+        await removeFavoriteUser(targetUid);
+      } else {
+        await addFavoriteUser(targetUid);
+      }
+
+      const nextFavorite = !isFavorite;
+
+      button.dataset.favorite = nextFavorite ? "true" : "false";
+      button.classList.toggle("is-active", nextFavorite);
+      button.textContent = nextFavorite
+        ? "★ お気に入り済み"
+        : "☆ お気に入りに追加";
+
+      if (message) {
+        message.textContent = nextFavorite
+          ? "お気に入りに追加しました。"
+          : "お気に入りを解除しました。";
+      }
+    } catch (error) {
+      console.error(error);
+
+      if (message) {
+        message.textContent = "お気に入りの更新に失敗しました。";
+      }
+    } finally {
+      button.disabled = false;
+    }
+  });
 }
 
 function renderUserList(users) {
@@ -340,7 +482,7 @@ function renderCharacterCards(characters) {
   `;
 }
 
-function renderUserPage(user, characters) {
+function renderUserPage(user, characters, isFavorite) {
   if (!userPageContent) return;
 
   const data = user.data;
@@ -371,6 +513,8 @@ function renderUserPage(user, characters) {
           }
 
           <p class="mini-info">公開キャラ ${characters.length}体</p>
+
+          ${renderFavoriteControl(user.id, isFavorite)}
         </div>
       </div>
     </section>
@@ -419,6 +563,8 @@ function renderUserPage(user, characters) {
 
     ${renderCharacterCards(characters)}
   `;
+
+  bindFavoriteButton(user.id);
 }
 
 async function initUserList() {
@@ -426,7 +572,6 @@ async function initUserList() {
 
   try {
     const users = await getPublicUsers();
-
     renderUserList(users);
   } catch (error) {
     renderError(error);
@@ -445,14 +590,17 @@ async function initUserDetail() {
     }
 
     const characters = await getPublicCharacters(user.id);
+    const favorite = await isFavoriteUser(user.id);
 
-    renderUserPage(user, characters);
+    renderUserPage(user, characters, favorite);
   } catch (error) {
     renderError(error);
   }
 }
 
 async function init() {
+  currentViewer = await waitAuthReady();
+
   if (rawUserId) {
     await initUserDetail();
     return;
