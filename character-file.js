@@ -54,15 +54,17 @@ async function getOwnerName(userId) {
   return userData.displayName || "作者名未設定";
 }
 
+function getCharacterImageSrc(data) {
+  return data.imageUrl || data.imageData || "";
+}
+
 function renderNotFound() {
   characterFile.innerHTML = `
-    <div class="panel">
+    <section class="card message-card">
       <h1>キャラが見つかりませんでした</h1>
       <p>削除されたか、URLが変わっている可能性があります。</p>
-      <div class="actions">
-        <a class="ghost-btn" href="/characters/">キャラ一覧へ</a>
-      </div>
-    </div>
+      <a class="primary-link" href="/characters/">キャラ一覧へ</a>
+    </section>
   `;
 }
 
@@ -76,13 +78,11 @@ async function renderCharacter(character) {
 
   if (data.isPublic !== true && data.userId !== currentUser?.uid) {
     characterFile.innerHTML = `
-      <div class="panel">
+      <section class="card message-card">
         <h1>このキャラは非公開です</h1>
         <p>公開されていないキャラクターです。</p>
-        <div class="actions">
-          <a class="ghost-btn" href="/characters/">キャラ一覧へ</a>
-        </div>
-      </div>
+        <a class="primary-link" href="/characters/">キャラ一覧へ</a>
+      </section>
     `;
     return;
   }
@@ -91,62 +91,66 @@ async function renderCharacter(character) {
 
   const tags = Array.isArray(data.tags)
     ? data.tags
-        .map((tag) => `<span>${escapeHtml(tag)}</span>`)
-        .join("")
+      .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`)
+      .join("")
     : "";
 
   const isOwner = currentUser && currentUser.uid === data.userId;
+  const imageSrc = getCharacterImageSrc(data);
 
   characterFile.innerHTML = `
-    <article class="character-detail panel">
-      <div class="character-detail-grid">
-        <div class="character-detail-image">
-          <img src="${data.imageData}" alt="${escapeHtml(data.name)}">
-        </div>
+    <article class="character-file-card">
+      <section class="character-file-visual card">
+        ${
+          imageSrc
+            ? `<img src="${imageSrc}" alt="${escapeHtml(data.name || "キャラクター画像")}">`
+            : `<div class="empty-preview">画像がありません。</div>`
+        }
+      </section>
 
-        <div class="character-detail-info">
-          <p class="eyebrow">Character File</p>
+      <section class="character-file-info card">
+        <p class="eyebrow">Character File</p>
 
-          <h1>${escapeHtml(data.name || "名前未設定")}</h1>
+        <h1>${escapeHtml(data.name || "名前未設定")}</h1>
 
-          ${
-            data.kana
-              ? `<p class="mini-info">${escapeHtml(data.kana)}</p>`
-              : ""
-          }
+        ${
+          data.kana
+            ? `<p class="kana">${escapeHtml(data.kana)}</p>`
+            : ""
+        }
 
-          <p class="status-pill">
-            ${data.faOk ? "ファンアート歓迎" : "ファンアートは要確認"}
-          </p>
-
+        <div class="badge-row">
+          <span class="badge">${data.faOk ? "ファンアート歓迎" : "ファンアートは要確認"}</span>
           ${
             data.isPublic === false
-              ? `<p class="status-pill muted-pill">非公開</p>`
+              ? `<span class="badge muted">非公開</span>`
               : ""
           }
-
-          <div class="tag-list">
-            ${tags}
-          </div>
-
-          <div class="actions">
-            ${
-              isOwner
-                ? `
-                  <a class="primary-btn" href="/characters/edit/?id=${encodeURIComponent(character.id)}">
-                    編集する
-                  </a>
-                `
-                : ""
-            }
-
-            <a class="ghost-btn" href="/characters/">一覧へ戻る</a>
-            <a class="ghost-btn" href="/draw/">絵を描く</a>
-          </div>
+          ${
+            data.imageSource === "upload"
+              ? `<span class="badge muted">アップロード画像</span>`
+              : `<span class="badge muted">お絵描き画像</span>`
+          }
         </div>
-      </div>
 
-      <section class="detail-section">
+        ${
+          tags
+            ? `<div class="tag-row">${tags}</div>`
+            : ""
+        }
+
+        <div class="button-row">
+          ${
+            isOwner
+              ? `<a class="primary-link" href="/characters/edit/?id=${character.id}">編集する</a>`
+              : ""
+          }
+          <a class="primary-link" href="/characters/">一覧へ戻る</a>
+          <a class="primary-link" href="/draw/">絵を描く</a>
+        </div>
+      </section>
+
+      <section class="card">
         <h2>プロフィール</h2>
         ${
           data.profile
@@ -155,7 +159,7 @@ async function renderCharacter(character) {
         }
       </section>
 
-      <section class="detail-section">
+      <section class="card">
         <h2>NG・注意事項</h2>
         ${
           data.ngText
@@ -164,16 +168,14 @@ async function renderCharacter(character) {
         }
       </section>
 
-      <section class="detail-section">
+      <section class="card">
         <h2>作者</h2>
-        <p>
-          <a class="text-link" href="/users/?id=${encodeURIComponent(data.userId)}">
-            ${escapeHtml(ownerName)}
-          </a>
-        </p>
+        <a class="primary-link" href="/users/file/?id=${escapeHtml(data.userId || "")}">
+          ${escapeHtml(ownerName)}
+        </a>
       </section>
 
-      <section class="detail-section">
+      <section class="card">
         <h2>ファンアート</h2>
         <p>ファンアート機能は、イベント機能と一緒に追加予定です。</p>
       </section>
@@ -184,13 +186,11 @@ async function renderCharacter(character) {
 async function init() {
   if (!characterId) {
     characterFile.innerHTML = `
-      <div class="panel">
+      <section class="card message-card">
         <h1>キャラが選ばれていません</h1>
         <p>URLが正しいか確認してください。</p>
-        <div class="actions">
-          <a class="ghost-btn" href="/characters/">キャラ一覧へ</a>
-        </div>
-      </div>
+        <a class="primary-link" href="/characters/">キャラ一覧へ</a>
+      </section>
     `;
     return;
   }
@@ -212,10 +212,10 @@ onAuthStateChanged(auth, (user) => {
     console.error(error);
 
     characterFile.innerHTML = `
-      <div class="panel">
+      <section class="card message-card">
         <h1>読み込みに失敗しました</h1>
         <p>ページを再読み込みしてみてください。</p>
-      </div>
+      </section>
     `;
   });
 });
