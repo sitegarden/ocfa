@@ -12,7 +12,7 @@ import {
 const userPageContent = document.getElementById("userPageContent");
 
 const params = new URLSearchParams(location.search);
-const userId = params.get("id");
+const rawUserId = params.get("id");
 
 function escapeHtml(text) {
   return String(text ?? "")
@@ -35,6 +35,52 @@ function getCharacterImage(data) {
   return data.imageUrl || data.imageData || "";
 }
 
+function normalizeHandle(handle) {
+  return String(handle || "")
+    .trim()
+    .replace(/^@+/, "")
+    .toLowerCase();
+}
+
+function renderLoading(text = "読み込んでいます...") {
+  if (!userPageContent) return;
+
+  userPageContent.innerHTML = `
+    <section class="panel">
+      <p>${escapeHtml(text)}</p>
+    </section>
+  `;
+}
+
+function renderError(error) {
+  console.error(error);
+
+  if (!userPageContent) return;
+
+  userPageContent.innerHTML = `
+    <section class="panel">
+      <h1>読み込みに失敗しました</h1>
+      <p>ページを再読み込みしてみてください。</p>
+    </section>
+  `;
+}
+
+function renderNotFound() {
+  if (!userPageContent) return;
+
+  userPageContent.innerHTML = `
+    <section class="panel">
+      <h1>ユーザーが見つかりませんでした</h1>
+      <p>削除されたか、非公開になっている可能性があります。</p>
+
+      <div class="actions">
+        <a class="ghost-btn" href="/users/">ユーザー一覧へ</a>
+        <a class="ghost-btn" href="/">トップへ戻る</a>
+      </div>
+    </section>
+  `;
+}
+
 function renderUserIcon(userData, className = "user-page-icon") {
   const displayName = getDisplayName(userData);
   const iconImage = userData.iconImageData || userData.photoURL || "";
@@ -54,21 +100,34 @@ function renderUserIcon(userData, className = "user-page-icon") {
   `;
 }
 
+function getUserPageUrl(userId, userData = {}) {
+  const handle = normalizeHandle(userData.handle || "");
+
+  if (handle) {
+    return `/users/?id=${encodeURIComponent(handle)}`;
+  }
+
+  return `/users/?id=${encodeURIComponent(userId)}`;
+}
+
 async function resolveUserId(rawId) {
   if (!rawId) return "";
 
-  const normalizedId = String(rawId).trim().replace(/^@+/, "").toLowerCase();
+  const originalId = String(rawId).trim().replace(/^@+/, "");
 
-  // まず users/{uid} として読む
-  const directUserRef = doc(db, "users", normalizedId);
+  if (!originalId) return "";
+
+  // まずUIDとしてそのまま読む。ここで小文字化しない。
+  const directUserRef = doc(db, "users", originalId);
   const directUserSnap = await getDoc(directUserRef);
 
   if (directUserSnap.exists()) {
-    return normalizedId;
+    return originalId;
   }
 
-  // なければ handles/{handle} から uid を探す
-  const handleRef = doc(db, "handles", normalizedId);
+  // UIDでなければhandleとして小文字化して探す。
+  const handle = normalizeHandle(originalId);
+  const handleRef = doc(db, "handles", handle);
   const handleSnap = await getDoc(handleRef);
 
   if (!handleSnap.exists()) {
@@ -79,9 +138,7 @@ async function resolveUserId(rawId) {
 }
 
 async function getUserData() {
-  if (!userId) return null;
-
-  const resolvedUid = await resolveUserId(userId);
+  const resolvedUid = await resolveUserId(rawUserId);
 
   if (!resolvedUid) return null;
 
@@ -121,7 +178,7 @@ async function getPublicUsers() {
   return users;
 }
 
-async function getPublicCharacters(targetUserId = userId) {
+async function getPublicCharacters(targetUserId) {
   if (!targetUserId) return [];
 
   const q = query(
@@ -150,17 +207,75 @@ async function getPublicCharacters(targetUserId = userId) {
   return characters;
 }
 
-async function getPublicCharacterCounts(users) {
-  const counts = {};
+function renderUserList(users) {
+  if (!userPageContent) return;
 
-  await Promise.all(
-    users.map(async (user) => {
-      const characters = await getPublicCharacters(user.id);
-      counts[user.id] = characters.length;
-    })
-  );
+  if (users.length === 0) {
+    userPageContent.innerHTML = `
+      <section class="page-head user-public-hero">
+        <p class="eyebrow">Users</p>
+        <h1>公開ユーザー</h1>
+        <p>まだ公開ユーザーはいません。</p>
+      </section>
+    `;
+    return;
+  }
 
-  return counts;
+  userPageContent.innerHTML = `
+    <section class="page-head user-public-hero">
+      <p class="eyebrow">Users</p>
+      <h1>公開ユーザー</h1>
+      <p class="lead">プロフィールを公開しているユーザーだけ表示しています。</p>
+    </section>
+
+    <section class="user-list-grid">
+      ${users
+        .map(({ id, data }) => {
+          const displayName = getDisplayName(data);
+          const profileText = data.profileText || "";
+          const genreText = data.genreText || "";
+          const userUrl = getUserPageUrl(id, data);
+
+          return `
+            <article class="user-list-card">
+              <a class="user-list-card-link" href="${userUrl}">
+                ${renderUserIcon(data, "user-list-icon")}
+
+                <div class="user-list-body">
+                  <h2>${escapeHtml(displayName)}</h2>
+
+                  ${
+                    data.handle
+                      ? `<p class="mini-info">@${escapeHtml(data.handle)}</p>`
+                      : `<p class="mini-info">ID未設定</p>`
+                  }
+
+                  ${
+                    profileText
+                      ? `
+                        <p class="user-list-profile">
+                          ${escapeHtml(profileText.slice(0, 90))}
+                          ${profileText.length > 90 ? "..." : ""}
+                        </p>
+                      `
+                      : `<p class="user-list-profile">プロフィールはまだありません。</p>`
+                  }
+
+                  ${
+                    genreText
+                      ? `<p class="mini-info">${escapeHtml(genreText)}</p>`
+                      : ""
+                  }
+
+                  <span class="ghost-btn user-list-more">ページを見る</span>
+                </div>
+              </a>
+            </article>
+          `;
+        })
+        .join("")}
+    </section>
+  `;
 }
 
 function renderCharacterCards(characters) {
@@ -221,77 +336,6 @@ function renderCharacterCards(characters) {
   `;
 }
 
-function renderUserList(users, characterCounts) {
-  if (!userPageContent) return;
-
-  if (users.length === 0) {
-    userPageContent.innerHTML = `
-      <section class="page-head user-public-hero">
-        <p class="eyebrow">Users</p>
-        <h1>公開ユーザー</h1>
-        <p>まだ公開ユーザーはいません。</p>
-
-        <div class="actions">
-          <a class="ghost-btn" href="/">トップへ戻る</a>
-        </div>
-      </section>
-    `;
-    return;
-  }
-
-  userPageContent.innerHTML = `
-    <section class="page-head user-public-hero">
-      <p class="eyebrow">Users</p>
-      <h1>公開ユーザー</h1>
-      <p class="lead">プロフィールを公開しているユーザーだけ表示しています。</p>
-    </section>
-
-    <section class="user-list-grid">
-      ${users
-        .map((user) => {
-          const data = user.data;
-          const displayName = getDisplayName(data);
-          const profileText = data.profileText || "";
-          const genreText = data.genreText || "";
-          const publicCharacterCount = characterCounts[user.id] || 0;
-
-          return `
-            <article class="user-list-card">
-              <a class="user-list-card-link" href="/users/?id=${encodeURIComponent(user.id)}">
-                ${renderUserIcon(data, "user-list-icon")}
-
-                <div class="user-list-body">
-                  <h2>${escapeHtml(displayName)}</h2>
-                  <p class="mini-info">公開キャラ ${publicCharacterCount}体</p>
-
-                  ${
-                    profileText
-                      ? `
-                        <p class="user-list-profile">
-                          ${escapeHtml(profileText).slice(0, 90)}
-                          ${profileText.length > 90 ? "..." : ""}
-                        </p>
-                      `
-                      : `<p class="user-list-profile">プロフィールはまだありません。</p>`
-                  }
-
-                  ${
-                    genreText
-                      ? `<p class="mini-info">${escapeHtml(genreText)}</p>`
-                      : ""
-                  }
-
-                  <span class="ghost-btn user-list-more">ページを見る</span>
-                </div>
-              </a>
-            </article>
-          `;
-        })
-        .join("")}
-    </section>
-  `;
-}
-
 function renderUserPage(user, characters) {
   if (!userPageContent) return;
 
@@ -315,6 +359,13 @@ function renderUserPage(user, characters) {
         <div>
           <p class="eyebrow">User Page</p>
           <h1>${escapeHtml(displayName)}</h1>
+
+          ${
+            data.handle
+              ? `<p class="mini-info">@${escapeHtml(data.handle)}</p>`
+              : `<p class="mini-info">ID未設定</p>`
+          }
+
           <p class="mini-info">公開キャラ ${characters.length}体</p>
         </div>
       </div>
@@ -366,62 +417,19 @@ function renderUserPage(user, characters) {
   `;
 }
 
-function renderNotFound() {
-  if (!userPageContent) return;
-
-  userPageContent.innerHTML = `
-    <section class="panel">
-      <h1>ユーザーが見つかりませんでした</h1>
-      <p>削除されたか、非公開になっている可能性があります。</p>
-
-      <div class="actions">
-        <a class="ghost-btn" href="/users/">ユーザー一覧へ</a>
-        <a class="ghost-btn" href="/">トップへ戻る</a>
-      </div>
-    </section>
-  `;
-}
-
-function renderError(error) {
-  console.error(error);
-
-  if (!userPageContent) return;
-
-  userPageContent.innerHTML = `
-    <section class="panel">
-      <h1>読み込みに失敗しました</h1>
-      <p>ページを再読み込みしてみてください。</p>
-    </section>
-  `;
-}
-
 async function initUserList() {
-  if (!userPageContent) return;
-
-  userPageContent.innerHTML = `
-    <section class="panel">
-      <p>ユーザー一覧を読み込んでいます...</p>
-    </section>
-  `;
+  renderLoading("ユーザー一覧を読み込んでいます...");
 
   try {
     const users = await getPublicUsers();
-    const characters = await getPublicCharacters(user.id);
-
-    renderUserList(users, characterCounts);
+    renderUserList(users);
   } catch (error) {
     renderError(error);
   }
 }
 
 async function initUserDetail() {
-  if (!userPageContent) return;
-
-  userPageContent.innerHTML = `
-    <section class="panel">
-      <p>ユーザーページを読み込んでいます...</p>
-    </section>
-  `;
+  renderLoading("ユーザーページを読み込んでいます...");
 
   try {
     const user = await getUserData();
@@ -440,7 +448,7 @@ async function initUserDetail() {
 }
 
 async function init() {
-  if (userId) {
+  if (rawUserId) {
     await initUserDetail();
     return;
   }
