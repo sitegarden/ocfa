@@ -1,11 +1,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
 import {
   getFirestore
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
 import {
   getAuth,
   GoogleAuthProvider
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
 import {
   getStorage
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
