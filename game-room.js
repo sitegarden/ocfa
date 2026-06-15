@@ -153,18 +153,22 @@ function getFanartDocId(round, artistPlayerId, targetPlayerId) {
 }
 
 function getMyPlayer() {
+  const guestId = getGuestId();
+
   if (currentUser) {
     return currentPlayers.find((player) => {
-      return player.data.userId === currentUser.uid
-        && player.data.isLeft !== true;
+      return (
+        player.data.isLeft !== true &&
+        (
+          player.data.userId === currentUser.uid ||
+          player.data.guestId === guestId
+        )
+      );
     });
   }
 
-  const guestId = getGuestId();
-
   return currentPlayers.find((player) => {
-    return player.data.guestId === guestId
-      && player.data.isLeft !== true;
+    return player.data.guestId === guestId && player.data.isLeft !== true;
   });
 }
 
