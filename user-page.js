@@ -216,6 +216,10 @@ function renderUserList(users) {
         <p class="eyebrow">Users</p>
         <h1>公開ユーザー</h1>
         <p>まだ公開ユーザーはいません。</p>
+
+        <div class="actions">
+          <a class="ghost-btn" href="/">トップへ戻る</a>
+        </div>
       </section>
     `;
     return;
@@ -422,6 +426,7 @@ async function initUserList() {
 
   try {
     const users = await getPublicUsers();
+
     renderUserList(users);
   } catch (error) {
     renderError(error);
