@@ -1541,15 +1541,20 @@ async function renderGameStageArea() {
     }
 
     return `
-      <section class="panel game-draw-panel game-fa-panel">
-        <p class="eyebrow">Fan Art Turn</p>
-        <h2>${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCを描く</h2>
+  <section class="panel game-draw-panel game-fa-panel">
+    <p class="eyebrow">Fan Art Turn</p>
+    <h2>${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCを描く</h2>
 
-        <p class="mini-info">
-          Round ${Number(currentRoom.data.currentRound || 0) + 1}
-          /
-          ${Math.max(1, currentPlayers.length - 1)}
-        </p>
+    <p class="mini-info">
+      Round ${Number(currentRoom.data.currentRound || 0) + 1}
+      /
+      ${Math.max(1, currentPlayers.length - 1)}
+    </p>
+
+    <div class="game-fa-workspace">
+      <aside class="game-fa-reference">
+        <p class="eyebrow">Reference</p>
+        <h3>資料OC</h3>
 
         <div class="game-target-oc">
           <img
@@ -1558,8 +1563,15 @@ async function renderGameStageArea() {
           >
         </div>
 
+        <p class="mini-info">
+          ${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCです。
+          タブレット以上では左側に固定表示されます。
+        </p>
+      </aside>
+
+      <div class="game-fa-draw-main">
         <p>
-          上のOCを見ながら、ファンアートを描いてください。
+          左のOCを見ながら、ファンアートを描いてください。
         </p>
 
         <p class="mini-info">
@@ -1597,8 +1609,10 @@ async function renderGameStageArea() {
             FAを提出する
           </button>
         </div>
-      </section>
-    `;
+      </div>
+    </div>
+  </section>
+`;
   }
 
   if (currentRoom.data.status !== "drawing_oc") {
