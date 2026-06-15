@@ -16,6 +16,11 @@ import {
 const noticeList = document.getElementById("noticeList");
 const noticeAdminActions = document.getElementById("noticeAdminActions");
 
+if (noticeAdminActions) {
+  noticeAdminActions.hidden = true;
+  noticeAdminActions.style.display = "none";
+}
+
 function escapeHtml(text) {
   return String(text || "")
     .replaceAll("&", "&amp;")
@@ -52,113 +57,103 @@ async function isAdminUser(user) {
   return snap.data().role === "admin";
 }
 
-async function getNotices(isAdmin) {
-  const baseRef = collection(db, "v2Notices");
+async function getNewsList(isAdmin) {
+  const newsRef = collection(db, "v2Notices");
 
   const q = isAdmin
     ? query(
-        baseRef,
+        newsRef,
         where("isDeleted", "==", false)
       )
     : query(
-        baseRef,
+        newsRef,
         where("isDeleted", "==", false),
         where("isPublic", "==", true)
       );
 
   const snap = await getDocs(q);
 
-  const notices = [];
+  const newsList = [];
 
   snap.forEach((docSnap) => {
-    notices.push({
+    newsList.push({
       id: docSnap.id,
       data: docSnap.data()
     });
   });
 
-  notices.sort((a, b) => {
+  newsList.sort((a, b) => {
     const aTime = a.data.createdAt?.seconds || 0;
     const bTime = b.data.createdAt?.seconds || 0;
     return bTime - aTime;
   });
 
-  return notices;
+  return newsList;
 }
 
-function renderEmpty(isAdmin) {
+function renderEmpty() {
+  if (!noticeList) return;
+
   noticeList.innerHTML = `
     <div class="panel">
       <h2>お知らせはまだありません</h2>
       <p>更新情報やイベント案内があると、ここに表示されます。</p>
-
-      ${
-        isAdmin
-          ? `
-            <div class="actions">
-              <a class="primary-btn" href="/notices/new/">最初のお知らせを書く</a>
-            </div>
-          `
-          : ""
-      }
     </div>
   `;
 }
 
-function renderNotices(notices, isAdmin) {
+function renderNews(newsList) {
   if (!noticeList) return;
 
-  if (notices.length === 0) {
-    renderEmpty(isAdmin);
+  if (newsList.length === 0) {
+    renderEmpty();
     return;
   }
 
   noticeList.innerHTML = `
     <div class="notice-stack">
-      ${notices
-        .map(({ id, data }) => {
+      ${newsList
+        .map(({ data }) => {
           const title = data.title || "無題のお知らせ";
           const body = data.body || "";
 
           return `
             <article class="notice-card panel">
-              <a class="notice-card-link" href="/notices/file/?id=${encodeURIComponent(id)}">
-                <div class="notice-card-head">
-                  <div>
-                    <p class="eyebrow">
-                      ${data.isImportant ? "Important" : "News"}
-                    </p>
+              <div class="notice-card-head">
+                <div>
+                  <p class="eyebrow">
+                    ${data.isImportant ? "Important" : "News"}
+                  </p>
 
-                    <h2>${escapeHtml(title)}</h2>
-                  </div>
-
-                  ${
-                    data.createdAt
-                      ? `<p class="notice-date">${formatDate(data.createdAt)}</p>`
-                      : ""
-                  }
+                  <h2>${escapeHtml(title)}</h2>
                 </div>
 
                 ${
-                  data.isImportant
-                    ? `<p class="status-pill">大切なお知らせ</p>`
+                  data.createdAt
+                    ? `<p class="notice-date">${formatDate(data.createdAt)}</p>`
                     : ""
                 }
+              </div>
 
-                <div class="notice-body">
-                  ${
-                    body
-                      ? `<p>${nl2br(body)}</p>`
-                      : `<p>本文はありません。</p>`
-                  }
-                </div>
+              ${
+                data.isImportant
+                  ? `<p class="status-pill">大切なお知らせ</p>`
+                  : ""
+              }
 
+              <div class="notice-body">
                 ${
-                  data.isPublic === false
-                    ? `<p class="mini-info">非公開のお知らせ</p>`
-                    : ""
+                  body
+                    ? `<p>${nl2br(body)}</p>`
+                    : `<p>本文はありません。</p>`
                 }
-              </a>
+              </div>
+
+              ${
+                data.isPublic === false
+                  ? `<p class="mini-info">非公開のお知らせ</p>`
+                  : ""
+              }
             </article>
           `;
         })
@@ -171,6 +166,11 @@ onAuthStateChanged(auth, async (user) => {
   try {
     if (!noticeList) return;
 
+    if (noticeAdminActions) {
+      noticeAdminActions.hidden = true;
+      noticeAdminActions.style.display = "none";
+    }
+
     noticeList.innerHTML = `
       <div class="panel">
         <p>お知らせを読み込み中...</p>
@@ -179,15 +179,21 @@ onAuthStateChanged(auth, async (user) => {
 
     const isAdmin = await isAdminUser(user);
 
-    if (noticeAdminActions) {
-      noticeAdminActions.hidden = !isAdmin;
+    if (noticeAdminActions && isAdmin) {
+      noticeAdminActions.hidden = false;
+      noticeAdminActions.style.display = "";
     }
 
-    const notices = await getNotices(isAdmin);
+    const newsList = await getNewsList(isAdmin);
 
-    renderNotices(notices, isAdmin);
+    renderNews(newsList);
   } catch (error) {
     console.error(error);
+
+    if (noticeAdminActions) {
+      noticeAdminActions.hidden = true;
+      noticeAdminActions.style.display = "none";
+    }
 
     if (!noticeList) return;
 
