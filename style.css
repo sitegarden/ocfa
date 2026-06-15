@@ -5774,3 +5774,17 @@ textarea {
     font-size: 15px;
   }
 }
+.notice-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.notice-card-link:hover h2 {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.notice-card-link .notice-body p {
+  color: var(--muted);
+}
