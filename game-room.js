@@ -79,9 +79,9 @@ const MAX_LAYER_HISTORY = 20;
 const TIME_UP_GRACE_MS = 7000;
 
 /* 筆圧補正 */
-const MIN_PRESSURE = 0.45;
+const MIN_PRESSURE = 0.6;
 const MAX_PRESSURE = 1.0;
-const PRESSURE_SMOOTHING = 0.55;
+const PRESSURE_SMOOTHING = 0.35;
 
 /* キャンバス */
 const GAME_CANVAS_SIZE = 768;
@@ -2771,12 +2771,6 @@ function drawGameCanvas(e) {
     return;
   }
 
-  const distance = Math.hypot(point.x - gameLastX, point.y - gameLastY);
-
-  if (distance < 0.5) {
-    return;
-  }
-
   targetCtx.save();
 
   targetCtx.lineCap = "round";
@@ -2791,12 +2785,9 @@ function drawGameCanvas(e) {
     targetCtx.strokeStyle = gamePenColor?.value || "#2b2430";
   }
 
-  const midX = (gameLastX + point.x) / 2;
-  const midY = (gameLastY + point.y) / 2;
-
   targetCtx.beginPath();
   targetCtx.moveTo(gameLastX, gameLastY);
-  targetCtx.quadraticCurveTo(gameLastX, gameLastY, midX, midY);
+  targetCtx.lineTo(point.x, point.y);
   targetCtx.stroke();
 
   targetCtx.restore();
