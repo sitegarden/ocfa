@@ -5686,3 +5686,91 @@ textarea {
   border-radius: 999px;
   padding: 14px 18px;
 }
+
+/* =========================
+   Home news / mobile compact
+========================= */
+
+@media (max-width: 640px) {
+  .home-news-section {
+    margin-top: 18px;
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .home-news-head {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .home-news-head h2 {
+    font-size: 26px;
+    line-height: 1.25;
+  }
+
+  .home-news-head .ghost-btn {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+
+  .home-notice-list {
+    gap: 10px;
+  }
+
+  .home-notice-card {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .home-notice-card h3 {
+    margin: 6px 0 8px;
+    font-size: 18px;
+    line-height: 1.45;
+  }
+
+  .home-notice-card p {
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .home-notice-meta {
+    font-size: 12px;
+  }
+
+  .home-notice-card a {
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-notice-card p {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-news-section .ghost-btn {
+    width: 100%;
+  }
+
+  .cute-hero .primary-btn,
+  .cute-hero .ghost-btn,
+  .home-event-banner .primary-btn,
+  .home-event-banner .ghost-btn {
+    width: 100%;
+  }
+
+  .home-news-section .primary-btn,
+  .home-news-section .ghost-btn {
+    padding: 10px 14px;
+    min-height: 44px;
+    font-size: 15px;
+  }
+}
