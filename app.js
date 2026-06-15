@@ -34,19 +34,22 @@ async function getOcfaUserData(user) {
 
   if (snap.exists()) {
     const data = snap.data();
-
     const latestPhotoURL = user.photoURL || "";
 
-    if ((data.photoURL || "") !== latestPhotoURL) {
-      await updateDoc(userRef, {
-        photoURL: latestPhotoURL,
-        updatedAt: serverTimestamp()
-      });
+    const updateData = {};
 
-      return {
-        ...data,
-        photoURL: latestPhotoURL
-      };
+    if ((data.photoURL || "") !== latestPhotoURL) {
+      updateData.photoURL = latestPhotoURL;
+    }
+
+    if (!("uploadAllowed" in data)) {
+      updateData.uploadAllowed = false;
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      updateData.updatedAt = serverTimestamp();
+      await updateDoc(userRef, updateData);
+      return { ...data, ...updateData };
     }
 
     return data;
@@ -60,6 +63,7 @@ async function getOcfaUserData(user) {
     displayName: user.displayName || emailName || "",
     photoURL: user.photoURL || "",
     role: "user",
+    uploadAllowed: false,
     handle: "",
     profileText: "",
     genreText: "",
@@ -69,7 +73,6 @@ async function getOcfaUserData(user) {
   };
 
   await setDoc(userRef, initialData);
-
   return initialData;
 }
 
@@ -77,8 +80,8 @@ function renderHeader() {
   if (!siteHeader) return;
 
   siteHeader.innerHTML = `
-    <div class="site-header-inner">
-      <a class="logo" href="/">OCFA</a>
+    <div class="header-inner">
+      <a class="site-logo" href="/">OCFA</a>
 
       <button
         id="menuToggle"
@@ -92,50 +95,38 @@ function renderHeader() {
         <span></span>
       </button>
 
-      <div id="headerMenu" class="header-menu">
-        <nav class="nav">
-          <a href="/characters/">キャラ一覧</a>
-          <a href="/draw/">描く</a>
-          <a href="/events/">イベント</a>
-          <a href="/games/">ゲーム</a>
-          <a href="/users/">ユーザー</a>
-          <a href="/news/">お知らせ</a>
-          <a href="/mypage/">マイページ</a>
-          <a href="/settings/">設定</a>
-        </nav>
+      <nav id="headerMenu" class="header-menu">
+        <a href="/characters/">キャラ一覧</a>
+        <a href="/draw/">描く</a>
+        <a href="/events/">イベント</a>
+        <a href="/games/">ゲーム</a>
+        <a href="/users/">ユーザー</a>
+        <a href="/notices/">お知らせ</a>
+        <a href="/mypage/">マイページ</a>
+        <a href="/settings/">設定</a>
+      </nav>
 
-        <div class="auth-box">
-          <span id="userName">確認中...</span>
-
-          <button id="loginBtn" type="button">ログイン</button>
-          <button id="logoutBtn" type="button" hidden>ログアウト</button>
-
-          <div id="loginPanel" class="login-panel" hidden>
-            <button id="googleLoginBtn" type="button" class="google-login-btn">
-              Googleでログイン
-            </button>
-
-            <div class="login-divider">または</div>
-
-            <label>
-              メールアドレス
-              <input id="emailInput" type="email" autocomplete="email">
-            </label>
-
-            <label>
-              パスワード
-              <input id="passwordInput" type="password" autocomplete="current-password">
-            </label>
-
-            <div class="login-actions">
-              <button id="emailLoginBtn" type="button">メールでログイン</button>
-              <button id="emailRegisterBtn" type="button">新規登録</button>
-            </div>
-
-            <p id="loginMessage" class="login-message"></p>
-          </div>
-        </div>
+      <div class="auth-area">
+        <span id="userName">確認中...</span>
+        <button id="loginBtn" type="button">ログイン</button>
+        <button id="logoutBtn" type="button" hidden>ログアウト</button>
       </div>
+    </div>
+
+    <div id="loginPanel" class="login-panel" hidden>
+      <button id="googleLoginBtn" type="button">Googleでログイン</button>
+
+      <div class="login-divider">または</div>
+
+      <input id="emailInput" type="email" placeholder="メールアドレス" autocomplete="email">
+      <input id="passwordInput" type="password" placeholder="パスワード" autocomplete="current-password">
+
+      <div class="login-actions">
+        <button id="emailLoginBtn" type="button">メールでログイン</button>
+        <button id="emailRegisterBtn" type="button">新規登録</button>
+      </div>
+
+      <p id="loginMessage" class="form-message"></p>
     </div>
   `;
 
@@ -148,13 +139,11 @@ function renderHeader() {
   const passwordInput = document.getElementById("passwordInput");
   const loginPanel = document.getElementById("loginPanel");
   const loginMessage = document.getElementById("loginMessage");
-
   const menuToggle = document.getElementById("menuToggle");
   const headerMenu = document.getElementById("headerMenu");
 
-  menuToggle.addEventListener("click", () => {
+  menuToggle?.addEventListener("click", () => {
     const isOpen = headerMenu.classList.toggle("is-open");
-
     menuToggle.classList.toggle("is-open", isOpen);
     menuToggle.setAttribute("aria-expanded", String(isOpen));
     menuToggle.setAttribute(
@@ -163,7 +152,7 @@ function renderHeader() {
     );
   });
 
-  headerMenu.querySelectorAll("a").forEach((link) => {
+  headerMenu?.querySelectorAll("a").forEach((link) => {
     link.addEventListener("click", () => {
       headerMenu.classList.remove("is-open");
       menuToggle.classList.remove("is-open");
@@ -172,7 +161,7 @@ function renderHeader() {
     });
   });
 
-  loginBtn.addEventListener("click", () => {
+  loginBtn?.addEventListener("click", () => {
     loginPanel.hidden = !loginPanel.hidden;
 
     if (!loginPanel.hidden) {
@@ -180,7 +169,7 @@ function renderHeader() {
     }
   });
 
-  googleLoginBtn.addEventListener("click", async () => {
+  googleLoginBtn?.addEventListener("click", async () => {
     try {
       loginMessage.textContent = "Googleでログインしています...";
       await signInWithPopup(auth, googleProvider);
@@ -191,7 +180,7 @@ function renderHeader() {
     }
   });
 
-  emailLoginBtn.addEventListener("click", async () => {
+  emailLoginBtn?.addEventListener("click", async () => {
     const email = emailInput.value.trim();
     const password = passwordInput.value;
 
@@ -210,7 +199,7 @@ function renderHeader() {
     }
   });
 
-  emailRegisterBtn.addEventListener("click", async () => {
+  emailRegisterBtn?.addEventListener("click", async () => {
     const email = emailInput.value.trim();
     const password = passwordInput.value;
 
@@ -238,7 +227,7 @@ function renderHeader() {
     }
   });
 
-  logoutBtn.addEventListener("click", async () => {
+  logoutBtn?.addEventListener("click", async () => {
     try {
       await signOut(auth);
     } catch (error) {
@@ -254,27 +243,18 @@ function renderFooter() {
   const contactUrl = "https://docs.google.com/forms/d/e/1FAIpQLSesMw6-ymf5_sRUzs_35r_Ml-ztA3Cgh8JAai1XNQH84__SWQ/viewform?usp=header";
 
   siteFooter.innerHTML = `
-  <div class="site-footer-inner">
-    <div class="footer-main">
-      <p class="footer-brand">OCFA</p>
+    <div class="footer-inner">
+      <strong>OCFA</strong>
+      <p>不具合報告・ご意見・ご感想などがあれば、フォームから送ってください。</p>
 
-      <p class="footer-text">
-        不具合報告・ご意見・ご感想などがあれば、フォームから送ってください。
-      </p>
+      <div class="footer-links">
+        <a href="/terms/">利用規約</a>
+        <a href="/privacy/">プライバシーポリシー</a>
+        <a href="${contactUrl}" target="_blank" rel="noopener noreferrer">感想・不具合を送る</a>
+      </div>
+
+      <small>© OCFA</small>
     </div>
-
-    <nav class="footer-nav">
-      <a href="/terms/">利用規約</a>
-      <a href="/privacy/">プライバシーポリシー</a>
-      <a href="${contactUrl}" target="_blank" rel="noopener noreferrer">
-        感想・不具合を送る
-      </a>
-    </nav>
-
-    <p class="footer-copy">
-      © OCFA
-    </p>
-  </div>
   `;
 }
 
@@ -300,7 +280,7 @@ onAuthStateChanged(auth, async (user) => {
     const userData = await getOcfaUserData(user);
     const displayName = userData.displayName || user.displayName || "ログイン中";
 
-    userName.textContent = displayName;
+    userName.textContent = escapeHtml(displayName);
     loginBtn.hidden = true;
     logoutBtn.hidden = false;
 
