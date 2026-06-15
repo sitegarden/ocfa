@@ -127,7 +127,13 @@ async function ensureUserDoc(user) {
   return initialData;
 }
 
-function getPublicPageUrl() {
+function getPublicPageUrl(userData = {}) {
+  const handle = normalizeHandle(userData.handle || "");
+
+  if (handle) {
+    return `/users/?id=${encodeURIComponent(handle)}`;
+  }
+
   return `/users/?id=${encodeURIComponent(currentUser.uid)}`;
 }
 
@@ -137,7 +143,7 @@ function renderSettings(userData) {
   const profileText = userData.profileText || "";
   const genreText = userData.genreText || "";
   const linkUrl = userData.linkUrl || "";
-  const publicPageUrl = getPublicPageUrl();
+  const publicPageUrl = getPublicPageUrl(userData);
   const handleRemainingText = getHandleRemainingText(userData.handleUpdatedAt);
 
   settingsContent.innerHTML = `
