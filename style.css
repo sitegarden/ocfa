@@ -5539,19 +5539,6 @@ textarea {
   height: 18px;
 }
 
-.primary-btn {
-  width: 100%;
-  border: 0;
-  border-radius: 999px;
-  padding: 14px 18px;
-  font: inherit;
-  font-weight: 800;
-  cursor: pointer;
-  background: linear-gradient(135deg, #ff8ab3, #8c7bff);
-  color: #fff;
-  box-shadow: 0 12px 24px rgba(120, 90, 200, 0.24);
-}
-
 .primary-link {
   display: inline-flex;
   align-items: center;
@@ -5691,4 +5678,11 @@ textarea {
   .character-file-visual {
     position: static;
   }
+}
+
+/* upload register page only */
+.character-register-grid .primary-btn {
+  width: 100%;
+  border-radius: 999px;
+  padding: 14px 18px;
 }
