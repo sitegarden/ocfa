@@ -1553,8 +1553,16 @@ async function renderGameStageArea() {
 
     <div class="game-fa-workspace">
       <aside class="game-fa-reference">
-        <p class="eyebrow">Reference</p>
-        <h3>資料OC</h3>
+        <div class="game-fa-reference-head">
+          <div>
+            <p class="eyebrow">Reference</p>
+            <h3>資料OC</h3>
+          </div>
+
+          <p class="mini-info">
+            ${escapeHtml(targetPlayer.data.name || "匿名")}さん
+          </p>
+        </div>
 
         <div class="game-target-oc">
           <img
@@ -1562,16 +1570,11 @@ async function renderGameStageArea() {
             alt="${escapeHtml(targetPlayer.data.name || "OC")}のOC"
           >
         </div>
-
-        <p class="mini-info">
-          ${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCです。
-          タブレット以上では左側に固定表示されます。
-        </p>
       </aside>
 
       <div class="game-fa-draw-main">
         <p>
-          左のOCを見ながら、ファンアートを描いてください。
+          資料OCを見ながら、ファンアートを描いてください。
         </p>
 
         <p class="mini-info">
@@ -1587,9 +1590,16 @@ async function renderGameStageArea() {
           </div>
         </div>
 
-        ${renderCanvasGuide("fa")}
-
         ${renderLayerTools()}
+
+        <div class="game-canvas-guide game-canvas-guide-compact">
+          <div class="game-canvas-guide-icon">↓</div>
+
+          <div>
+            <strong>この下に描けます</strong>
+            <p>資料を見ながら、白いキャンバスに描いてください。</p>
+          </div>
+        </div>
 
         <div class="game-canvas-wrap">
           <canvas
