@@ -5788,3 +5788,14 @@ textarea {
 .notice-card-link .notice-body p {
   color: var(--muted);
 }
+
+.character-card-noimage {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-bottom: 2px solid var(--line);
+  background: #fffdf8;
+  color: var(--muted);
+  font-weight: 900;
+}
