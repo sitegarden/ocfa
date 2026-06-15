@@ -5842,20 +5842,6 @@ textarea {
    Game room / FA reference layout
 ========================= */
 
-.game-fa-workspace {
-  display: grid;
-  gap: 16px;
-  align-items: start;
-}
-
-.game-fa-reference {
-  min-width: 0;
-  padding: 14px;
-  border: 2px dashed var(--line);
-  border-radius: 22px;
-  background: rgba(255, 250, 242, 0.78);
-}
-
 .game-fa-reference h3 {
   margin: 4px 0 12px;
   font-size: 20px;
@@ -5871,12 +5857,6 @@ textarea {
   max-height: none;
   aspect-ratio: 1 / 1;
   object-fit: contain;
-}
-
-.game-fa-draw-main {
-  min-width: 0;
-  display: grid;
-  gap: 14px;
 }
 
 .game-canvas-wrap {
@@ -5926,5 +5906,177 @@ textarea {
   .game-fa-reference .game-target-oc img {
     max-width: 220px;
     justify-self: center;
+  }
+}
+
+
+/* =========================
+   Game room / stable FA reference layout
+========================= */
+
+.game-fa-workspace {
+  display: grid;
+  gap: 14px;
+  align-items: start;
+}
+
+.game-fa-draw-main {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.game-canvas-wrap {
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+}
+
+.game-fa-reference {
+  min-width: 0;
+  padding: 12px;
+  border: 2px dashed var(--line);
+  border-radius: 20px;
+  background: rgba(255, 250, 242, 0.92);
+  box-shadow: var(--shadow-soft);
+}
+
+.game-fa-reference-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.game-fa-reference-head h3 {
+  margin: 2px 0 0;
+  font-size: 18px;
+}
+
+.game-fa-reference-head .mini-info {
+  margin: 0;
+  text-align: right;
+}
+
+.game-fa-reference .game-target-oc {
+  margin: 0;
+  padding: 8px;
+  border-radius: 18px;
+}
+
+.game-fa-reference .game-target-oc img {
+  display: block;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+}
+
+/* タブレット以上：左に資料を固定、右に描画 */
+@media (min-width: 760px) {
+  .game-fa-workspace {
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .game-fa-reference {
+    position: sticky;
+    top: 92px;
+    align-self: start;
+    max-height: calc(100dvh - 112px);
+    overflow: auto;
+  }
+
+  .game-fa-draw-main .game-canvas {
+    width: 100%;
+    max-width: 600px;
+  }
+}
+
+/* 広い画面では資料を少し大きく */
+@media (min-width: 1100px) {
+  .game-fa-workspace {
+    grid-template-columns: 330px minmax(0, 1fr);
+    gap: 22px;
+  }
+
+  .game-fa-draw-main .game-canvas {
+    max-width: 640px;
+  }
+}
+
+/* スマホ：資料をキャンバス直前に小さく固定 */
+@media (max-width: 759px) {
+  .game-fa-workspace {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .game-fa-reference {
+    position: sticky;
+    top: 68px;
+    z-index: 8;
+    order: 2;
+    padding: 8px;
+    border-radius: 18px;
+  }
+
+  .game-fa-draw-main {
+    display: contents;
+  }
+
+  .game-fa-draw-main > p,
+  .game-fa-draw-main > .mini-info,
+  .game-fa-draw-main > .game-timer-box,
+  .game-fa-draw-main > .game-draw-toolbar,
+  .game-fa-draw-main > .game-layer-panel {
+    order: 1;
+  }
+
+  .game-fa-reference-head {
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .game-fa-reference-head .eyebrow {
+    display: none;
+  }
+
+  .game-fa-reference-head h3 {
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .game-fa-reference-head .mini-info {
+    font-size: 12px;
+  }
+
+  .game-fa-reference .game-target-oc {
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  .game-fa-reference .game-target-oc img {
+    width: min(100%, 160px);
+    margin: 0 auto;
+  }
+
+  .game-canvas-guide-compact {
+    order: 3;
+    margin: 8px 0;
+  }
+
+  .game-canvas-wrap {
+    order: 4;
+  }
+
+  .game-canvas-help {
+    order: 5;
+  }
+
+  .game-fa-draw-main > .actions {
+    order: 6;
   }
 }
