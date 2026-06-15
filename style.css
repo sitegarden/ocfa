@@ -5833,3 +5833,7 @@ textarea {
   color: var(--muted);
   font-weight: 900;
 }
+
+.favorite-user-grid {
+  margin-top: 20px;
+}
