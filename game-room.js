@@ -2859,8 +2859,6 @@ function addWatermarkToGameCanvas(name) {
 function getGameCanvasImageData() {
   if (!gameCanvas) return "";
 
-  redrawGameCanvas();
-
   return gameCanvas.toDataURL("image/jpeg", 0.82);
 }
 
@@ -3016,6 +3014,21 @@ function getTimestampMs(value) {
   return Date.now();
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function getRoomStartedMs() {
   return getTimestampMs(currentRoom?.data?.startedAt);
 }
@@ -3069,30 +3082,38 @@ function drawTimeUpCard(name, label = "OC") {
     ctx.clearRect(0, 0, layerCanvas.width, layerCanvas.height);
   });
 
-  redrawGameCanvas();
+  const targetCtx = layerContexts[0];
 
-  gameCtx.save();
+  if (!targetCtx) return;
 
-  gameCtx.fillStyle = "#fffdf8";
-  gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+  activeLayerIndex = 0;
+  layerVisible = [true, true];
 
-  gameCtx.fillStyle = "#2b2430";
-  gameCtx.textAlign = "center";
-  gameCtx.textBaseline = "middle";
+  targetCtx.save();
 
-  gameCtx.font = "bold 46px sans-serif";
-  gameCtx.fillText("時間切れ", gameCanvas.width / 2, gameCanvas.height / 2 - 28);
+  targetCtx.fillStyle = "#fffdf8";
+  targetCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
 
-  gameCtx.font = "bold 24px sans-serif";
-  gameCtx.fillText(
+  targetCtx.fillStyle = "#2b2430";
+  targetCtx.textAlign = "center";
+  targetCtx.textBaseline = "middle";
+
+  targetCtx.font = "bold 46px sans-serif";
+  targetCtx.fillText("時間切れ", gameCanvas.width / 2, gameCanvas.height / 2 - 28);
+
+  targetCtx.font = "bold 24px sans-serif";
+  targetCtx.fillText(
     `${name || "匿名"} の${label}`,
     gameCanvas.width / 2,
     gameCanvas.height / 2 + 28
   );
 
-  gameCtx.restore();
+  targetCtx.restore();
 
   gameHasDrawn = true;
+
+  redrawGameCanvas();
+  updateLayerUi();
 }
 
 function updateTimerDisplay(timerText, timerBar, remaining, turnSeconds) {
