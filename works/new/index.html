@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>作品を作る - OCFA</title>
+  <meta
+    name="description"
+    content="OCFAの作品作成ページです。"
+  />
+
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+  <header id="siteHeader"></header>
+
+  <main class="page">
+    <section class="panel">
+      <p class="eyebrow">Works</p>
+      <h1>作品を作る</h1>
+      <p>
+        世界観やシリーズを作品としてまとめられます。
+        自分専用の作品も、共有作品も作れます。
+      </p>
+    </section>
+
+    <form id="workForm" class="panel">
+      <section class="card">
+        <h2>作品名</h2>
+        <input
+          id="workTitle"
+          type="text"
+          maxlength="60"
+          placeholder="例：星降る街の魔法使い"
+          required
+        >
+      </section>
+
+      <section class="card">
+        <h2>作品説明</h2>
+        <textarea
+          id="workDescription"
+          rows="6"
+          maxlength="1000"
+          placeholder="作品の世界観、雰囲気、登場キャラの方向性などを書けます。"
+        ></textarea>
+      </section>
+
+      <section class="card">
+        <h2>作品タイプ</h2>
+
+        <label class="radio-card">
+          <input type="radio" name="workType" value="personal" checked>
+          <span>
+            <strong>自分専用</strong>
+            <small>自分のOCや世界観をまとめる作品です。</small>
+          </span>
+        </label>
+
+        <label class="radio-card">
+          <input type="radio" name="workType" value="shared">
+          <span>
+            <strong>共有作品</strong>
+            <small>他の人のキャラ参加や、うちよそFAを楽しめる作品です。</small>
+          </span>
+        </label>
+      </section>
+
+      <section id="sharedSettings" class="card" hidden>
+        <h2>共有作品の参加設定</h2>
+
+        <label class="radio-card">
+          <input type="radio" name="joinType" value="free" checked>
+          <span>
+            <strong>自由参加</strong>
+            <small>参加したい人が気軽に入れる作品です。</small>
+          </span>
+        </label>
+
+        <label class="radio-card">
+          <input type="radio" name="joinType" value="approval">
+          <span>
+            <strong>承認制</strong>
+            <small>参加申請を見てから許可する作品です。</small>
+          </span>
+        </label>
+
+        <label class="radio-card">
+          <input type="radio" name="joinType" value="closed">
+          <span>
+            <strong>募集なし</strong>
+            <small>今は参加募集しない作品です。</small>
+          </span>
+        </label>
+
+        <h3>ルール・注意事項</h3>
+        <textarea
+          id="rulesText"
+          rows="6"
+          maxlength="1000"
+          placeholder="共有作品のルール、NG、うちよそFAの注意などを書けます。"
+        ></textarea>
+      </section>
+
+      <section class="card">
+        <h2>公開設定</h2>
+
+        <label class="check-line">
+          <input id="isPublic" type="checkbox" checked>
+          <span>作品を公開する</span>
+        </label>
+      </section>
+
+      <div class="button-row">
+        <button type="submit" class="primary-btn">
+          作品を作る
+        </button>
+
+        <a class="ghost-btn" href="/works/">
+          作品一覧へ
+        </a>
+      </div>
+
+      <p id="message"></p>
+    </form>
+  </main>
+
+  <footer id="siteFooter"></footer>
+
+  <script type="module" src="/app.js"></script>
+  <script type="module" src="/work-new.js"></script>
+</body>
+</html>
