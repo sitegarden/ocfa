@@ -26,6 +26,8 @@ const message = document.getElementById("message");
 
 let currentUser = null;
 let currentWork = null;
+let currentMember = null;
+let canAddCharacter = false;
 
 function escapeHtml(text) {
   return String(text)
@@ -38,6 +40,12 @@ function escapeHtml(text) {
 
 function getCharacterImageSrc(data) {
   return data.imageUrl || data.imageData || "";
+}
+
+function getJoinTypeLabel(type) {
+  if (type === "free") return "自由参加";
+  if (type === "approval") return "承認制";
+  return "募集なし";
 }
 
 function renderError(title, body) {
@@ -66,8 +74,40 @@ async function getWork() {
   };
 }
 
+async function getMyMember(user) {
+  const memberQuery = query(
+    collection(db, "workMembers"),
+    where("workId", "==", workId),
+    where("userId", "==", user.uid),
+    limit(1)
+  );
+
+  const snap = await getDocs(memberQuery);
+
+  if (snap.empty) return null;
+
+  const first = snap.docs[0];
+
+  return {
+    id: first.id,
+    data: first.data()
+  };
+}
+
+function checkCanAddCharacter(work, member, user) {
+  const data = work.data;
+
+  if (data.userId === user.uid) return true;
+
+  if (data.workType !== "shared") return false;
+
+  return member?.data?.status === "approved"
+    && member?.data?.isDeleted !== true;
+}
+
 function renderWorkInfo(work) {
   const data = work.data;
+  const isOwner = data.userId === currentUser.uid;
 
   workInfo.innerHTML = `
     <section class="card">
@@ -82,10 +122,26 @@ function renderWorkInfo(work) {
         <span class="badge">${data.workType === "shared" ? "共有作品" : "自分専用"}</span>
         ${
           data.workType === "shared"
-            ? `<span class="badge muted">${escapeHtml(data.joinType || "closed")}</span>`
+            ? `<span class="badge muted">${escapeHtml(getJoinTypeLabel(data.joinType))}</span>`
             : ""
         }
+        ${
+          isOwner
+            ? `<span class="badge muted">オーナー</span>`
+            : `<span class="badge muted">参加者</span>`
+        }
       </div>
+
+      ${
+        data.rulesText
+          ? `
+            <section class="mini-section">
+              <h3>ルール・注意事項</h3>
+              <p>${escapeHtml(data.rulesText)}</p>
+            </section>
+          `
+          : ""
+      }
 
       <div class="button-row">
         <a class="primary-link" href="/works/file/?id=${work.id}">
@@ -135,6 +191,12 @@ async function loadMyCharacters() {
     `;
     return;
   }
+
+  characters.sort((a, b) => {
+    const aName = a.data.kana || a.data.name || "";
+    const bName = b.data.kana || b.data.name || "";
+    return aName.localeCompare(bName, "ja");
+  });
 
   characterSelectList.innerHTML = "";
 
@@ -207,10 +269,8 @@ async function addCharacterToWork(characterId) {
     return;
   }
 
-  const workData = currentWork.data;
-
-  if (workData.userId !== currentUser.uid) {
-    message.textContent = "今は作品オーナーだけがキャラクターを追加できます。";
+  if (!canAddCharacter) {
+    message.textContent = "この作品にキャラクターを追加できません。";
     return;
   }
 
@@ -249,6 +309,8 @@ async function addCharacterToWork(characterId) {
 
     message.textContent = "作品に追加しています...";
 
+    const workData = currentWork.data;
+
     await updateDoc(characterRef, {
       workId,
       workTitle: workData.title || "",
@@ -269,7 +331,6 @@ async function addCharacterToWork(characterId) {
     await loadMyCharacters();
   } catch (error) {
     console.error("キャラ追加エラー:", error);
-
     message.textContent = `キャラクターの追加に失敗しました。${error.message || ""}`;
   }
 }
@@ -291,13 +352,24 @@ async function init(user) {
 
   currentWork = work;
 
-  if (work.data.isDeleted === true) {
-    renderError("作品が見つかりませんでした", "削除されたか、URLが変わっている可能性があります。");
+  if (work.data.isDeleted === true || work.data.isPublic !== true) {
+    renderError("作品が見つかりませんでした", "削除されたか、非公開の作品です。");
     return;
   }
 
-  if (work.data.userId !== user.uid) {
-    renderError("追加できません", "今は作品オーナーだけがキャラクターを追加できます。");
+  currentMember = await getMyMember(user);
+  canAddCharacter = checkCanAddCharacter(work, currentMember, user);
+
+  if (!canAddCharacter) {
+    if (work.data.workType === "shared") {
+      renderError(
+        "参加が必要です",
+        "この共有作品にキャラクターを追加するには、先に作品へ参加してください。"
+      );
+      return;
+    }
+
+    renderError("追加できません", "この作品にキャラクターを追加できません。");
     return;
   }
 
