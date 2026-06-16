@@ -41,6 +41,7 @@ function renderEmpty() {
 function createFanartCard(item) {
   const data = item.data;
   const imageSrc = getFanartImageSrc(data);
+  const fanartUrl = `/fanarts/file/?id=${encodeURIComponent(item.id)}`;
 
   const card = document.createElement("article");
   card.className = "fanart-card";
@@ -75,7 +76,9 @@ function createFanartCard(item) {
         ${escapeHtml(data.comment || "コメントはありません。")}
       </p>
 
-      <p class="primary-link fake-link">感想を見る・書く</p>
+      <p class="primary-link fake-link">
+        感想を見る・書く
+      </p>
     </div>
   </a>
 `;
