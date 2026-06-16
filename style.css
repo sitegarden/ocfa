@@ -6601,3 +6601,31 @@ textarea {
 .compact-member-card .member-info h3 {
   margin-bottom: 4px;
 }
+
+.work-mini-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 241, 200, 0.8), transparent 32%),
+    rgba(255, 250, 241, 0.92);
+  border: 1px solid rgba(214, 196, 176, 0.85);
+}
+
+.work-mini-card h3 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  color: #3b302b;
+}
+
+.work-mini-card p {
+  margin: 10px 0 0;
+  color: #6f635c;
+  line-height: 1.7;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
