@@ -176,10 +176,28 @@ async function renderCharacter(character) {
       </section>
 
       <section class="card">
-        <h2>ファンアート</h2>
-        <p>ファンアート機能は、イベント機能と一緒に追加予定です。</p>
-      </section>
-    </article>
+
+<h2>ファンアート</h2>
+
+<p>
+  このキャラクターに向けて、イベントとは別に自由なファンアートを投稿できます。
+</p>
+
+<div class="button-row">
+  ${
+    data.faOk
+      ? `<a class="primary-link" href="/fanarts/new/?characterId=${character.id}">この子のFAを描く</a>`
+      : `<span class="badge muted">ファンアートは要確認</span>`
+  }
+
+  <a class="primary-link" href="/fanarts/">FA一覧を見る</a>
+</div>
+
+<div id="characterFanartList" class="character-grid">
+  <p>ファンアートを読み込み中...</p>
+</div>
+
+</section>
   `;
 }
 
