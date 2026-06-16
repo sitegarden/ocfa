@@ -1652,9 +1652,9 @@ async function renderGameStageArea() {
       </div>
     </div>
 
-    <div class="game-draw-tools">
-      ${renderLayerTools()}
-    </div>
+    <div class="game-tool-box">
+  ${renderLayerTools()}
+</div>
 
     <div class="game-submit-bar">
       <p>
@@ -1761,9 +1761,9 @@ if (submitted) {
         時間切れになった場合も、保存されている絵があればそれを提出します。
       </div>
 
-      <div class="game-draw-tools">
-        ${renderLayerTools()}
-      </div>
+      <div class="game-tool-box">
+  ${renderLayerTools()}
+</div>
 
       <div class="game-canvas-card">
         <div class="game-canvas-label">
