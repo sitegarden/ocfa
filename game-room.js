@@ -1386,88 +1386,95 @@ function getFanartsByTargetPlayerId(targetPlayerId) {
 function renderRevealArea() {
   if (!currentPlayers.length) {
     return `
-      <section class="panel">
-        <p class="eyebrow">Result</p>
-        <h2>結果発表</h2>
-        <p>参加者データがありません。</p>
+      <section class="game-result-screen">
+        <div class="game-result-hero">
+          <p class="mini-label">Result</p>
+          <h2>結果発表</h2>
+          <p>参加者データがありません。</p>
+        </div>
       </section>
     `;
   }
 
   return `
-    <section class="panel">
-      <p class="eyebrow">Result</p>
-      <h2>結果発表</h2>
+    <section class="game-result-screen">
+      <div class="game-result-hero">
+        <p class="mini-label">Result</p>
+        <h2>結果発表！</h2>
+        <p>
+          全ラウンドが終了しました。
+          キャラごとに、みんなが描いたファンアートを表示しています。
+        </p>
+      </div>
 
-      <p>
-        全ラウンドが終了しました。
-        キャラごとに、みんなが描いたファンアートを表示しています。
-      </p>
-    </section>
+      <div class="game-result-list-new">
+        ${currentPlayers
+          .map((player) => {
+            const original = getOriginalByPlayerId(player.id);
+            const fanarts = getFanartsByTargetPlayerId(player.id);
 
-    <div class="game-result-list">
-      ${currentPlayers
-        .map((player) => {
-          const original = getOriginalByPlayerId(player.id);
-          const fanarts = getFanartsByTargetPlayerId(player.id);
+            return `
+              <article class="game-result-character-new">
+                <header class="game-result-character-head">
+                  <div>
+                    <p class="mini-label">Original Character</p>
+                    <h3>${escapeHtml(player.data.name || "匿名")}さんのOC</h3>
+                  </div>
 
-          return `
-            <section class="panel game-result-character">
-              <div class="section-head">
-                <div>
-                  <p class="eyebrow">Original Character</p>
-                  <h2>${escapeHtml(player.data.name || "匿名")}さんのOC</h2>
+                  <span>${fanarts.length} FA</span>
+                </header>
+
+                <div class="game-result-original-new">
+                  ${
+                    original
+                      ? `
+                        <img
+                          src="${original.data.imageData}"
+                          alt="${escapeHtml(player.data.name || "匿名")}さんのOC"
+                        >
+                      `
+                      : `
+                        <p class="mini-info">元OCが見つかりませんでした。</p>
+                      `
+                  }
                 </div>
-              </div>
 
-              ${
-                original
-                  ? `
-                    <div class="game-result-original">
-                      <img
-                        src="${original.data.imageData}"
-                        alt="${escapeHtml(player.data.name || "匿名")}さんのOC"
-                      >
-                    </div>
-                  `
-                  : `
-                    <p class="mini-info">元OCが見つかりませんでした。</p>
-                  `
-              }
+                <div class="game-result-fa-area">
+                  <h4>描かれたFA</h4>
 
-              <h3>描かれたFA</h3>
+                  ${
+                    fanarts.length
+                      ? `
+                        <div class="game-result-fanarts-new">
+                          ${fanarts
+                            .map((fanart) => {
+                              return `
+                                <article class="game-result-fanart-card-new">
+                                  <img src="${fanart.data.imageData}" alt="FA">
 
-              ${
-                fanarts.length
-                  ? `
-                    <div class="game-result-fanarts">
-                      ${fanarts
-                        .map((fanart) => {
-                          return `
-                            <article class="game-result-fanart-card">
-                              <img src="${fanart.data.imageData}" alt="FA">
-
-                              <p>
-                                by ${escapeHtml(getPlayerNameById(
-                                  fanart.data.artistPlayerId,
-                                  fanart.data.artistName
-                                ))}
-                              </p>
-                            </article>
-                          `;
-                        })
-                        .join("")}
-                    </div>
-                  `
-                  : `
-                    <p class="mini-info">FAがありません。</p>
-                  `
-              }
-            </section>
-          `;
-        })
-        .join("")}
-    </div>
+                                  <p>
+                                    by ${escapeHtml(getPlayerNameById(
+                                      fanart.data.artistPlayerId,
+                                      fanart.data.artistName
+                                    ))}
+                                  </p>
+                                </article>
+                              `;
+                            })
+                            .join("")}
+                        </div>
+                      `
+                      : `
+                        <p class="mini-info">FAがありません。</p>
+                      `
+                  }
+                </div>
+              </article>
+            `;
+          })
+          .join("")}
+      </div>
+    </section>
   `;
 }
 
