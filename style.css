@@ -6588,3 +6588,16 @@ textarea {
   margin: 0 0 8px;
   font-size: 1.05rem;
 }
+
+.compact-member-card {
+  padding: 12px;
+}
+
+.compact-member-card .member-avatar {
+  width: 42px;
+  height: 42px;
+}
+
+.compact-member-card .member-info h3 {
+  margin-bottom: 4px;
+}
