@@ -1579,3 +1579,64 @@ body {
     object-fit: contain;
   }
 }
+
+/* =========================
+   Drawing mode compact
+========================= */
+
+.game-shell.is-drawing-mode .game-main-layout {
+  grid-template-columns: 1fr;
+}
+
+.game-shell.is-drawing-mode .game-topbar {
+  position: static;
+  padding: 12px 14px;
+}
+
+.game-shell.is-drawing-mode .game-topbar-status {
+  margin-bottom: 4px;
+}
+
+.game-shell.is-drawing-mode .game-topbar-title {
+  font-size: 1.1rem;
+}
+
+.game-shell.is-drawing-mode .game-stage-panel {
+  padding: 12px;
+}
+
+.game-floating-message {
+  margin: 0;
+  min-height: 1.2em;
+}
+
+@media (max-width: 760px) {
+  .game-shell.is-drawing-mode {
+    gap: 8px;
+  }
+
+  .game-shell.is-drawing-mode .game-topbar {
+    border-radius: 18px;
+  }
+
+  .game-shell.is-drawing-mode .game-stage-panel {
+    padding: 8px;
+    border-radius: 18px;
+  }
+
+  .game-shell.is-drawing-mode .game-draw-header {
+    gap: 8px;
+  }
+
+  .game-shell.is-drawing-mode .game-draw-header h2 {
+    font-size: 1.35rem;
+  }
+
+  .game-shell.is-drawing-mode .game-draw-header p {
+    display: none;
+  }
+
+  .game-shell.is-drawing-mode .game-draw-note {
+    display: none;
+  }
+}
