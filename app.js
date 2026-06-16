@@ -99,8 +99,9 @@ function renderHeader() {
         <nav class="nav">
           <a href="/characters/">キャラ一覧</a>
           <a href="/fanarts/">ファンアート一覧</a>
-          <a href="/draw/">描く</a>
+          <a href="/works/">世界観</a>
           <a href="/events/">イベント</a>
+          <a href="/draw/">描く</a>
           <a href="/games/">ゲーム</a>
           <a href="/users/">ユーザー一覧</a>
           <a href="/favorites/">お気に入り</a>
