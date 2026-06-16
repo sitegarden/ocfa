@@ -2050,3 +2050,60 @@ body {
     transform: scale(0.92);
   }
 }
+
+/* =========================
+   Result FA grid
+========================= */
+
+.game-result-fanarts-new {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.game-result-fanart-card-new {
+  min-width: 0;
+  padding: 8px;
+  border-radius: 18px;
+}
+
+.game-result-fanart-card-new img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  object-fit: contain;
+  border-radius: 14px;
+  background: #fffdf8;
+}
+
+.game-result-fanart-card-new p {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #756456;
+}
+
+/* 狭めタブレットでも3列維持 */
+@media (min-width: 761px) {
+  .game-result-fanarts-new {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* スマホは2列 */
+@media (max-width: 760px) {
+  .game-result-fanarts-new {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .game-result-fanart-card-new {
+    padding: 6px;
+    border-radius: 16px;
+  }
+
+  .game-result-fanart-card-new img {
+    border-radius: 12px;
+  }
+}
