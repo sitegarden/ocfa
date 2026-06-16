@@ -1752,7 +1752,7 @@ async function renderGameStageArea() {
 
         <div class="game-draw-timer">
           <span>残り時間</span>
-          <strong id="originalTimer">--:--</strong>
+          <strong id="originalTimerText">--:--</strong>
         </div>
       </header>
 
