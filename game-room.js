@@ -1852,72 +1852,95 @@ async function renderRoom() {
   const statusLabel = getStatusLabel(room.status);
   const turnMinutes = Math.floor(Number(room.turnSeconds || 120) / 60);
 
+  const isDrawingStatus =
+  room.status === "drawing_oc" || room.status === "drawing_fa";
+
   gameRoomContent.innerHTML = `
-    <div class="game-shell">
-      <header class="game-topbar">
-        <div>
-          <p class="game-topbar-status">OC Drawing Game / ${escapeHtml(statusLabel)}</p>
-          <h1 class="game-topbar-title">${escapeHtml(room.title || "OC描き合いゲーム")}</h1>
-        </div>
-
-        <div class="game-topbar-meta">
-          <span>参加者 ${currentPlayers.length} / ${room.maxPlayers}人</span>
-          <span>1ターン ${turnMinutes}分</span>
-        </div>
-      </header>
-
-      <div class="game-main-layout">
-        <main class="game-stage-panel">
-          <div class="game-room-status">
-            <div>
-              <strong>OC提出</strong>
-              <span>${getOriginalSubmittedCount()} / ${currentPlayers.length}人</span>
-            </div>
-
-            ${
-              room.status === "drawing_fa"
-                ? `
-                  <div>
-                    <strong>現在のFA提出</strong>
-                    <span>${getFanartSubmittedCountForCurrentRound()} / ${currentPlayers.length}人</span>
-                  </div>
-                `
-                : ""
-            }
-          </div>
-
-          ${await renderGameStageArea()}
-        </main>
-
-        <aside class="game-side-panel">
-          <section class="game-side-section">
-            <p class="mini-label">Players</p>
-            <h2>参加者</h2>
-            ${renderPlayers()}
-          </section>
-
-          <section class="game-side-section">
-            ${renderJoinArea()}
-          </section>
-
-          <section class="game-side-section">
-            ${renderOwnerArea()}
-          </section>
-
-          <section class="game-side-section">
-            <p class="mini-label">Share</p>
-            <p class="small-text">部屋URLを共有すると、ゲストも参加できます。</p>
-            <button type="button" class="btn secondary" id="copyRoomUrlBtn">
-              部屋URLをコピー
-            </button>
-            <a class="btn ghost" href="/games/">ゲームトップへ戻る</a>
-          </section>
-
-          <p id="roomMessage" class="message"></p>
-        </aside>
+  <div class="game-shell ${isDrawingStatus ? "is-drawing-mode" : ""}">
+    <header class="game-topbar">
+      <div>
+        <p class="game-topbar-status">OC Drawing Game / ${escapeHtml(statusLabel)}</p>
+        <h1 class="game-topbar-title">${escapeHtml(room.title || "OC描き合いゲーム")}</h1>
       </div>
+
+      ${
+        !isDrawingStatus
+          ? `
+            <div class="game-topbar-meta">
+              <span>参加者 ${currentPlayers.length} / ${room.maxPlayers}人</span>
+              <span>1ターン ${turnMinutes}分</span>
+            </div>
+          `
+          : ""
+      }
+    </header>
+
+    <div class="game-main-layout">
+      <main class="game-stage-panel">
+        ${
+          !isDrawingStatus
+            ? `
+              <div class="game-room-status">
+                <div>
+                  <strong>OC提出</strong>
+                  <span>${getOriginalSubmittedCount()} / ${currentPlayers.length}人</span>
+                </div>
+
+                ${
+                  room.status === "drawing_fa"
+                    ? `
+                      <div>
+                        <strong>現在のFA提出</strong>
+                        <span>${getFanartSubmittedCountForCurrentRound()} / ${currentPlayers.length}人</span>
+                      </div>
+                    `
+                    : ""
+                }
+              </div>
+            `
+            : ""
+        }
+
+        ${await renderGameStageArea()}
+      </main>
+
+      ${
+        !isDrawingStatus
+          ? `
+            <aside class="game-side-panel">
+              <section class="game-side-section">
+                <p class="mini-label">Players</p>
+                <h2>参加者</h2>
+                ${renderPlayers()}
+              </section>
+
+              <section class="game-side-section">
+                ${renderJoinArea()}
+              </section>
+
+              <section class="game-side-section">
+                ${renderOwnerArea()}
+              </section>
+
+              <section class="game-side-section">
+                <p class="mini-label">Share</p>
+                <p class="small-text">部屋URLを共有すると、ゲストも参加できます。</p>
+                <button type="button" class="btn secondary" id="copyRoomUrlBtn">
+                  部屋URLをコピー
+                </button>
+                <a class="btn ghost" href="/games/">ゲームトップへ戻る</a>
+              </section>
+
+              <p id="roomMessage" class="message"></p>
+            </aside>
+          `
+          : `
+            <p id="roomMessage" class="message game-floating-message"></p>
+          `
+      }
     </div>
-  `;
+  </div>
+`;
   
   const copyRoomUrlBtn = document.getElementById("copyRoomUrlBtn");
   const guestJoinBtn = document.getElementById("guestJoinBtn");
