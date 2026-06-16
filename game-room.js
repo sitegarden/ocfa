@@ -79,9 +79,9 @@ const MAX_LAYER_HISTORY = 20;
 const TIME_UP_GRACE_MS = 7000;
 
 /* 筆圧補正 */
-const MIN_PRESSURE = 0.6;
+const MIN_PRESSURE = 0.18;
 const MAX_PRESSURE = 1.0;
-const PRESSURE_SMOOTHING = 0.35;
+const PRESSURE_SMOOTHING = 0.55;
 
 /* キャンバス */
 const GAME_CANVAS_SIZE = 768;
@@ -2367,9 +2367,9 @@ function getGamePressure(e) {
       : 0.5;
 
   const correctedPressure = Math.max(
-    MIN_PRESSURE,
-    Math.min(MAX_PRESSURE, rawPressure * 1.35)
-  );
+  MIN_PRESSURE,
+  Math.min(MAX_PRESSURE, rawPressure)
+);
 
   gameSmoothedPressure =
     gameSmoothedPressure * PRESSURE_SMOOTHING
