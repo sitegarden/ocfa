@@ -950,14 +950,30 @@ async function startGame() {
 
 await updateDoc(doc(db, "ocGameRooms", roomId), {
   status: "starting",
+  startCount: 3,
   startingAt: serverTimestamp(),
   updatedAt: serverTimestamp()
 });
 
-await wait(3000);
+await wait(1000);
+
+await updateDoc(doc(db, "ocGameRooms", roomId), {
+  startCount: 2,
+  updatedAt: serverTimestamp()
+});
+
+await wait(1000);
+
+await updateDoc(doc(db, "ocGameRooms", roomId), {
+  startCount: 1,
+  updatedAt: serverTimestamp()
+});
+
+await wait(1000);
 
 await updateDoc(doc(db, "ocGameRooms", roomId), {
   status: "drawing_oc",
+  startCount: 0,
   startedAt: serverTimestamp(),
   updatedAt: serverTimestamp()
 });
@@ -1484,15 +1500,19 @@ async function renderGameStageArea() {
   }
 
   if (currentRoom.data.status === "starting") {
-    return `
-      <section class="game-starting-screen">
-        <p class="mini-label">Game Start</p>
-        <h2>始まるよー！</h2>
-        <p>まずは自分のOCを描く時間です。準備してね。</p>
-        <div class="game-starting-count">3</div>
-      </section>
-    `;
-  }
+  const startCount = Number(currentRoom.data.startCount || 3);
+
+  return `
+    <section class="game-starting-screen">
+      <p class="mini-label">Game Start</p>
+      <h2>始まるよー！</h2>
+      <p>まずは自分のOCを描く時間です。準備してね。</p>
+      <div class="game-starting-count">
+        ${startCount > 0 ? startCount : "START!"}
+      </div>
+    </section>
+  `;
+}
 
   if (currentRoom.data.status === "waiting") {
     return `
