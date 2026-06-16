@@ -216,18 +216,24 @@ function renderWork(work) {
       }
 
       <section class="card">
-        <h2>この作品のキャラクター</h2>
+  <h2>この作品のキャラクター</h2>
 
-        <p>
-          作品に所属するキャラクター一覧は、次のステップで追加します。
-        </p>
+  <p>
+    作品に所属するキャラクター一覧は、次のステップで追加します。
+  </p>
 
-        <div class="button-row">
-          <a class="primary-link" href="/characters/">
-            キャラ一覧を見る
-          </a>
-        </div>
-      </section>
+  <div class="button-row">
+    ${
+      isOwner
+        ? `<a class="primary-link" href="/works/add-character/?id=${work.id}">キャラを追加する</a>`
+        : ""
+    }
+
+    <a class="primary-link" href="/characters/">
+      キャラ一覧を見る
+    </a>
+  </div>
+</section>
 
       <section class="card">
         <h2>この作品のファンアート</h2>
