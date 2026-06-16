@@ -1729,3 +1729,10 @@ body {
     margin-inline: -2px;
   }
 }
+
+.game-tool-box {
+  padding: 10px;
+  border-radius: 20px;
+  background: #fff8eb;
+  border: 1px solid rgba(183, 148, 112, 0.24);
+}
