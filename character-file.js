@@ -1,8 +1,14 @@
 import { auth, db } from "/firebase.js";
 
 import {
+  collection,
   doc,
-  getDoc
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 import {
@@ -66,6 +72,84 @@ function renderNotFound() {
       <a class="primary-link" href="/characters/">キャラ一覧へ</a>
     </section>
   `;
+}
+
+function getFanartImageSrc(data) {
+  return data.imageUrl || data.imageData || "";
+}
+
+function formatDate(value) {
+  if (!value?.toDate) return "";
+
+  const date = value.toDate();
+
+  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+async function loadCharacterFanarts() {
+  const fanartList = document.getElementById("characterFanartList");
+
+  if (!fanartList || !characterId) return;
+
+  const fanartsQuery = query(
+    collection(db, "v2Fanarts"),
+    where("characterId", "==", characterId),
+    where("isPublic", "==", true),
+    where("isDeleted", "==", false),
+    orderBy("createdAt", "desc"),
+    limit(12)
+  );
+
+  const snap = await getDocs(fanartsQuery);
+
+  if (snap.empty) {
+    fanartList.innerHTML = `
+      <div class="empty-preview">
+        まだこの子へのファンアートはありません。
+      </div>
+    `;
+
+    return;
+  }
+
+  fanartList.innerHTML = "";
+
+  snap.forEach((docSnap) => {
+    const data = docSnap.data();
+    const imageSrc = getFanartImageSrc(data);
+
+    const card = document.createElement("article");
+    card.className = "character-card";
+
+    card.innerHTML = `
+      <div class="character-thumb">
+        ${
+          imageSrc
+            ? `<img class="character-img" src="${imageSrc}" alt="${escapeHtml(data.characterName || "ファンアート")}">`
+            : `<div class="no-image">No Image</div>`
+        }
+      </div>
+
+      <div class="character-body">
+        <h2>${escapeHtml(data.artistName || "作者名未設定")}</h2>
+
+        <p class="character-profile">
+          ${escapeHtml(data.comment || "コメントはありません。")}
+        </p>
+
+        <div class="character-tags">
+          <span>${data.imageSource === "upload" ? "画像投稿" : "お絵描き"}</span>
+          ${
+            data.createdAt
+              ? `<span>${escapeHtml(formatDate(data.createdAt))}</span>`
+              : ""
+          }
+        </div>
+      </div>
+    `;
+
+    fanartList.appendChild(card);
+  });
 }
 
 async function renderCharacter(character) {
@@ -199,6 +283,8 @@ async function renderCharacter(character) {
 
 </section>
   `;
+
+  await loadCharacterFanarts();
 }
 
 async function init() {
