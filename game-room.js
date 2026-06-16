@@ -1595,88 +1595,77 @@ async function renderGameStageArea() {
     }
 
     return `
-      <section class="panel game-draw-panel game-fa-panel">
-        <p class="eyebrow">Fan Art Turn</p>
+  <section class="game-fa-screen">
+    <header class="game-draw-header">
+      <div>
+        <p class="mini-label">Fan Art Turn</p>
         <h2>${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCを描く</h2>
-
-        <p class="mini-info">
-          Round ${Number(currentRoom.data.currentRound || 0) + 1}
-          /
-          ${Math.max(1, currentPlayers.length - 1)}
+        <p>
+          資料OCを見ながら、ファンアートを描いてください。
         </p>
+      </div>
 
-        <div class="game-fa-workspace">
-          <aside class="game-fa-reference">
-            <div class="game-fa-reference-head">
-              <div>
-                <p class="eyebrow">Reference</p>
-                <h3>資料OC</h3>
-              </div>
+      <div class="game-draw-timer">
+        <span>残り時間</span>
+        <strong id="fanartTimerText">残り時間：--:--</strong>
 
-              <p class="mini-info">
-                ${escapeHtml(targetPlayer.data.name || "匿名")}さん
-              </p>
-            </div>
-
-            <div class="game-target-oc">
-              <img
-                src="${targetOriginal.data.imageData}"
-                alt="${escapeHtml(targetPlayer.data.name || "OC")}のOC"
-              >
-            </div>
-          </aside>
-
-          <div class="game-fa-draw-main">
-            <p>
-              資料OCを見ながら、ファンアートを描いてください。
-            </p>
-
-            <p class="mini-info">
-              描いた内容はこの端末に自動保存されます。
-              時間切れになった場合も、保存されている絵があればそれを提出します。
-            </p>
-
-            <div class="game-timer-box">
-              <p id="fanartTimerText" class="game-timer">残り時間：--:--</p>
-
-              <div class="game-timer-meter">
-                <span id="fanartTimerBar"></span>
-              </div>
-            </div>
-
-            ${renderLayerTools()}
-
-            <div class="game-canvas-guide game-canvas-guide-compact">
-              <div class="game-canvas-guide-icon">↓</div>
-
-              <div>
-                <strong>この下に描けます</strong>
-                <p>資料を見ながら、白いキャンバスに描いてください。</p>
-              </div>
-            </div>
-
-            <div class="game-canvas-wrap">
-              <canvas
-                id="gameCanvas"
-                class="game-canvas"
-                width="768"
-                height="768"
-              ></canvas>
-            </div>
-
-            <p class="mini-info game-canvas-help">
-              指やペンで白いエリアに描けます。画面が動く場合は、キャンバス内から描き始めてください。
-            </p>
-
-            <div class="actions">
-              <button id="submitFanartBtn" class="primary-btn" type="button">
-                FAを提出する
-              </button>
-            </div>
-          </div>
+        <div class="game-timer-meter">
+          <span id="fanartTimerBar"></span>
         </div>
-      </section>
-    `;
+      </div>
+    </header>
+
+    <div class="game-draw-note">
+      Round ${Number(currentRoom.data.currentRound || 0) + 1}
+      /
+      ${Math.max(1, currentPlayers.length - 1)}
+      ・描いた内容はこの端末に自動保存されます。
+    </div>
+
+    <div class="game-fa-workspace-new">
+      <aside class="game-fa-reference-card">
+        <div class="game-canvas-label">
+          <span>資料OC</span>
+          <small>${escapeHtml(targetPlayer.data.name || "匿名")}さん</small>
+        </div>
+
+        <div class="game-target-oc-new">
+          <img
+            src="${targetOriginal.data.imageData}"
+            alt="${escapeHtml(targetPlayer.data.name || "OC")}のOC"
+          >
+        </div>
+      </aside>
+
+      <div class="game-fa-drawing-area">
+        <div class="game-draw-tools">
+          ${renderLayerTools()}
+        </div>
+
+        <div class="game-canvas-card">
+          <div class="game-canvas-label">
+            <span>FAを描く場所</span>
+            <small>白いキャンバスに描いてください</small>
+          </div>
+
+          <canvas
+            id="gameCanvas"
+            class="game-canvas"
+            width="768"
+            height="768"
+          ></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-submit-bar">
+      <p>描けたら提出。提出後も残り30秒までは取り消せます。</p>
+      <button id="submitFanartBtn" class="btn primary" type="button">
+        FAを提出する
+      </button>
+    </div>
+  </section>
+`;
   }
 
   if (currentRoom.data.status !== "drawing_oc") {
