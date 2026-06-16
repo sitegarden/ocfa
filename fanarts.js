@@ -46,6 +46,7 @@ function createFanartCard(item) {
   card.className = "fanart-card";
 
   card.innerHTML = `
+  <a class="fanart-link" href="${fanartUrl}">
     <div class="fanart-thumb">
       ${
         imageSrc
@@ -74,15 +75,10 @@ function createFanartCard(item) {
         ${escapeHtml(data.comment || "コメントはありません。")}
       </p>
 
-      <div class="button-row">
-        ${
-          data.characterId
-            ? `<a class="primary-link" href="/characters/file/?id=${escapeHtml(data.characterId)}">この子を見る</a>`
-            : ""
-        }
-      </div>
+      <p class="primary-link fake-link">感想を見る・書く</p>
     </div>
-  `;
+  </a>
+`;
 
   return card;
 }
