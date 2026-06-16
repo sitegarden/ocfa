@@ -3,9 +3,103 @@
 ========================= */
 
 body {
-  background: #f7f4ff;
+  background:
+    radial-gradient(circle at top left, rgba(196, 181, 253, 0.35), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(251, 207, 232, 0.35), transparent 36%),
+    #f8f5ff;
 }
 
 .page {
+  width: min(100% - 24px, 1200px);
   max-width: 1200px;
+  margin: 0 auto;
+}
+
+#gameRoomContent,
+#gameHomeContent {
+  width: 100%;
+}
+
+.game-shell {
+  display: grid;
+  gap: 16px;
+}
+
+.game-topbar {
+  position: sticky;
+  top: 72px;
+  z-index: 20;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+
+  padding: 12px 14px;
+  border: 1px solid rgba(120, 96, 190, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 28px rgba(95, 76, 150, 0.10);
+}
+
+.game-topbar-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.game-topbar-status {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #7c5fc7;
+}
+
+.game-main-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 16px;
+  align-items: start;
+}
+
+.game-stage-panel,
+.game-side-panel {
+  border: 1px solid rgba(120, 96, 190, 0.14);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 34px rgba(95, 76, 150, 0.10);
+}
+
+.game-stage-panel {
+  padding: 16px;
+  min-width: 0;
+}
+
+.game-side-panel {
+  position: sticky;
+  top: 142px;
+  padding: 14px;
+}
+
+@media (max-width: 760px) {
+  .page {
+    width: min(100% - 14px, 1200px);
+  }
+
+  .game-topbar {
+    top: 58px;
+    border-radius: 16px;
+  }
+
+  .game-main-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .game-side-panel {
+    position: static;
+  }
+
+  .game-stage-panel {
+    padding: 12px;
+  }
 }
