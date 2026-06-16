@@ -130,11 +130,11 @@ function getGuestId() {
 
 function getStatusLabel(status) {
   if (status === "waiting") return "待機中";
+  if (status === "starting") return "開始準備中";
   if (status === "drawing_oc") return "OC作成中";
   if (status === "drawing_fa") return "FA作成中";
   if (status === "reveal") return "結果発表";
   if (status === "finished") return "終了";
-
   return "不明";
 }
 
@@ -947,11 +947,22 @@ async function startGame() {
       message.textContent = "ゲームを開始しています...";
     }
 
-    await updateDoc(doc(db, "ocGameRooms", roomId), {
-      status: "drawing_oc",
-      startedAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
+
+await updateDoc(doc(db, "ocGameRooms", roomId), {
+  status: "starting",
+  startingAt: serverTimestamp(),
+  updatedAt: serverTimestamp()
+});
+
+await wait(3000);
+
+await updateDoc(doc(db, "ocGameRooms", roomId), {
+  status: "drawing_oc",
+  startedAt: serverTimestamp(),
+  updatedAt: serverTimestamp()
+});
+
+    
   } catch (error) {
     console.error(error);
 
@@ -1463,6 +1474,17 @@ function renderRevealArea() {
 async function renderGameStageArea() {
   if (!currentRoom) {
     return "";
+  }
+
+  if (currentRoom.data.status === "starting") {
+    return `
+      <section class="game-starting-screen">
+        <p class="mini-label">Game Start</p>
+        <h2>始まるよー！</h2>
+        <p>まずは自分のOCを描く時間です。準備してね。</p>
+        <div class="game-starting-count">3</div>
+      </section>
+    `;
   }
 
   if (currentRoom.data.status === "reveal") {
