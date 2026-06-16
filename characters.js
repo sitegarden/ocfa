@@ -65,7 +65,7 @@ async function loadCharacters() {
     card.className = "character-card";
 
     const name = character.name || "名前未設定";
-    const imageData = character.imageData || "";
+    const imageSrc = character.imageUrl || character.imageData || "";
     const profile = character.profile || "プロフィールはまだありません。";
 
     const tags = Array.isArray(character.tags)
@@ -76,12 +76,11 @@ async function loadCharacters() {
 
     card.innerHTML = `
       <a class="character-card-link" href="/characters/file/?id=${encodeURIComponent(characterId)}">
-        ${
-          imageData
-            ? `<img src="${imageData}" alt="${escapeHtml(name)}">`
-            : `<div class="character-no-image">No Image</div>`
-        }
-
+        ${ imageSrc ? `
+  <img class="character-img" src="${imageSrc}" alt="${escapeHtml(name)}">
+` : `
+  <div class="no-image">No Image</div>
+` }
         <div class="character-body">
           <h2>${escapeHtml(name)}</h2>
 
