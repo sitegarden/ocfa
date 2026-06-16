@@ -1736,3 +1736,83 @@ body {
   background: #fff8eb;
   border: 1px solid rgba(183, 148, 112, 0.24);
 }
+
+/* =========================
+   Starting countdown / warm theme
+========================= */
+
+.game-starting-screen {
+  display: grid;
+  place-items: center;
+  gap: 14px;
+  min-height: 420px;
+  padding: 32px 18px;
+  text-align: center;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 213, 158, 0.46), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(233, 169, 159, 0.28), transparent 36%),
+    linear-gradient(135deg, #fffdf7, #fff4e3);
+  border: 1px solid rgba(183, 148, 112, 0.26);
+  box-shadow: 0 16px 36px rgba(116, 83, 48, 0.12);
+}
+
+.game-starting-screen h2 {
+  margin: 0;
+  font-size: clamp(2.4rem, 10vw, 5rem);
+  line-height: 1;
+  color: #30283a;
+  letter-spacing: -0.06em;
+}
+
+.game-starting-screen p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 900;
+  color: #756456;
+}
+
+.game-starting-count {
+  display: grid;
+  place-items: center;
+  min-width: 92px;
+  height: 92px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, #f5cfaa, #e9a99f);
+  color: #3a2d25;
+  font-size: 2.9rem;
+  font-weight: 1000;
+  box-shadow:
+    0 14px 28px rgba(116, 83, 48, 0.18),
+    inset 0 2px 0 rgba(255, 255, 255, 0.65);
+  animation: gameStartWarmPulse 0.9s infinite;
+}
+
+@keyframes gameStartWarmPulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08) rotate(-1deg);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 760px) {
+  .game-starting-screen {
+    min-height: 320px;
+    border-radius: 22px;
+  }
+
+  .game-starting-count {
+    min-width: 76px;
+    height: 76px;
+    font-size: 2.2rem;
+  }
+}
