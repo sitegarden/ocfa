@@ -1296,48 +1296,40 @@ function renderLayerTools() {
             <small>Apple Pencilなど対応ペンのみ</small>
           </span>
         </label>
-
-        <p class="mini-info">
-          書きにくい時はOFF推奨です。OFFでもなめらかに描けます。
-        </p>
       </div>
     </div>
 
-    <div class="game-layer-head">
-  <div>
-    <p class="eyebrow">Layer</p>
-    <h3>レイヤー</h3>
-  </div>
+    <div class="game-layer-panel">
+      <div class="game-layer-head">
+        <div>
+          <p class="eyebrow">Layer</p>
+          <h3>レイヤー</h3>
+        </div>
 
-  <p id="layerStatusText" class="mini-info">
-    現在：レイヤー1
-  </p>
-</div>
-
-      <p class="mini-info">
-        レイヤー2は上、レイヤー1は下に重なります。
-        色塗りや下書きを分けたい時に使えます。
-      </p>
+        <p id="layerStatusText" class="mini-info">
+          現在：レイヤー1
+        </p>
+      </div>
 
       <div class="game-layer-tools">
-       <button id="layerBtn1" type="button" class="layer-btn layer-top">
-  <span class="layer-order">上</span>
-  <strong>レイヤー2</strong>
-</button>
+        <button id="layerBtn1" type="button" class="layer-btn layer-top">
+          <span class="layer-order">上</span>
+          <strong>レイヤー2</strong>
+        </button>
 
-<button id="layerBtn0" type="button" class="layer-btn layer-bottom is-active">
-  <span class="layer-order">下</span>
-  <strong>レイヤー1</strong>
-</button>
+        <button id="layerBtn0" type="button" class="layer-btn layer-bottom is-active">
+          <span class="layer-order">下</span>
+          <strong>レイヤー1</strong>
+        </button>
       </div>
 
       <div class="game-layer-actions">
         <button id="toggleLayerBtn" type="button">
-          選択中を表示/非表示
+          表示/非表示
         </button>
 
         <button id="clearLayerBtn" type="button" class="danger-btn">
-          選択中を消す
+          消す
         </button>
       </div>
     </div>
