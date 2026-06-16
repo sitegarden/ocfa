@@ -1640,3 +1640,92 @@ body {
     display: none;
   }
 }
+
+/* =========================
+   FA focus layout
+========================= */
+
+.game-fa-screen {
+  display: grid;
+  gap: 12px;
+}
+
+.game-fa-focus-card {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.game-fa-reference-inline {
+  position: sticky;
+  top: 90px;
+
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #fffdf8, #fff3df);
+  border: 1px solid rgba(183, 148, 112, 0.28);
+  box-shadow: 0 12px 24px rgba(116, 83, 48, 0.10);
+}
+
+.game-fa-reference-inline img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: 16px;
+  background: #fffdf8;
+  border: 2px solid rgba(138, 101, 71, 0.22);
+}
+
+/* タブレット以下：資料をキャンバスのすぐ上へ */
+@media (max-width: 900px) {
+  .game-fa-focus-card {
+    grid-template-columns: 1fr;
+  }
+
+  .game-fa-reference-inline {
+    position: static;
+  }
+
+  .game-fa-reference-inline img {
+    max-width: 260px;
+    max-height: 260px;
+    margin: 0 auto;
+  }
+}
+
+/* スマホ：スクロール量をさらに減らす */
+@media (max-width: 760px) {
+  .game-fa-screen {
+    gap: 8px;
+  }
+
+  .game-fa-focus-card {
+    gap: 8px;
+  }
+
+  .game-fa-reference-inline {
+    padding: 8px;
+    border-radius: 18px;
+  }
+
+  .game-fa-reference-inline .game-canvas-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .game-fa-reference-inline img {
+    max-width: 180px;
+    max-height: 180px;
+    border-radius: 14px;
+  }
+
+  .game-fa-focus-card .game-canvas-card {
+    margin-inline: -2px;
+  }
+}
