@@ -1303,17 +1303,16 @@ function renderLayerTools() {
       </div>
     </div>
 
-    <div class="game-layer-panel">
-      <div class="game-layer-head">
-        <div>
-          <p class="eyebrow">Layer</p>
-          <h3>レイヤー</h3>
-        </div>
+    <div class="game-layer-head">
+  <div>
+    <p class="eyebrow">Layer</p>
+    <h3>レイヤー</h3>
+  </div>
 
-        <p id="layerStatusText" class="mini-info">
-          現在：レイヤー1（下・表示中）
-        </p>
-      </div>
+  <p id="layerStatusText" class="mini-info">
+    現在：レイヤー1
+  </p>
+</div>
 
       <p class="mini-info">
         レイヤー2は上、レイヤー1は下に重なります。
@@ -1321,17 +1320,15 @@ function renderLayerTools() {
       </p>
 
       <div class="game-layer-tools">
-        <button id="layerBtn1" type="button" class="layer-btn layer-top">
-          <span class="layer-order">上</span>
-          <strong>レイヤー2</strong>
-          <small>線画・仕上げ向き</small>
-        </button>
+       <button id="layerBtn1" type="button" class="layer-btn layer-top">
+  <span class="layer-order">上</span>
+  <strong>レイヤー2</strong>
+</button>
 
-        <button id="layerBtn0" type="button" class="layer-btn layer-bottom is-active">
-          <span class="layer-order">下</span>
-          <strong>レイヤー1</strong>
-          <small>下書き・色向き</small>
-        </button>
+<button id="layerBtn0" type="button" class="layer-btn layer-bottom is-active">
+  <span class="layer-order">下</span>
+  <strong>レイヤー1</strong>
+</button>
       </div>
 
       <div class="game-layer-actions">
