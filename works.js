@@ -4,7 +4,8 @@ import {
   collection,
   getDocs,
   limit,
-  query
+  query,
+  where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const workList = document.getElementById("workList");
@@ -98,6 +99,8 @@ async function loadWorks() {
   try {
     const worksQuery = query(
       collection(db, "works"),
+      where("isPublic", "==", true),
+      where("isDeleted", "==", false),
       limit(80)
     );
 
@@ -113,19 +116,11 @@ async function loadWorks() {
     snap.forEach((docSnap) => {
       const data = docSnap.data();
 
-      if (data.isPublic !== true) return;
-      if (data.isDeleted === true) return;
-
       works.push({
         id: docSnap.id,
         data
       });
     });
-
-    if (works.length === 0) {
-      renderEmpty();
-      return;
-    }
 
     works.sort((a, b) => {
       const aTime = a.data.createdAt?.toMillis?.() || 0;
