@@ -6502,3 +6502,44 @@ textarea {
     -webkit-line-clamp: 3;
   }
 }
+
+.work-file-card {
+  display: grid;
+  gap: 22px;
+}
+
+.work-file-hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(255, 241, 200, 0.9), transparent 32%),
+    radial-gradient(circle at 90% 10%, rgba(255, 214, 232, 0.75), transparent 28%),
+    rgba(255, 252, 246, 0.96);
+}
+
+.work-file-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: start;
+}
+
+.work-file-head h1 {
+  margin: 0 0 6px;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  line-height: 1.2;
+}
+
+.work-file-stats {
+  margin: 18px 0;
+}
+
+@media (max-width: 600px) {
+  .work-file-head {
+    grid-template-columns: 1fr;
+  }
+
+  .work-file-head h1 {
+    font-size: 1.8rem;
+  }
+}
