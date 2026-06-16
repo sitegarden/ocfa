@@ -98,7 +98,7 @@ function renderHeader() {
       <div id="headerMenu" class="header-menu">
         <nav class="nav">
           <a href="/characters/">キャラ一覧</a>
-          <a href="/fanarts/">ファンアート一覧</
+          <a href="/fanarts/">ファンアート一覧</a>
           <a href="/draw/">描く</a>
           <a href="/events/">イベント</a>
           <a href="/games/">ゲーム</a>
