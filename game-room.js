@@ -1487,10 +1487,6 @@ async function renderGameStageArea() {
     `;
   }
 
-  if (currentRoom.data.status === "reveal") {
-    return renderRevealArea();
-  }
-
   if (currentRoom.data.status === "waiting") {
   return `
     <section class="game-waiting-hero">
@@ -1522,6 +1518,10 @@ async function renderGameStageArea() {
     </section>
   `;
 }
+
+   if (currentRoom.data.status === "reveal") {
+    return renderRevealArea();
+  }
 
   if (currentRoom.data.status === "drawing_fa") {
     const myPlayer = getMyPlayer();
