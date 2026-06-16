@@ -1115,3 +1115,82 @@ body {
     border-radius: 20px;
   }
 }
+
+/* =========================
+   Drawing screen / FA
+========================= */
+
+.game-fa-screen {
+  display: grid;
+  gap: 14px;
+}
+
+.game-fa-workspace-new {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.game-fa-reference-card {
+  position: sticky;
+  top: 150px;
+
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #fffdf8, #fff3df);
+  border: 1px solid rgba(183, 148, 112, 0.28);
+  box-shadow: 0 14px 30px rgba(116, 83, 48, 0.10);
+}
+
+.game-target-oc-new {
+  overflow: hidden;
+  border-radius: 18px;
+  background: #fffdf8;
+  border: 2px solid rgba(138, 101, 71, 0.22);
+}
+
+.game-target-oc-new img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.game-fa-drawing-area {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .game-fa-workspace-new {
+    grid-template-columns: 1fr;
+  }
+
+  .game-fa-reference-card {
+    position: static;
+  }
+
+  .game-target-oc-new {
+    max-width: 360px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .game-fa-reference-card {
+    padding: 10px;
+    border-radius: 20px;
+  }
+
+  .game-target-oc-new {
+    max-width: 240px;
+    border-radius: 16px;
+  }
+
+  .game-fa-workspace-new {
+    gap: 12px;
+  }
+}
