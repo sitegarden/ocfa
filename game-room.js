@@ -1551,48 +1551,52 @@ async function renderGameStageArea() {
 
     const submittedFanart = getMyFanartForCurrentRound(myPlayer, targetPlayer);
 
-    if (submittedFanart) {
-      return `
-        <section class="panel">
-          <p class="eyebrow">Fan Art Turn</p>
-          <h2>FA提出済み</h2>
+ if (submittedFanart) {
+  return `
+    <section class="game-submitted-screen">
+      <div class="game-submitted-hero">
+        <p class="mini-label">Submitted</p>
+        <h2>FA提出完了！</h2>
+        <p>
+          ${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCへのFAを提出しました。
+          ほかの人の提出を待っています。
+        </p>
+      </div>
 
-          <p>
-            ${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCへのFAを提出しました。
-            ほかの人の提出を待っています。
-          </p>
+      <div class="game-submitted-preview">
+        <div class="game-canvas-label">
+          <span>提出したFA</span>
+          <small>${escapeHtml(targetPlayer.data.name || "匿名")}さん宛て</small>
+        </div>
 
-          <div class="submitted-oc-preview">
-            <img src="${submittedFanart.data.imageData}" alt="提出したFA">
-          </div>
+        <img src="${submittedFanart.data.imageData}" alt="提出したFA">
+      </div>
 
-          ${
-            canCancelSubmitNow()
-              ? `
-                <div class="actions">
-                  <button
-                    id="cancelFanartBtn"
-                    class="ghost-btn"
-                    type="button"
-                    data-fanart-id="${submittedFanart.id}"
-                  >
-                    提出を取り消す
-                  </button>
-                </div>
+      ${
+        canCancelSubmitNow()
+          ? `
+            <div class="game-submit-bar">
+              <p>残り30秒までは提出を取り消して描き直せます。</p>
 
-                <p class="mini-info">
-                  取り消すと、提出した絵を下書きとして復元して描き直せます。
-                </p>
-              `
-              : `
-                <p class="mini-info">
-                  残り30秒を切ったため、提出は取り消せません。
-                </p>
-              `
-          }
-        </section>
-      `;
-    }
+              <button
+                id="cancelFanartBtn"
+                class="btn ghost"
+                type="button"
+                data-fanart-id="${submittedFanart.id}"
+              >
+                提出を取り消す
+              </button>
+            </div>
+          `
+          : `
+            <div class="game-draw-note">
+              残り30秒を切ったため、提出は取り消せません。
+            </div>
+          `
+      }
+    </section>
+  `;
+}
 
     return `
   <section class="game-fa-screen">
@@ -1684,48 +1688,52 @@ async function renderGameStageArea() {
 
   const submitted = await getMyOriginal(myPlayer.id);
 
-  if (submitted) {
-    return `
-      <section class="panel">
-        <p class="eyebrow">Your OC</p>
-        <h2>OC提出済み</h2>
-
+if (submitted) {
+  return `
+    <section class="game-submitted-screen">
+      <div class="game-submitted-hero">
+        <p class="mini-label">Submitted</p>
+        <h2>OC提出完了！</h2>
         <p>
           あなたのOCは提出済みです。
           全員の提出が終わるまで待ってください。
         </p>
+      </div>
 
-        <div class="submitted-oc-preview">
-          <img src="${submitted.data.imageData}" alt="提出したOC">
+      <div class="game-submitted-preview">
+        <div class="game-canvas-label">
+          <span>提出したOC</span>
+          <small>みんながこのOCを見てFAを描きます</small>
         </div>
 
-        ${
-          canCancelSubmitNow()
-            ? `
-              <div class="actions">
-                <button
-                  id="cancelOriginalBtn"
-                  class="ghost-btn"
-                  type="button"
-                  data-original-id="${submitted.id}"
-                >
-                  提出を取り消す
-                </button>
-              </div>
+        <img src="${submitted.data.imageData}" alt="提出したOC">
+      </div>
 
-              <p class="mini-info">
-                取り消すと、提出した絵を下書きとして復元して描き直せます。
-              </p>
-            `
-            : `
-              <p class="mini-info">
-                残り30秒を切ったため、提出は取り消せません。
-              </p>
-            `
-        }
-      </section>
-    `;
-  }
+      ${
+        canCancelSubmitNow()
+          ? `
+            <div class="game-submit-bar">
+              <p>残り30秒までは提出を取り消して描き直せます。</p>
+
+              <button
+                id="cancelOriginalBtn"
+                class="btn ghost"
+                type="button"
+                data-original-id="${submitted.id}"
+              >
+                提出を取り消す
+              </button>
+            </div>
+          `
+          : `
+            <div class="game-draw-note">
+              残り30秒を切ったため、提出は取り消せません。
+            </div>
+          `
+      }
+    </section>
+  `;
+}
 
   return `
     <section class="game-draw-screen">
