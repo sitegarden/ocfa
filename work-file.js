@@ -218,6 +218,99 @@ async function loadWorkCharacters() {
   }
 }
 
+async function loadWorkMembers() {
+  const memberList = document.getElementById("workMemberList");
+
+  if (!memberList || !workId) return;
+
+  try {
+    const memberQuery = query(
+      collection(db, "workMembers"),
+      where("workId", "==", workId),
+      limit(100)
+    );
+
+    const snap = await getDocs(memberQuery);
+
+    if (snap.empty) {
+      memberList.innerHTML = `
+        <div class="empty-preview">
+          まだ参加者はいません。
+        </div>
+      `;
+      return;
+    }
+
+    const members = [];
+
+    snap.forEach((docSnap) => {
+      const data = docSnap.data();
+
+      if (data.isDeleted === true) return;
+      if (data.status !== "approved") return;
+
+      members.push({
+        id: docSnap.id,
+        data
+      });
+    });
+
+    if (members.length === 0) {
+      memberList.innerHTML = `
+        <div class="empty-preview">
+          まだ参加者はいません。
+        </div>
+      `;
+      return;
+    }
+
+    members.sort((a, b) => {
+      const aName = a.data.userName || "";
+      const bName = b.data.userName || "";
+      return aName.localeCompare(bName, "ja");
+    });
+
+    memberList.innerHTML = "";
+
+    members.forEach((item) => {
+      const data = item.data;
+
+      const card = document.createElement("article");
+      card.className = "member-card compact-member-card";
+
+      card.innerHTML = `
+        <div class="member-main">
+          <div class="member-avatar">
+            ${
+              data.userPhotoURL
+                ? `<img src="${escapeHtml(data.userPhotoURL)}" alt="${escapeHtml(data.userName || "参加者")}">`
+                : `<span>${escapeHtml((data.userName || "?").slice(0, 1))}</span>`
+            }
+          </div>
+
+          <div class="member-info">
+            <h3>${escapeHtml(data.userName || "名前未設定")}</h3>
+            <div class="badge-row">
+              <span class="badge muted">参加中</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      memberList.appendChild(card);
+    });
+  } catch (error) {
+    console.error("作品参加者読み込みエラー:", error);
+
+    memberList.innerHTML = `
+      <div class="empty-preview">
+        参加者の読み込みに失敗しました。<br>
+        ${escapeHtml(error.message || "")}
+      </div>
+    `;
+  }
+}
+
 async function removeCharacterFromWork(characterId) {
   if (!currentUser || !currentWork) {
     alert("ログイン情報または作品情報が見つかりません。");
@@ -411,6 +504,22 @@ function renderWork(work) {
                   : `<p>ルールはまだ設定されていません。</p>`
               }
             </section>
+
+            <section class="card">
+  <h2>参加者</h2>
+
+  <div class="button-row">
+    ${
+      isOwner
+        ? `<a class="primary-link" href="/works/members/?id=${work.id}">参加申請を管理する</a>`
+        : ""
+    }
+  </div>
+
+  <div id="workMemberList" class="member-list">
+    <p>参加者を読み込み中...</p>
+  </div>
+</section>
           `
           : ""
       }
@@ -452,6 +561,13 @@ function renderWork(work) {
   `;
 
   loadWorkCharacters();
+
+  if (isShared) {
+
+    loadWorkMembers();
+
+  }
+  
 }
 
 async function init() {
