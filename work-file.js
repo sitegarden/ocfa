@@ -5,8 +5,11 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   limit,
   query,
+  serverTimestamp,
+  updateDoc,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -20,6 +23,7 @@ const params = new URLSearchParams(location.search);
 const workId = params.get("id");
 
 let currentUser = null;
+let currentWork = null;
 
 function escapeHtml(text) {
   return String(text)
@@ -178,14 +182,30 @@ async function loadWorkCharacters() {
             </p>
 
             <div class="character-tags">
-              <span>${data.faOk ? "FA歓迎" : "FA要確認"}</span>
-            </div>
+  <span>${data.faOk ? "FA歓迎" : "FA要確認"}</span>
+</div>
+
+<div class="button-row">
+  ${
+    currentUser && currentWork && currentWork.data.userId === currentUser.uid
+      ? `<button type="button" class="primary-link remove-work-character-btn" data-character-id="${item.id}">作品から外す</button>`
+      : ""
+  }
+</div>
           </div>
         </a>
       `;
 
+      
+
       characterList.appendChild(card);
     });
+
+    document.querySelectorAll(".remove-work-character-btn").forEach((button) => {
+  button.addEventListener("click", () => {
+    removeCharacterFromWork(button.dataset.characterId);
+  });
+});
   } catch (error) {
     console.error("作品キャラ読み込みエラー:", error);
 
@@ -198,8 +218,62 @@ async function loadWorkCharacters() {
   }
 }
 
+async function removeCharacterFromWork(characterId) {
+  if (!currentUser || !currentWork) {
+    alert("ログイン情報または作品情報が見つかりません。");
+    return;
+  }
+
+  if (currentWork.data.userId !== currentUser.uid) {
+    alert("作品オーナーだけがキャラクターを外せます。");
+    return;
+  }
+
+  if (!confirm("このキャラクターを作品から外しますか？")) {
+    return;
+  }
+
+  try {
+    const characterRef = doc(db, "v2Characters", characterId);
+    const characterSnap = await getDoc(characterRef);
+
+    if (!characterSnap.exists()) {
+      alert("キャラクターが見つかりませんでした。");
+      return;
+    }
+
+    const characterData = characterSnap.data();
+
+    if (characterData.workId !== workId) {
+      alert("このキャラクターは、この作品に所属していません。");
+      return;
+    }
+
+    await updateDoc(characterRef, {
+      workId: "",
+      workTitle: "",
+      workOwnerUid: "",
+      workType: "",
+      updatedAt: serverTimestamp()
+    });
+
+    const workRef = doc(db, "works", workId);
+
+    await updateDoc(workRef, {
+      characterCount: increment(-1),
+      updatedAt: serverTimestamp()
+    });
+
+    await loadWorkCharacters();
+  } catch (error) {
+    console.error("作品からキャラを外すエラー:", error);
+    alert(`キャラクターを外せませんでした。${error.message || ""}`);
+  }
+}
+
 function renderWork(work) {
   const data = work.data;
+  currentWork = work;
 
   if (data.isDeleted === true) {
     renderNotFound();
