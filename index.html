@@ -7,25 +7,25 @@
   <title>OCFA</title>
   <meta
     name="description"
-    content="OCFAは、オリジナルキャラクターを描いて登録し、イベントでファンアートを描き合えるOC専用サイトです。"
+    content="OCFAは、オリジナルキャラクターのプロフィールやイラストをまとめて登録し、イベントでファンアートを描き合えるOC専用サイトです。"
   />
 
   <!-- favicon -->
-<link rel="icon" type="image/png" href="/assets/favicon.png">
-<link rel="apple-touch-icon" href="/assets/favicon.png">
+  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/favicon.png">
 
-<!-- OGP -->
-<meta property="og:title" content="OCFA">
-<meta property="og:description" content="オリジナルキャラクターを登録したり、みんなでFAを描き合える創作サイトです。">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://ocfa.jp/">
-<meta property="og:image" content="https://ocfa.jp/assets/ogp.png">
+  <!-- OGP -->
+  <meta property="og:title" content="OCFA">
+  <meta property="og:description" content="オリジナルキャラクターを登録したり、みんなでFAを描き合える創作サイトです。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ocfa.jp/">
+  <meta property="og:image" content="https://ocfa.jp/assets/ogp.png">
 
-<!-- Twitter / X -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="OCFA">
-<meta name="twitter:description" content="オリジナルキャラクターを登録したり、みんなでFAを描き合える創作サイトです。">
-<meta name="twitter:image" content="https://ocfa.jp/assets/ogp.png">
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="OCFA">
+  <meta name="twitter:description" content="オリジナルキャラクターを登録したり、みんなでFAを描き合える創作サイトです。">
+  <meta name="twitter:image" content="https://ocfa.jp/assets/ogp.png">
 
   <link rel="stylesheet" href="./style.css" />
 </head>
@@ -49,18 +49,25 @@
         </h1>
 
         <p class="lead">
-          OCFAは、オリジナルキャラクターをその場で描いて登録し、
+          OCFAは、オリジナルキャラクターのプロフィールやイラストをまとめて登録し、
           イベントを通してファンアートを描き合えるOC専用サイトです。
         </p>
+
+       <p class="lead-note">
+  OCの登録はサイト内のお絵描き機能から利用できます。
+  画像アップロード機能は一部ユーザー向けに順次対応中です。
+</p>
 
         <div class="actions">
           <a class="primary-btn" href="/draw/">キャラを描く</a>
           <a class="ghost-btn" href="./characters/">みんなの子を見る</a>
+          <a class="ghost-btn" href="/events/">イベントを見る</a>
         </div>
 
         <div class="mini-tags">
           <span>OC only</span>
           <span>Draw</span>
+          <span>Upload limited</span>
           <span>Fan Art</span>
           <span>Event</span>
         </div>
@@ -78,27 +85,28 @@
           </div>
 
           <div class="fake-canvas" id="homeOcPreview">
-  <img
-    id="homeOcImage"
-    class="home-oc-image"
-    src=""
-    alt="ランダム表示されたキャラクター"
-    hidden
-  >
+            <img
+              id="homeOcImage"
+              class="home-oc-image"
+              src=""
+              alt="ランダム表示されたキャラクター"
+              hidden
+            >
 
-  <div id="homeOcFallback" class="fake-face">
-    <div class="fake-hair"></div>
-    <div class="fake-eyes">
-      <span></span>
-      <span></span>
-    </div>
-    <div class="fake-mouth"></div>
-  </div>
+            <div id="homeOcFallback" class="hero-profile-preview">
+              <div class="hero-profile-icon">OC</div>
+              <div class="hero-profile-info">
+                <span>Character File</span>
+                <strong>うちの子プロフィール</strong>
+                <p>画像・設定・FAイベントをまとめて見せられる場所。</p>
+              </div>
+            </div>
 
-  <div class="spark spark-1">✦</div>
-  <div class="spark spark-2">✧</div>
-  <div class="spark spark-3">♡</div>
-</div>
+            <div class="spark spark-1">✦</div>
+            <div class="spark spark-2">✧</div>
+            <div class="spark spark-3">♡</div>
+          </div>
+
           <div class="fake-lines">
             <span></span>
             <span></span>
@@ -106,8 +114,8 @@
           </div>
 
           <div class="paper-tags">
-            <span>kawaii</span>
-            <span>magic</span>
+            <span>profile</span>
+            <span>fan art</span>
           </div>
         </div>
 
@@ -118,74 +126,82 @@
     </section>
 
     <section class="home-event-banner">
-  <div class="home-event-copy">
-    <p class="eyebrow">Event</p>
-    <h2>OCFAイベント開催中！</h2>
+      <div class="home-event-copy">
+        <p class="eyebrow">Event</p>
+        <h2>OCFAイベント開催中！</h2>
 
-    <p>
-      オリジナルキャラクターを登録して、FAを描いたり描いてもらったりできるイベントを開催中です。
-      創作好きの方は、ぜひ気軽に参加してみてください。
-    </p>
+        <p>
+          オリジナルキャラクターを登録して、FAを描いたり描いてもらったりできるイベントを開催中です。
+          創作好きの方は、ぜひ気軽に参加してみてください。
+        </p>
 
-    <p class="home-event-note">
-      ※現在も調整しながら運営しています。バグや待ち時間が発生する場合があります。
-    </p>
+        <p class="home-event-note">
+          ※現在も調整しながら運営しています。バグや待ち時間が発生する場合があります。
+        </p>
 
-    <div class="actions">
-      <a class="primary-btn" href="/events/">
-        イベントを見る
-      </a>
+        <div class="actions">
+          <a class="primary-btn" href="/events/">
+            イベントを見る
+          </a>
 
-      <a class="ghost-btn" href="/characters/new/">
-  キャラを登録する
-</a>
-    </div>
-  </div>
+          <a class="ghost-btn" href="/characters/new/">
+            キャラを登録する
+          </a>
+        </div>
+      </div>
 
-  <div class="home-event-card" aria-hidden="true">
-    <span>OCFA</span>
-    <strong>EVENT</strong>
-    <small>開催中</small>
-  </div>
-</section>
+      <div class="home-event-card" aria-hidden="true">
+        <span>OCFA</span>
+        <strong>EVENT</strong>
+        <small>開催中</small>
+      </div>
+    </section>
 
     <section class="home-news-section panel">
-  <div class="home-news-head">
-    <div>
-      <p class="eyebrow">News</p>
-      <h2>最新のお知らせ</h2>
-    </div>
+      <div class="home-news-head">
+        <div>
+          <p class="eyebrow">News</p>
+          <h2>最新のお知らせ</h2>
+        </div>
 
-    <a class="ghost-btn" href="/news/">すべて見る</a>
-  </div>
+        <a class="ghost-btn" href="/news/">すべて見る</a>
+      </div>
 
-  <div id="homeNoticeList" class="home-notice-list">
-    <p>お知らせを読み込み中...</p>
-  </div>
-</section>
+      <div id="homeNoticeList" class="home-notice-list">
+        <p>お知らせを読み込み中...</p>
+      </div>
+    </section>
 
     <section class="cute-feature-grid">
       <article class="cute-feature pink">
         <div class="feature-mark">✎</div>
-        <h2>サイト内で描く</h2>
+        <h2>サイト内で描ける</h2>
         <p>
-          画像URLやアップロードではなく、キャンバスで描いたイラストをそのまま登録。
+          キャンバスで描いたイラストを、そのままキャラクター画像として登録できます。
         </p>
       </article>
 
       <article class="cute-feature blue">
-        <div class="feature-mark">♡</div>
-        <h2>うちの子を出せる</h2>
-        <p>
-          自分のOCを登録して、イベントに参加できる形を目指します。
-        </p>
-      </article>
+  <div class="feature-mark">♡</div>
+  <h2>画像登録にも対応</h2>
+  <p>
+    一部ユーザー向けに、手元のイラスト画像を登録できる機能も用意しています。
+  </p>
+</article>
 
       <article class="cute-feature yellow">
         <div class="feature-mark">★</div>
+        <h2>うちの子を出せる</h2>
+        <p>
+          自分のOCを登録して、プロフィールやイラストをまとめて見せられます。
+        </p>
+      </article>
+
+      <article class="cute-feature green">
+        <div class="feature-mark">✦</div>
         <h2>ゆるく描き合う</h2>
         <p>
-          深すぎる交流ではなく、いいねや短文コメント中心で気軽に楽しめます。
+          深すぎる交流ではなく、描きたい・描いてもらえたを気軽に楽しめる場所です。
         </p>
       </article>
     </section>
@@ -206,6 +222,6 @@
   <footer id="siteFooter"></footer>
 
   <script type="module" src="/app.js"></script>
-<script type="module" src="/home.js"></script>
+  <script type="module" src="/home.js"></script>
 </body>
 </html>
