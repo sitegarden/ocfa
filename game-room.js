@@ -1469,6 +1469,38 @@ async function renderGameStageArea() {
     return renderRevealArea();
   }
 
+  if (currentRoom.data.status === "waiting") {
+  return `
+    <section class="game-waiting-hero">
+      <p class="mini-label">Lobby</p>
+      <h2>参加者を待っています</h2>
+      <p>
+        参加者が集まったら、オーナーがゲームを開始できます。
+        まずは自分のOCを描いて、そのあと他の人のOCへファンアートを描きます。
+      </p>
+
+      <div class="game-rule-grid">
+        <div>
+          <strong>1</strong>
+          <span>自分のOCを描く</span>
+        </div>
+        <div>
+          <strong>2</strong>
+          <span>他の人のOCを見る</span>
+        </div>
+        <div>
+          <strong>3</strong>
+          <span>FAを描いて提出</span>
+        </div>
+        <div>
+          <strong>4</strong>
+          <span>最後に結果発表</span>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
   if (currentRoom.data.status === "drawing_fa") {
     const myPlayer = getMyPlayer();
 
