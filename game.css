@@ -1969,3 +1969,84 @@ body {
     object-fit: contain;
   }
 }
+
+
+/* =========================
+   Fixed countdown overlay
+========================= */
+
+.game-starting-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: grid;
+  place-items: center;
+  gap: 14px;
+  padding: 24px;
+
+  text-align: center;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 218, 170, 0.55), transparent 34%),
+    radial-gradient(circle at 70% 80%, rgba(233, 169, 159, 0.36), transparent 38%),
+    rgba(255, 247, 232, 0.94);
+  backdrop-filter: blur(8px);
+}
+
+.game-starting-screen .mini-label {
+  margin: 0;
+  color: #b9836a;
+  letter-spacing: 0.16em;
+}
+
+.game-starting-screen h2 {
+  margin: 0;
+  font-size: clamp(2.2rem, 8vw, 5rem);
+  color: #30283a;
+  line-height: 1;
+}
+
+.game-starting-screen p {
+  margin: 0;
+  font-size: clamp(0.95rem, 2.5vw, 1.2rem);
+  font-weight: 900;
+  color: #756456;
+}
+
+.game-starting-count {
+  display: grid;
+  place-items: center;
+
+  width: clamp(120px, 24vw, 220px);
+  height: clamp(120px, 24vw, 220px);
+  border-radius: 999px;
+
+  background:
+    linear-gradient(180deg, #ffe3bc, #e9a99f);
+  border: 4px solid rgba(255, 255, 255, 0.72);
+
+  color: #3a2d25;
+  font-size: clamp(4.8rem, 18vw, 10rem);
+  font-weight: 1000;
+  line-height: 1;
+
+  box-shadow:
+    0 24px 50px rgba(116, 83, 48, 0.22),
+    inset 0 3px 0 rgba(255, 255, 255, 0.7);
+
+  animation: gameCountdownPop 0.9s ease-in-out infinite;
+}
+
+@keyframes gameCountdownPop {
+  0% {
+    transform: scale(0.92);
+  }
+
+  45% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    transform: scale(0.92);
+  }
+}
