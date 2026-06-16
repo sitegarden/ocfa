@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>ファンアート投稿 - OCFA</title>
+  <meta
+    name="description"
+    content="OCFAのファンアート投稿ページです。"
+  />
+
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+  <header id="siteHeader"></header>
+
+  <main class="page">
+    <section class="panel">
+      <p class="eyebrow">Fan Art</p>
+      <h1 id="pageTitle">ファンアートを投稿する</h1>
+      <p id="pageLead">
+        キャラクターに向けて、イベントとは別に自由なファンアートを投稿できます。
+      </p>
+    </section>
+
+    <section id="fanartGuide" class="panel" hidden></section>
+
+    <form id="fanartForm" class="panel" hidden>
+      <section class="card">
+        <h2>描くキャラクター</h2>
+        <div id="characterPreview">
+          <p>キャラクター情報を読み込み中...</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>投稿方法</h2>
+
+        <div class="button-row">
+          <button type="button" id="modeDrawingBtn" class="primary-link">
+            この場で描く
+          </button>
+
+          <button type="button" id="modeUploadBtn" class="primary-link">
+            画像を選ぶ
+          </button>
+        </div>
+
+        <p id="modeHelp" class="muted-text">
+          通常はサイト内のお絵描き機能で投稿できます。
+        </p>
+      </section>
+
+      <section id="drawingPanel" class="card">
+        <h2>お絵描き</h2>
+
+        <div class="drawing-tools button-row">
+          <button type="button" class="primary-link" data-color="#30283a">黒</button>
+          <button type="button" class="primary-link" data-color="#ff6fae">ピンク</button>
+          <button type="button" class="primary-link" data-color="#6aa8ff">青</button>
+          <button type="button" class="primary-link" data-color="#ffffff">消しゴム</button>
+          <button type="button" id="clearCanvasBtn" class="primary-link">全消し</button>
+        </div>
+
+        <div class="draw-area">
+          <canvas id="fanartCanvas" width="800" height="800"></canvas>
+        </div>
+
+        <p class="muted-text">
+          指やペン、マウスで描けます。
+        </p>
+      </section>
+
+      <section id="uploadPanel" class="card" hidden>
+        <h2>画像を選ぶ</h2>
+
+        <input
+          id="uploadInput"
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+        >
+
+        <div id="uploadPreview" class="empty-preview">
+          まだ画像が選ばれていません。
+        </div>
+
+        <p class="muted-text">
+          画像投稿は一部ユーザー向けの機能です。
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>コメント</h2>
+
+        <textarea
+          id="fanartComment"
+          rows="5"
+          placeholder="ひとことコメントを書けます。"
+        ></textarea>
+      </section>
+
+      <div class="button-row">
+        <button type="submit" class="primary-btn">
+          ファンアートを投稿する
+        </button>
+
+        <a class="ghost-btn" href="/characters/">
+          キャラ一覧へ
+        </a>
+      </div>
+
+      <p id="message"></p>
+    </form>
+  </main>
+
+  <footer id="siteFooter"></footer>
+
+  <script type="module" src="/app.js"></script>
+  <script type="module" src="/fanart-new.js"></script>
+</body>
+</html>
