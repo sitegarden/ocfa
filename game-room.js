@@ -1307,17 +1307,17 @@ function renderLayerTools() {
         </div>
 
         <p id="layerStatusText" class="mini-info">
-          現在：レイヤー1
+          現在：レイヤー2
         </p>
       </div>
 
       <div class="game-layer-tools">
-        <button id="layerBtn1" type="button" class="layer-btn layer-top">
+        <button id="layerBtn1" type="button" class="layer-btn layer-top is-active">
           <span class="layer-order">上</span>
           <strong>レイヤー2</strong>
         </button>
 
-        <button id="layerBtn0" type="button" class="layer-btn layer-bottom is-active">
+        <button id="layerBtn0" type="button" class="layer-btn layer-bottom">
           <span class="layer-order">下</span>
           <strong>レイヤー1</strong>
         </button>
@@ -2417,7 +2417,7 @@ function createLayerCanvas() {
 function initGameLayers() {
   layerCanvases = [];
   layerContexts = [];
-  activeLayerIndex = 0;
+  activeLayerIndex = 1;
   layerVisible = [true, true];
   currentTool = "pen";
   layerHistory = [[], []];
