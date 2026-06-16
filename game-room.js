@@ -1611,9 +1611,7 @@ async function renderGameStageArea() {
       <div>
         <p class="mini-label">Fan Art Turn</p>
         <h2>${escapeHtml(targetPlayer.data.name || "匿名")}さんのOCを描く</h2>
-        <p>
-          資料OCを見ながら、ファンアートを描いてください。
-        </p>
+        <p>資料OCを見ながら、ファンアートを描いてください。</p>
       </div>
 
       <div class="game-draw-timer">
@@ -1626,51 +1624,45 @@ async function renderGameStageArea() {
       </div>
     </header>
 
-    <div class="game-draw-note">
-      Round ${Number(currentRoom.data.currentRound || 0) + 1}
-      /
-      ${Math.max(1, currentPlayers.length - 1)}
-      ・描いた内容はこの端末に自動保存されます。
-    </div>
-
-    <div class="game-fa-workspace-new">
-      <aside class="game-fa-reference-card">
+    <div class="game-fa-focus-card">
+      <div class="game-fa-reference-inline">
         <div class="game-canvas-label">
           <span>資料OC</span>
           <small>${escapeHtml(targetPlayer.data.name || "匿名")}さん</small>
         </div>
 
-        <div class="game-target-oc-new">
-          <img
-            src="${targetOriginal.data.imageData}"
-            alt="${escapeHtml(targetPlayer.data.name || "OC")}のOC"
-          >
-        </div>
-      </aside>
+        <img
+          src="${targetOriginal.data.imageData}"
+          alt="${escapeHtml(targetPlayer.data.name || "OC")}のOC"
+        >
+      </div>
 
-      <div class="game-fa-drawing-area">
-        <div class="game-draw-tools">
-          ${renderLayerTools()}
+      <div class="game-canvas-card">
+        <div class="game-canvas-label">
+          <span>FAを描く場所</span>
+          <small>資料を見ながら描いてください</small>
         </div>
 
-        <div class="game-canvas-card">
-          <div class="game-canvas-label">
-            <span>FAを描く場所</span>
-            <small>白いキャンバスに描いてください</small>
-          </div>
-
-          <canvas
-            id="gameCanvas"
-            class="game-canvas"
-            width="768"
-            height="768"
-          ></canvas>
-        </div>
+        <canvas
+          id="gameCanvas"
+          class="game-canvas"
+          width="768"
+          height="768"
+        ></canvas>
       </div>
     </div>
 
+    <div class="game-draw-tools">
+      ${renderLayerTools()}
+    </div>
+
     <div class="game-submit-bar">
-      <p>描けたら提出。提出後も残り30秒までは取り消せます。</p>
+      <p>
+        Round ${Number(currentRoom.data.currentRound || 0) + 1}
+        /
+        ${Math.max(1, currentPlayers.length - 1)}
+      </p>
+
       <button id="submitFanartBtn" class="btn primary" type="button">
         FAを提出する
       </button>
