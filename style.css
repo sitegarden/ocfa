@@ -6543,3 +6543,48 @@ textarea {
     font-size: 1.8rem;
   }
 }
+
+.member-list {
+  display: grid;
+  gap: 14px;
+}
+
+.member-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 250, 241, 0.92);
+  border: 1px solid rgba(214, 196, 176, 0.85);
+}
+
+.member-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.member-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fff1c8;
+  border: 1px solid #ddc98e;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  font-weight: 900;
+  color: #7a6431;
+}
+
+.member-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.member-info h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
