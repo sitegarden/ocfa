@@ -63,6 +63,31 @@ function getCharacterImageSrc(data) {
   return data.imageUrl || data.imageData || "";
 }
 
+async function getWork(workId) {
+  if (!workId) return null;
+
+  const workRef = doc(db, "works", workId);
+  const snap = await getDoc(workRef);
+
+  if (!snap.exists()) return null;
+
+  return {
+    id: snap.id,
+    data: snap.data()
+  };
+}
+
+function getWorkTypeLabel(type) {
+  if (type === "shared") return "共有作品";
+  return "自分専用";
+}
+
+function getJoinTypeLabel(type) {
+  if (type === "free") return "自由参加";
+  if (type === "approval") return "承認制";
+  return "募集なし";
+}
+
 function renderNotFound() {
   characterFile.innerHTML = `
     <section class="card message-card">
@@ -203,6 +228,7 @@ async function renderCharacter(character) {
     : "";
 
   const isOwner = currentUser && currentUser.uid === data.userId;
+  const work = await getWork(data.workId || "");
   const imageSrc = getCharacterImageSrc(data);
 
   characterFile.innerHTML = `
@@ -281,6 +307,43 @@ async function renderCharacter(character) {
           ${escapeHtml(ownerName)}
         </a>
       </section>
+
+      <section class="card">
+  <h2>所属作品</h2>
+
+  ${
+    work
+      ? `
+        <div class="work-mini-card">
+          <div>
+            <h3>${escapeHtml(work.data.title || "作品名未設定")}</h3>
+
+            <div class="badge-row">
+              <span class="badge">${escapeHtml(getWorkTypeLabel(work.data.workType))}</span>
+              ${
+                work.data.workType === "shared"
+                  ? `<span class="badge muted">${escapeHtml(getJoinTypeLabel(work.data.joinType))}</span>`
+                  : ""
+              }
+            </div>
+
+            <p>
+              ${escapeHtml(work.data.description || "作品説明はまだありません。")}
+            </p>
+          </div>
+
+          <div class="button-row">
+            <a class="primary-link" href="/works/file/?id=${work.id}">
+              作品を見る
+            </a>
+          </div>
+        </div>
+      `
+      : `
+        <p>まだ作品には所属していません。</p>
+      `
+  }
+</section>
 
       <section class="card">
 
