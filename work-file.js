@@ -389,6 +389,18 @@ function renderWork(work) {
                   `
                   : ""
               }
+
+              ${
+  isOwner
+    ? `
+      <div class="button-row">
+        <a class="primary-link" href="/works/members/?id=${work.id}">
+          参加申請を管理する
+        </a>
+      </div>
+    `
+    : ""
+}
             </section>
 
             <section class="card">
