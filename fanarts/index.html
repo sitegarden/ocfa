@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>ファンアート一覧 - OCFA</title>
+  <meta
+    name="description"
+    content="OCFAに投稿されたファンアート一覧です。"
+  />
+
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+  <header id="siteHeader"></header>
+
+  <main class="page">
+    <section class="panel">
+      <p class="eyebrow">Fan Art</p>
+      <h1>ファンアート一覧</h1>
+      <p>
+        イベントとは別に投稿された、みんなのファンアート一覧です。
+      </p>
+    </section>
+
+    <section class="panel">
+      <div class="button-row">
+        <a class="primary-link" href="/characters/">
+          描きたいキャラを探す
+        </a>
+      </div>
+
+      <div id="fanartList" class="character-grid">
+        <p>ファンアートを読み込み中...</p>
+      </div>
+    </section>
+  </main>
+
+  <footer id="siteFooter"></footer>
+
+  <script type="module" src="/app.js"></script>
+  <script type="module" src="/fanarts.js"></script>
+</body>
+</html>
