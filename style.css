@@ -6313,3 +6313,14 @@ textarea {
     -webkit-line-clamp: 2;
   }
 }
+
+.fanart-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.fake-link {
+  display: inline-flex;
+  margin-top: 8px;
+}
