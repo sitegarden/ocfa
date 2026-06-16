@@ -1747,9 +1747,13 @@ if (submitted) {
         </div>
 
         <div class="game-draw-timer">
-          <span>残り時間</span>
-          <strong id="originalTimerText">--:--</strong>
-        </div>
+  <span>残り時間</span>
+  <strong id="originalTimerText">残り時間：--:--</strong>
+
+  <div class="game-timer-meter">
+    <span id="originalTimerBar"></span>
+  </div>
+</div>
       </header>
 
       <div class="game-draw-note">
