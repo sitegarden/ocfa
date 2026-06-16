@@ -1,8 +1,13 @@
 import { auth, db } from "/firebase.js";
 
 import {
+  collection,
   doc,
-  getDoc
+  getDoc,
+  getDocs,
+  limit,
+  query,
+  where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 import {
@@ -82,6 +87,115 @@ async function getWork() {
     id: snap.id,
     data: snap.data()
   };
+}
+
+function getCharacterImageSrc(data) {
+  return data.imageUrl || data.imageData || "";
+}
+
+async function loadWorkCharacters() {
+  const characterList = document.getElementById("workCharacterList");
+
+  if (!characterList || !workId) return;
+
+  try {
+    const charactersQuery = query(
+      collection(db, "v2Characters"),
+      where("workId", "==", workId),
+      limit(80)
+    );
+
+    const snap = await getDocs(charactersQuery);
+
+    if (snap.empty) {
+      characterList.innerHTML = `
+        <div class="empty-preview">
+          まだこの作品にキャラクターはいません。
+        </div>
+      `;
+      return;
+    }
+
+    const characters = [];
+
+    snap.forEach((docSnap) => {
+      const data = docSnap.data();
+
+      if (data.isDeleted === true) return;
+      if (data.isPublic !== true && data.userId !== currentUser?.uid) return;
+
+      characters.push({
+        id: docSnap.id,
+        data
+      });
+    });
+
+    if (characters.length === 0) {
+      characterList.innerHTML = `
+        <div class="empty-preview">
+          まだ表示できるキャラクターはいません。
+        </div>
+      `;
+      return;
+    }
+
+    characters.sort((a, b) => {
+      const aName = a.data.kana || a.data.name || "";
+      const bName = b.data.kana || b.data.name || "";
+      return aName.localeCompare(bName, "ja");
+    });
+
+    characterList.innerHTML = "";
+
+    characters.forEach((item) => {
+      const data = item.data;
+      const imageSrc = getCharacterImageSrc(data);
+
+      const card = document.createElement("article");
+      card.className = "character-card";
+
+      card.innerHTML = `
+        <a class="character-link" href="/characters/file/?id=${item.id}">
+          <div class="character-thumb">
+            ${
+              imageSrc
+                ? `<img class="character-img" src="${imageSrc}" alt="${escapeHtml(data.name || "キャラクター画像")}">`
+                : `<div class="no-image">No Image</div>`
+            }
+          </div>
+
+          <div class="character-body">
+            <h2>${escapeHtml(data.name || "名前未設定")}</h2>
+
+            ${
+              data.kana
+                ? `<p class="character-kana">${escapeHtml(data.kana)}</p>`
+                : ""
+            }
+
+            <p class="character-profile">
+              ${escapeHtml(data.profile || "プロフィールはまだありません。")}
+            </p>
+
+            <div class="character-tags">
+              <span>${data.faOk ? "FA歓迎" : "FA要確認"}</span>
+            </div>
+          </div>
+        </a>
+      `;
+
+      characterList.appendChild(card);
+    });
+  } catch (error) {
+    console.error("作品キャラ読み込みエラー:", error);
+
+    characterList.innerHTML = `
+      <div class="empty-preview">
+        キャラクターの読み込みに失敗しました。<br>
+        ${escapeHtml(error.message || "")}
+      </div>
+    `;
+  }
 }
 
 function renderWork(work) {
@@ -218,10 +332,6 @@ function renderWork(work) {
       <section class="card">
   <h2>この作品のキャラクター</h2>
 
-  <p>
-    作品に所属するキャラクター一覧は、次のステップで追加します。
-  </p>
-
   <div class="button-row">
     ${
       isOwner
@@ -232,6 +342,10 @@ function renderWork(work) {
     <a class="primary-link" href="/characters/">
       キャラ一覧を見る
     </a>
+  </div>
+
+  <div id="workCharacterList" class="character-grid">
+    <p>キャラクターを読み込み中...</p>
   </div>
 </section>
 
@@ -250,6 +364,8 @@ function renderWork(work) {
       </section>
     </article>
   `;
+
+  loadWorkCharacters();
 }
 
 async function init() {
