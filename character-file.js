@@ -6,7 +6,6 @@ import {
   getDoc,
   getDocs,
   limit,
-  orderBy,
   query,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -91,65 +90,89 @@ async function loadCharacterFanarts() {
 
   if (!fanartList || !characterId) return;
 
-  const fanartsQuery = query(
-    collection(db, "v2Fanarts"),
-    where("characterId", "==", characterId),
-    where("isPublic", "==", true),
-    where("isDeleted", "==", false),
-    orderBy("createdAt", "desc"),
-    limit(12)
-  );
+  try {
+    const fanartsQuery = query(
+      collection(db, "v2Fanarts"),
+      where("characterId", "==", characterId),
+      where("isPublic", "==", true),
+      where("isDeleted", "==", false),
+      limit(12)
+    );
 
-  const snap = await getDocs(fanartsQuery);
+    const snap = await getDocs(fanartsQuery);
 
-  if (snap.empty) {
-    fanartList.innerHTML = `
-      <div class="empty-preview">
-        まだこの子へのファンアートはありません。
-      </div>
-    `;
+    if (snap.empty) {
+      fanartList.innerHTML = `
+        <div class="empty-preview">
+          まだこの子へのファンアートはありません。
+        </div>
+      `;
 
-    return;
-  }
+      return;
+    }
 
-  fanartList.innerHTML = "";
+    const fanarts = [];
 
-  snap.forEach((docSnap) => {
-    const data = docSnap.data();
-    const imageSrc = getFanartImageSrc(data);
+    snap.forEach((docSnap) => {
+      fanarts.push({
+        id: docSnap.id,
+        data: docSnap.data()
+      });
+    });
 
-    const card = document.createElement("article");
-    card.className = "character-card";
+    fanarts.sort((a, b) => {
+      const aTime = a.data.createdAt?.toMillis?.() || 0;
+      const bTime = b.data.createdAt?.toMillis?.() || 0;
+      return bTime - aTime;
+    });
 
-    card.innerHTML = `
-      <div class="character-thumb">
-        ${
-          imageSrc
-            ? `<img class="character-img" src="${imageSrc}" alt="${escapeHtml(data.characterName || "ファンアート")}">`
-            : `<div class="no-image">No Image</div>`
-        }
-      </div>
+    fanartList.innerHTML = "";
 
-      <div class="character-body">
-        <h2>${escapeHtml(data.artistName || "作者名未設定")}</h2>
+    fanarts.forEach((item) => {
+      const data = item.data;
+      const imageSrc = getFanartImageSrc(data);
 
-        <p class="character-profile">
-          ${escapeHtml(data.comment || "コメントはありません。")}
-        </p>
+      const card = document.createElement("article");
+      card.className = "character-card";
 
-        <div class="character-tags">
-          <span>${data.imageSource === "upload" ? "画像投稿" : "お絵描き"}</span>
+      card.innerHTML = `
+        <div class="character-thumb">
           ${
-            data.createdAt
-              ? `<span>${escapeHtml(formatDate(data.createdAt))}</span>`
-              : ""
+            imageSrc
+              ? `<img class="character-img" src="${imageSrc}" alt="${escapeHtml(data.characterName || "ファンアート")}">`
+              : `<div class="no-image">No Image</div>`
           }
         </div>
+
+        <div class="character-body">
+          <h2>${escapeHtml(data.artistName || "作者名未設定")}</h2>
+
+          <p class="character-profile">
+            ${escapeHtml(data.comment || "コメントはありません。")}
+          </p>
+
+          <div class="character-tags">
+            <span>${data.imageSource === "upload" ? "画像投稿" : "お絵描き"}</span>
+            ${
+              data.createdAt
+                ? `<span>${escapeHtml(formatDate(data.createdAt))}</span>`
+                : ""
+            }
+          </div>
+        </div>
+      `;
+
+      fanartList.appendChild(card);
+    });
+  } catch (error) {
+    console.error(error);
+
+    fanartList.innerHTML = `
+      <div class="empty-preview">
+        ファンアートの読み込みに失敗しました。
       </div>
     `;
-
-    fanartList.appendChild(card);
-  });
+  }
 }
 
 async function renderCharacter(character) {
