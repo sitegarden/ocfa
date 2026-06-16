@@ -1085,7 +1085,7 @@ function renderJoinArea() {
                   id="guestName"
                   type="text"
                   maxlength="20"
-                  placeholder="例：ゼロ"
+                  placeholder="例：匿名にゃんこ"
                   autocomplete="off"
                 >
               </label>
