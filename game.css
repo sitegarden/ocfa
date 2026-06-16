@@ -1816,3 +1816,82 @@ body {
     font-size: 2.2rem;
   }
 }
+
+/* =========================
+   Compact layer tools
+========================= */
+
+.game-layer-panel {
+  padding: 10px;
+  border-radius: 18px;
+}
+
+.game-layer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.game-layer-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.game-layer-head .eyebrow {
+  margin-bottom: 2px;
+}
+
+.game-layer-head #layerStatusText {
+  margin: 0;
+  font-size: 0.78rem;
+  text-align: right;
+}
+
+.game-layer-tools {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.game-layer-tools .layer-btn {
+  min-height: 46px;
+  padding: 8px 10px;
+  border-radius: 14px;
+}
+
+.game-layer-tools .layer-btn small {
+  display: none;
+}
+
+.game-layer-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.game-layer-actions button {
+  min-height: 40px;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 760px) {
+  .game-layer-head {
+    display: grid;
+    gap: 4px;
+  }
+
+  .game-layer-head #layerStatusText {
+    text-align: left;
+  }
+
+  .game-layer-panel {
+    padding: 8px;
+  }
+
+  .game-layer-tools .layer-btn {
+    min-height: 42px;
+  }
+}
