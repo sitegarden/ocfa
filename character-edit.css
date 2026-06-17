@@ -1,0 +1,102 @@
+/* =========================
+   Character Edit Theme
+========================= */
+
+.theme-editor {
+  margin-top: 24px;
+  padding: 20px;
+  border: 2px dashed #ffc1dc;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 122, 182, 0.16), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(139, 198, 255, 0.2), transparent 34%),
+    #fffafd;
+}
+
+.theme-editor h2 {
+  margin-top: 0;
+}
+
+.theme-editor-note {
+  margin: 0 0 16px;
+  color: #7a6070;
+  font-weight: 700;
+  line-height: 1.8;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+}
+
+.theme-field {
+  display: grid;
+  gap: 6px;
+  font-weight: 900;
+}
+
+.theme-field input[type="color"] {
+  width: 100%;
+  height: 46px;
+  padding: 4px;
+  border: 2px solid #ffd2e6;
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.theme-field input[type="range"] {
+  width: 100%;
+}
+
+.theme-field select {
+  width: 100%;
+  min-height: 44px;
+  border: 2px solid #ffd2e6;
+  border-radius: 14px;
+  background: #fff;
+  color: #3a2d35;
+  font-weight: 800;
+}
+
+.theme-preview {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top left, var(--preview-main), transparent 34%),
+    radial-gradient(circle at bottom right, var(--preview-sub), transparent 34%),
+    var(--preview-bg);
+  color: var(--preview-text);
+  box-shadow: 0 10px 24px rgba(80, 55, 80, 0.12);
+}
+
+.theme-preview-card {
+  padding: 16px;
+  border-radius: var(--preview-radius);
+  background: var(--preview-card);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.theme-preview-label {
+  display: inline-flex;
+  margin-bottom: 8px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--preview-main);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.theme-preview h3 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.theme-preview p {
+  margin: 8px 0 0;
+  color: var(--preview-text);
+  font-weight: 700;
+}
