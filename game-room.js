@@ -750,18 +750,55 @@ function getOcPlayers() {
   });
 }
 
+
 function getFanartTargetsForPlayer(player) {
   if (!player) return [];
 
   const ocPlayers = getOcPlayers();
 
+  if (ocPlayers.length <= 1) {
+    return ocPlayers.filter((targetPlayer) => {
+      return targetPlayer.id !== player.id || isFaOnlyPlayer(player);
+    });
+  }
+
+  // FAのみ参加者は、普通参加者と同じ枚数になるように
+  // OC人数 - 1人分だけ描く
+  // ただしホストのOCは必ず描かれる対象に残す
+  if (isFaOnlyPlayer(player)) {
+    const faOnlyPlayers = currentPlayers.filter((item) => {
+      return item.data.isLeft !== true && isFaOnlyPlayer(item);
+    });
+
+    const faOnlyIndex = Math.max(
+      0,
+      faOnlyPlayers.findIndex((item) => item.id === player.id)
+    );
+
+    const skipCandidates = ocPlayers.filter((targetPlayer) => {
+      return targetPlayer.data.userId !== currentRoom?.data?.ownerId;
+    });
+
+    const skipTarget =
+      skipCandidates.length > 0
+        ? skipCandidates[faOnlyIndex % skipCandidates.length]
+        : null;
+
+    return ocPlayers.filter((targetPlayer) => {
+      if (skipTarget && targetPlayer.id === skipTarget.id) {
+        return false;
+      }
+
+      return Boolean(getOriginalByPlayerId(targetPlayer.id));
+    });
+  }
+
+  // 普通参加者は自分のOC以外を描く
   return ocPlayers.filter((targetPlayer) => {
-    // 普通参加者は自分のOCには描かない
-    if (!isFaOnlyPlayer(player) && targetPlayer.id === player.id) {
+    if (targetPlayer.id === player.id) {
       return false;
     }
 
-    // 元OCが存在する人だけ対象
     return Boolean(getOriginalByPlayerId(targetPlayer.id));
   });
 }
