@@ -1059,13 +1059,23 @@ async function startGame() {
     return;
   }
 
-  if (currentPlayers.length < 2) {
-    if (message) {
-      message.textContent = "2人以上集まると開始できます。";
-    }
+  const ocPlayers = getOcPlayers();
 
-    return;
+if (currentPlayers.length < 2) {
+  if (message) {
+    message.textContent = "2人以上集まると開始できます。";
   }
+
+  return;
+}
+
+if (ocPlayers.length < 1) {
+  if (message) {
+    message.textContent = "OCを描く参加者が1人以上必要です。";
+  }
+
+  return;
+}
 
   const ok = confirm(
     `現在の参加者は${currentPlayers.length}人です。\nこの人数でゲームを開始しますか？`
@@ -1650,8 +1660,8 @@ function renderRevealArea() {
       </div>
 
       <div class="game-result-list-new">
-        ${currentPlayers
-          .map((player) => {
+        ${getOcPlayers()
+  .map((player) => {
             const original = getOriginalByPlayerId(player.id);
             const fanarts = getFanartsByTargetPlayerId(player.id);
 
