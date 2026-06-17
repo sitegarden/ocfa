@@ -2734,3 +2734,83 @@ body {
     margin-right: 0;
   }
 }
+
+/* ツール全体 */
+.game-draw-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 色・太さのエリア */
+.game-draw-tools {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* 色ボタンと太さスライダーの箱 */
+.game-color-tool,
+.game-size-tool {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  text-align: center;
+}
+
+/* ラベル文字が邪魔なら消す */
+.game-color-tool > span,
+.game-size-tool > span {
+  display: none;
+}
+
+/* 色ボタンのズレ修正 */
+.game-color-tool input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 74px;
+  height: 74px;
+  padding: 0;
+  margin: 0 auto;
+  border: none;
+  background: transparent;
+  display: block;
+  cursor: pointer;
+}
+
+.game-color-tool input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.game-color-tool input[type="color"]::-webkit-color-swatch {
+  border: 4px solid #d7cdbf;
+  border-radius: 20px;
+}
+
+.game-color-tool input[type="color"]::-moz-color-swatch {
+  border: 4px solid #d7cdbf;
+  border-radius: 20px;
+}
+
+/* 太さスライダーも中央 */
+.game-size-tool input[type="range"] {
+  width: 100%;
+  max-width: 56px;
+  margin: 0 auto;
+  display: block;
+}
+
+.game-color-tool {
+  padding: 0 !important;
+}
+
+.game-color-tool input[type="color"] {
+  flex: 0 0 auto;
+  align-self: center;
+}
