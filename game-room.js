@@ -69,6 +69,9 @@ let submittingFanart = false;
 let currentTool = "pen";
 let layerHistory = [[], []];
 
+let gamePenColorValue = "#2b2430";
+let gamePenSizeValue = 6;
+
 /*
   筆圧ONでも細くなりすぎないようにする
   OFFなら普通のブラシとして描ける
@@ -1313,13 +1316,13 @@ function renderLayerTools() {
       <div class="game-draw-tools">
         <label class="game-color-tool">
           <span>色</span>
-          <input id="gamePenColor" type="color" value="#2b2430">
+          <input id="gamePenColor" type="color" value="${escapeHtml(gamePenColorValue)}">
         </label>
 
         <label class="game-size-tool">
           <span>太さ</span>
-          <input id="gamePenSize" type="range" min="1" max="28" value="6">
-          <strong id="gamePenSizeText">6</strong>
+          <input id="gamePenSize" type="range" min="1" max="28" value="${gamePenSizeValue}">
+<strong id="gamePenSizeText">${gamePenSizeValue}</strong>
         </label>
       </div>
 
@@ -2476,7 +2479,6 @@ function initGameLayers() {
   layerContexts = [];
   activeLayerIndex = 1;
   layerVisible = [true, true];
-  currentTool = "pen";
   layerHistory = [[], []];
   gameLastPressure = 0.5;
   gameSmoothedPressure = 0.5;
