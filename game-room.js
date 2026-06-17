@@ -2837,6 +2837,14 @@ function syncToolSettingsPanel() {
 
   if (!toolSettingsBtn || !toolSettingsPanel) return;
 
+  /*
+    パネルがツールバー内にあると、overflowや幅で切られやすいので
+    body直下へ移動して、画面上に確実に出す
+  */
+  if (toolSettingsPanel.parentElement !== document.body) {
+    document.body.appendChild(toolSettingsPanel);
+  }
+
   toolSettingsBtn.classList.toggle("is-active", toolSettingsOpen);
   toolSettingsPanel.classList.toggle("is-open", toolSettingsOpen);
   toolSettingsPanel.hidden = !toolSettingsOpen;
