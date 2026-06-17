@@ -1416,23 +1416,25 @@ function renderLayerTools() {
         </button>
       </div>
 
-      <div
+<div class="game-tool-setting-button-area">
+  <button
+    id="toolSettingsBtn"
+    type="button"
+    class="${toolSettingsOpen ? "is-active" : ""}"
+    title="設定"
+    aria-label="設定"
+  >
+    ⚙️
+  </button>
+</div>
+</div>
+
+<div
   id="toolSettingsPanel"
   class="game-tool-settings-panel ${toolSettingsOpen ? "is-open" : ""}"
 >
-        <button
-          id="toolSettingsBtn"
-          type="button"
-          class="${toolSettingsOpen ? "is-active" : ""}"
-          title="設定"
-          aria-label="設定"
-        >
-          ⚙️
-        </button>
-      </div>
-    </div>
 
-    <div class="game-tool-settings-panel ${toolSettingsOpen ? "is-open" : ""}">
+     
       <div class="game-tool-settings-head">
         <strong>描き心地設定</strong>
         <small>必要な時だけ調整できます</small>
