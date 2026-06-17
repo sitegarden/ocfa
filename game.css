@@ -3283,3 +3283,31 @@ body {
   outline: 3px solid rgba(145, 115, 235, 0.35) !important;
   outline-offset: 3px !important;
 }
+
+
+/* =========================
+   OCFA mobile canvas slight left adjust
+========================= */
+
+@media (max-width: 700px) {
+  /* OC描画画面：少し左へ戻す */
+  .is-drawing-mode .game-draw-screen > .game-canvas-card {
+    margin-left: 52px !important;
+    width: calc(100vw - 72px) !important;
+    max-width: calc(100vw - 72px) !important;
+  }
+
+  /* FA描画画面：少し左へ戻す */
+  .is-drawing-mode .game-fa-focus-card {
+    margin-left: 52px !important;
+    width: calc(100vw - 72px) !important;
+    max-width: calc(100vw - 72px) !important;
+  }
+
+  /* 提出バーもキャンバスと位置を合わせる */
+  .is-drawing-mode .game-submit-bar {
+    margin-left: 52px !important;
+    width: calc(100vw - 72px) !important;
+    max-width: calc(100vw - 72px) !important;
+  }
+}
