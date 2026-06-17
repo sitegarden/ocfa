@@ -4022,3 +4022,19 @@ function getCurrentTurnRemainingSeconds() {
 function canCancelSubmitNow() {
   return getCurrentTurnRemainingSeconds() > 30;
 }
+
+document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState !== "visible") return;
+  if (!currentRoom) return;
+
+  try {
+    const latestRoom = await getRoom();
+
+    if (latestRoom) {
+      currentRoom = latestRoom;
+      await renderRoom();
+    }
+  } catch (error) {
+    console.error(error);
+  }
+});
