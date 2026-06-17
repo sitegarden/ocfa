@@ -256,146 +256,122 @@ async function renderCharacter(character) {
   const work = await getWork(data.workId || "");
   const imageSrc = getCharacterImageSrc(data);
 
-  characterFile.innerHTML = `
-    <article class="character-file-card">
-      <section class="character-file-visual card">
+  const theme = getTheme(data);
+const themeStyle = getThemeStyle(theme);
+
+characterFile.innerHTML = `
+  <div class="cf-page cf-pattern-${escapeHtml(theme.pattern)}" style="${themeStyle}">
+    <section class="cf-profile-card">
+      <div class="cf-image-wrap">
         ${
           imageSrc
-            ? `<img src="${imageSrc}" alt="${escapeHtml(data.name || "キャラクター画像")}">`
-            : `<div class="empty-preview">画像がありません。</div>`
+            ? `<img class="cf-main-image" src="${escapeHtml(imageSrc)}" alt="${escapeHtml(data.name || "キャラクター画像")}">`
+            : `<div class="cf-no-image">画像がありません</div>`
         }
-      </section>
+      </div>
 
-      <section class="character-file-info card">
-        <p class="eyebrow">Character File</p>
+      <div class="cf-main-info">
+        <p class="cf-label">Character File</p>
 
         <h1>${escapeHtml(data.name || "名前未設定")}</h1>
 
         ${
           data.kana
-            ? `<p class="kana">${escapeHtml(data.kana)}</p>`
+            ? `<p class="cf-kana">${escapeHtml(data.kana)}</p>`
             : ""
         }
 
-        <div class="badge-row">
-          <span class="badge">${data.faOk ? "ファンアート歓迎" : "ファンアートは要確認"}</span>
-          ${
-            data.isPublic === false
-              ? `<span class="badge muted">非公開</span>`
-              : ""
-          }
-          ${
-            data.imageSource === "upload"
-              ? `<span class="badge muted">アップロード画像</span>`
-              : `<span class="badge muted">お絵描き画像</span>`
-          }
+        <div class="cf-badges">
+          <span>${data.faOk ? "FA歓迎" : "FA要確認"}</span>
+          ${data.isPublic === false ? `<span>非公開</span>` : ""}
+          <span>${data.imageSource === "upload" ? "アップロード画像" : "お絵描き画像"}</span>
         </div>
 
         ${
           tags
-            ? `<div class="tag-row">${tags}</div>`
+            ? `<div class="cf-tags">${tags}</div>`
             : ""
         }
 
-        <div class="button-row">
-          ${
-            isOwner
-              ? `<a class="primary-link" href="/characters/edit/?id=${character.id}">編集する</a>`
-              : ""
-          }
-          <a class="primary-link" href="/characters/">一覧へ戻る</a>
-          <a class="primary-link" href="/draw/">絵を描く</a>
+        <div class="cf-actions">
+          ${isOwner ? `<a class="primary-btn" href="/characters/edit/?id=${character.id}">編集する</a>` : ""}
+          <a class="ghost-btn" href="/characters/">一覧へ戻る</a>
+          <a class="ghost-btn" href="/draw/?characterId=${character.id}">絵を描く</a>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="card">
+    <section class="cf-link-list">
+      <article class="cf-link-card">
         <h2>プロフィール</h2>
         ${
           data.profile
             ? `<p>${nl2br(data.profile)}</p>`
             : `<p>プロフィールはまだありません。</p>`
         }
-      </section>
+      </article>
 
-      <section class="card">
+      <article class="cf-link-card">
         <h2>NG・注意事項</h2>
         ${
           data.ngText
             ? `<p>${nl2br(data.ngText)}</p>`
             : `<p>特に記載はありません。</p>`
         }
-      </section>
+      </article>
 
-      <section class="card">
+      <article class="cf-link-card">
         <h2>作者</h2>
-        <a class="primary-link" href="/users/file/?id=${escapeHtml(data.userId || "")}">
-          ${escapeHtml(ownerName)}
-        </a>
-      </section>
+        <p>
+          <a href="/users/profile/?id=${escapeHtml(data.userId || "")}">
+            ${escapeHtml(ownerName)}
+          </a>
+        </p>
+      </article>
 
-      <section class="card">
-  <h2>所属作品</h2>
+      <article class="cf-link-card">
+        <h2>所属作品</h2>
+        ${
+          work
+            ? `
+              <h3>${escapeHtml(work.data.title || "作品名未設定")}</h3>
+              <p>
+                ${escapeHtml(getWorkTypeLabel(work.data.workType))}
+                ${
+                  work.data.workType === "shared"
+                    ? ` / ${escapeHtml(getJoinTypeLabel(work.data.joinType))}`
+                    : ""
+                }
+              </p>
+              <p>${escapeHtml(work.data.description || "作品説明はまだありません。")}</p>
+              <a class="cf-mini-link" href="/works/file/?id=${work.id}">作品を見る</a>
+            `
+            : `<p>まだ作品には所属していません。</p>`
+        }
+      </article>
 
-  ${
-    work
-      ? `
-        <div class="work-mini-card">
-          <div>
-            <h3>${escapeHtml(work.data.title || "作品名未設定")}</h3>
+      <article class="cf-link-card">
+        <h2>ファンアート</h2>
+        <p>このキャラクターに向けて、イベントとは別に自由なファンアートを投稿できます。</p>
 
-            <div class="badge-row">
-              <span class="badge">${escapeHtml(getWorkTypeLabel(work.data.workType))}</span>
-              ${
-                work.data.workType === "shared"
-                  ? `<span class="badge muted">${escapeHtml(getJoinTypeLabel(work.data.joinType))}</span>`
-                  : ""
-              }
-            </div>
-
-            <p>
-              ${escapeHtml(work.data.description || "作品説明はまだありません。")}
-            </p>
-          </div>
-
-          <div class="button-row">
-            <a class="primary-link" href="/works/file/?id=${work.id}">
-              作品を見る
-            </a>
-          </div>
+        <div class="cf-actions">
+          ${
+            data.faOk
+              ? `<a class="primary-btn" href="/fanarts/new/?characterId=${character.id}">この子のFAを描く</a>`
+              : `<span class="ghost-label">ファンアートは要確認</span>`
+          }
+          <a class="ghost-btn" href="/fanarts/?characterId=${character.id}">FA一覧を見る</a>
         </div>
-      `
-      : `
-        <p>まだ作品には所属していません。</p>
-      `
-  }
-</section>
 
-      <section class="card">
+        <div id="characterFanartList" class="cf-fanart-grid">
+          <p>ファンアートを読み込み中...</p>
+        </div>
+      </article>
+    </section>
+  </div>
+`;
 
-<h2>ファンアート</h2>
-
-<p>
-  このキャラクターに向けて、イベントとは別に自由なファンアートを投稿できます。
-</p>
-
-<div class="button-row">
-  ${
-    data.faOk
-      ? `<a class="primary-link" href="/fanarts/new/?characterId=${character.id}">この子のFAを描く</a>`
-      : `<span class="badge muted">ファンアートは要確認</span>`
-  }
-
-  <a class="primary-link" href="/fanarts/">FA一覧を見る</a>
-</div>
-
-<div id="characterFanartList" class="character-grid">
-  <p>ファンアートを読み込み中...</p>
-</div>
-
-</section>
-  `;
-
-  await loadCharacterFanarts();
+await loadCharacterFanarts();
 }
 
 async function init() {
