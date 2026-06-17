@@ -200,6 +200,31 @@ async function loadCharacterFanarts() {
   }
 }
 
+function getTheme(data) {
+  const theme = data.customTheme || {};
+
+  return {
+    bgColor: theme.bgColor || "#fff7fb",
+    mainColor: theme.mainColor || "#ff7ab6",
+    subColor: theme.subColor || "#8bc6ff",
+    textColor: theme.textColor || "#3a2d35",
+    cardColor: theme.cardColor || "#ffffff",
+    radius: theme.radius || "24",
+    pattern: theme.pattern || "dot"
+  };
+}
+
+function getThemeStyle(theme) {
+  return `
+    --cf-bg: ${escapeHtml(theme.bgColor)};
+    --cf-main: ${escapeHtml(theme.mainColor)};
+    --cf-sub: ${escapeHtml(theme.subColor)};
+    --cf-text: ${escapeHtml(theme.textColor)};
+    --cf-card: ${escapeHtml(theme.cardColor)};
+    --cf-radius: ${Number(theme.radius) || 24}px;
+  `;
+}
+
 async function renderCharacter(character) {
   const data = character.data;
 
