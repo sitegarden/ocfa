@@ -2674,3 +2674,11 @@ body {
     margin-left: 62px;
   }
 }
+
+.is-drawing-mode .game-tool-settings-panel[hidden] {
+  display: none !important;
+}
+
+.is-drawing-mode .game-tool-settings-panel.is-open {
+  display: block !important;
+}
