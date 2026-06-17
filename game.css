@@ -3061,3 +3061,50 @@ body {
     max-width: calc(100vw - 86px) !important;
   }
 }
+
+/* =========================
+   OCFA settings panel body mode
+========================= */
+
+#toolSettingsPanel {
+  position: fixed !important;
+  left: 82px !important;
+  top: 88px !important;
+  right: 12px !important;
+  bottom: auto !important;
+
+  width: auto !important;
+  max-width: none !important;
+  max-height: 64vh !important;
+  overflow-y: auto !important;
+
+  display: none !important;
+  padding: 14px !important;
+  border-radius: 22px !important;
+
+  background: rgba(255, 253, 248, 0.98) !important;
+  border: 2px solid rgba(214, 198, 235, 0.95) !important;
+  box-shadow: 0 18px 42px rgba(49, 38, 60, 0.26) !important;
+
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 999999 !important;
+}
+
+#toolSettingsPanel.is-open {
+  display: block !important;
+}
+
+#toolSettingsPanel[hidden] {
+  display: none !important;
+}
+
+@media (min-width: 701px) {
+  #toolSettingsPanel {
+    left: 100px !important;
+    top: 104px !important;
+    right: auto !important;
+    width: 280px !important;
+  }
+}
