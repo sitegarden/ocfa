@@ -2090,8 +2090,24 @@ async function renderRoom() {
             </aside>
           `
           : `
-            <p id="roomMessage" class="message game-floating-message"></p>
-          `
+  <div class="game-floating-owner-tools">
+    ${
+      isOwner()
+        ? `
+          <button
+            id="forceAdvanceBtn"
+            class="danger-btn"
+            type="button"
+          >
+            未提出者を時間切れ扱いで進める
+          </button>
+        `
+        : ""
+    }
+
+    <p id="roomMessage" class="message game-floating-message"></p>
+  </div>
+`
       }
     </div>
   </div>
