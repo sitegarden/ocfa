@@ -1326,18 +1326,29 @@ function renderLayerTools() {
         </label>
       </div>
 
-      <div class="game-tool-actions">
-        <button id="penToolBtn" type="button" class="is-active">
-          ペン
-        </button>
+      <button
+  id="penToolBtn"
+  type="button"
+  class="${currentTool === "pen" ? "is-active" : ""}"
+>
+  ペン
+</button>
 
-        <button id="eraserToolBtn" type="button">
-          消しゴム
-        </button>
+<button
+  id="eraserToolBtn"
+  type="button"
+  class="${currentTool === "eraser" ? "is-active" : ""}"
+>
+  消しゴム
+</button>
 
-        <button id="fillToolBtn" type="button">
-          塗りつぶし
-        </button>
+<button
+  id="fillToolBtn"
+  type="button"
+  class="${currentTool === "fill" ? "is-active" : ""}"
+>
+  塗りつぶし
+</button>
 
         <button id="undoLayerBtn" type="button">
           1つ戻る
@@ -2557,12 +2568,14 @@ function canSwitchLayerNow() {
 }
 
 function setupLayerButtons() {
+  
   const layerBtn0 = document.getElementById("layerBtn0");
-  const layerBtn1 = document.getElementById("layerBtn1");
-  const toggleLayerBtn = document.getElementById("toggleLayerBtn");
-  const clearLayerBtn = document.getElementById("clearLayerBtn");
-  const gamePenSize = document.getElementById("gamePenSize");
-  const gamePenSizeText = document.getElementById("gamePenSizeText");
+const layerBtn1 = document.getElementById("layerBtn1");
+const toggleLayerBtn = document.getElementById("toggleLayerBtn");
+const clearLayerBtn = document.getElementById("clearLayerBtn");
+const gamePenColor = document.getElementById("gamePenColor");
+const gamePenSize = document.getElementById("gamePenSize");
+const gamePenSizeText = document.getElementById("gamePenSizeText");
   const penToolBtn = document.getElementById("penToolBtn");
   const eraserToolBtn = document.getElementById("eraserToolBtn");
   const fillToolBtn = document.getElementById("fillToolBtn");
@@ -2696,13 +2709,23 @@ function setupLayerButtons() {
     });
   }
 
-  if (gamePenSize && gamePenSizeText) {
-    gamePenSizeText.textContent = gamePenSize.value;
+  if (gamePenColor) {
+  gamePenColor.value = gamePenColorValue;
 
-    gamePenSize.addEventListener("input", () => {
-      gamePenSizeText.textContent = gamePenSize.value;
-    });
-  }
+  gamePenColor.addEventListener("input", () => {
+    gamePenColorValue = gamePenColor.value;
+  });
+}
+
+if (gamePenSize && gamePenSizeText) {
+  gamePenSize.value = String(gamePenSizeValue);
+  gamePenSizeText.textContent = String(gamePenSizeValue);
+
+  gamePenSize.addEventListener("input", () => {
+    gamePenSizeValue = Number(gamePenSize.value || 6);
+    gamePenSizeText.textContent = String(gamePenSizeValue);
+  });
+}
 
   updateToolButtons();
   updateLayerUi();
@@ -2943,7 +2966,7 @@ function drawGameCanvas(e) {
 
   if (!targetCtx) return;
 
-  const baseSize = Number(gamePenSize?.value || 6);
+  const baseSize = Number(gamePenSize?.value || gamePenSizeValue || 6);
   const pressure = Math.max(MIN_PRESSURE, Math.min(MAX_PRESSURE, point.pressure));
 
   if (pressure <= 0) {
@@ -2961,7 +2984,7 @@ function drawGameCanvas(e) {
     targetCtx.strokeStyle = "rgba(0, 0, 0, 1)";
   } else {
     targetCtx.globalCompositeOperation = "source-over";
-    targetCtx.strokeStyle = gamePenColor?.value || "#2b2430";
+    targetCtx.strokeStyle = gamePenColor?.value || gamePenColorValue || "#2b2430";
   }
 
   targetCtx.beginPath();
