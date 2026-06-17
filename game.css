@@ -3158,3 +3158,128 @@ body {
   outline: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
+
+/* =========================
+   OCFA toolbar color rewrite
+   通常ボタンを赤系から分離
+========================= */
+
+/* ツールバー本体も赤っぽさを減らす */
+.is-drawing-mode .game-tool-box {
+  background: rgba(255, 253, 248, 0.96) !important;
+  border: 2px solid rgba(170, 150, 235, 0.38) !important;
+  box-shadow: 0 14px 34px rgba(88, 72, 160, 0.16) !important;
+}
+
+/* ツールバー内の通常ボタン */
+.is-drawing-mode .game-tool-actions button,
+.is-drawing-mode .game-layer-tools button,
+.is-drawing-mode .game-layer-actions button,
+.is-drawing-mode .game-tool-setting-button-area button {
+  background:
+    linear-gradient(180deg, #ffffff, #f3efff) !important;
+  color: #3b3150 !important;
+
+  border: 1px solid rgba(125, 103, 190, 0.24) !important;
+  box-shadow:
+    0 6px 14px rgba(90, 70, 150, 0.10),
+    inset 0 2px 0 rgba(255, 255, 255, 0.75) !important;
+}
+
+/* hover / active でも赤くしない */
+.is-drawing-mode .game-tool-actions button:hover,
+.is-drawing-mode .game-layer-tools button:hover,
+.is-drawing-mode .game-layer-actions button:hover,
+.is-drawing-mode .game-tool-setting-button-area button:hover,
+.is-drawing-mode .game-tool-actions button:active,
+.is-drawing-mode .game-layer-tools button:active,
+.is-drawing-mode .game-layer-actions button:active,
+.is-drawing-mode .game-tool-setting-button-area button:active {
+  background:
+    linear-gradient(180deg, #f8f5ff, #e9e1ff) !important;
+  color: #35295a !important;
+  filter: none !important;
+}
+
+/* 選択中：紫でハッキリ */
+.is-drawing-mode .game-tool-actions button.is-active,
+.is-drawing-mode .game-layer-tools button.is-active,
+.is-drawing-mode .game-tool-setting-button-area button.is-active,
+#toolSettingsBtn.is-active {
+  background:
+    linear-gradient(180deg, #e8ddff, #cdbdff) !important;
+  color: #2f235c !important;
+
+  border: 2px solid rgba(111, 83, 205, 0.68) !important;
+  box-shadow:
+    0 0 0 3px rgba(145, 115, 235, 0.22),
+    0 10px 20px rgba(90, 70, 160, 0.14) !important;
+
+  transform: scale(1.06);
+}
+
+/* ゴミ箱だけは危険色。でも赤すぎない薄ピンク */
+.is-drawing-mode #clearLayerBtn {
+  background:
+    linear-gradient(180deg, #fff0f2, #ffd6dd) !important;
+  color: #6a2c3a !important;
+
+  border: 1px solid rgba(190, 80, 105, 0.28) !important;
+}
+
+/* ゴミ箱hoverも濃くしすぎない */
+.is-drawing-mode #clearLayerBtn:hover,
+.is-drawing-mode #clearLayerBtn:active {
+  background:
+    linear-gradient(180deg, #ffe7ec, #ffc5d0) !important;
+  color: #5d2632 !important;
+}
+
+/* =========================
+   OCFA toolbar no text selection
+========================= */
+
+.is-drawing-mode .game-tool-box,
+.is-drawing-mode .game-tool-box *,
+.is-drawing-mode .game-draw-toolbar,
+.is-drawing-mode .game-draw-toolbar *,
+.is-drawing-mode .game-layer-panel,
+.is-drawing-mode .game-layer-panel *,
+.is-drawing-mode .game-submit-bar,
+.is-drawing-mode .game-submit-bar *,
+.is-drawing-mode .game-floating-owner-tools,
+.is-drawing-mode .game-floating-owner-tools * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-drag: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* ボタン押下時の青い選択・青い枠を消す */
+.is-drawing-mode button,
+.is-drawing-mode .btn,
+#toolSettingsBtn {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation !important;
+}
+
+.is-drawing-mode button:focus,
+.is-drawing-mode button:active,
+.is-drawing-mode .btn:focus,
+.is-drawing-mode .btn:active,
+#toolSettingsBtn:focus,
+#toolSettingsBtn:active {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* キーボード操作だけは見失わないようにする */
+.is-drawing-mode button:focus-visible,
+.is-drawing-mode .btn:focus-visible {
+  outline: 3px solid rgba(145, 115, 235, 0.35) !important;
+  outline-offset: 3px !important;
+}
