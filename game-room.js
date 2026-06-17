@@ -74,6 +74,7 @@ let gamePenSizeValue = 6;
 
 let stabilizerEnabled = true;
 let stabilizerStrength = 0.45;
+let toolSettingsOpen = false;
 
 
 /*
@@ -1314,6 +1315,7 @@ function renderOwnerArea() {
   `;
 }
 
+
 function renderLayerTools() {
   return `
     <div class="game-draw-toolbar" aria-label="描画ツール">
@@ -1371,58 +1373,6 @@ function renderLayerTools() {
         </button>
       </div>
 
-      <div class="game-pressure-box">
-        <label class="game-pressure-toggle">
-          <input
-            id="gamePressureToggle"
-            type="checkbox"
-            ${pressureEnabled ? "checked" : ""}
-          >
-          <span>
-            筆圧
-            <small>ペンのみ</small>
-          </span>
-        </label>
-      </div>
-
-      <div class="game-stabilizer-box">
-        <label class="game-stabilizer-toggle">
-          <input
-            id="gameStabilizerToggle"
-            type="checkbox"
-            ${stabilizerEnabled ? "checked" : ""}
-          >
-          <span>
-            手ぶれ補正
-            <small>なめらか</small>
-          </span>
-        </label>
-
-        <label class="game-stabilizer-strength">
-          <span>強さ</span>
-          <input
-            id="gameStabilizerStrength"
-            type="range"
-            min="0"
-            max="80"
-            value="${Math.round(stabilizerStrength * 100)}"
-          >
-        </label>
-      </div>
-    </div>
-
-    <div class="game-layer-panel">
-      <div class="game-layer-head">
-        <div>
-          <p class="eyebrow">Layer</p>
-          <h3>レイヤー</h3>
-        </div>
-
-        <p id="layerStatusText" class="mini-info">
-          現在：レイヤー2
-        </p>
-      </div>
-
       <div class="game-layer-tools">
         <button
           id="layerBtn1"
@@ -1464,6 +1414,68 @@ function renderLayerTools() {
         >
           🗑
         </button>
+      </div>
+
+      <div class="game-tool-setting-button-area">
+        <button
+          id="toolSettingsBtn"
+          type="button"
+          class="${toolSettingsOpen ? "is-active" : ""}"
+          title="設定"
+          aria-label="設定"
+        >
+          ⚙️
+        </button>
+      </div>
+    </div>
+
+    <div class="game-tool-settings-panel ${toolSettingsOpen ? "is-open" : ""}">
+      <div class="game-tool-settings-head">
+        <strong>描き心地設定</strong>
+        <small>必要な時だけ調整できます</small>
+      </div>
+
+      <label class="game-pressure-toggle">
+        <input
+          id="gamePressureToggle"
+          type="checkbox"
+          ${pressureEnabled ? "checked" : ""}
+        >
+        <span>
+          筆圧を使う
+          <small>Apple Pencilなど対応ペンのみ</small>
+        </span>
+      </label>
+
+      <label class="game-stabilizer-toggle">
+        <input
+          id="gameStabilizerToggle"
+          type="checkbox"
+          ${stabilizerEnabled ? "checked" : ""}
+        >
+        <span>
+          手ぶれ補正
+          <small>線をなめらかにします</small>
+        </span>
+      </label>
+
+      <label class="game-stabilizer-strength">
+        <span>手ぶれ補正の強さ</span>
+        <input
+          id="gameStabilizerStrength"
+          type="range"
+          min="0"
+          max="80"
+          value="${Math.round(stabilizerStrength * 100)}"
+        >
+      </label>
+    </div>
+
+    <div class="game-layer-panel">
+      <div class="game-layer-head">
+        <p id="layerStatusText" class="mini-info">
+          現在：レイヤー2
+        </p>
       </div>
     </div>
   `;
@@ -2642,10 +2654,12 @@ const gamePenSizeText = document.getElementById("gamePenSizeText");
   const eraserToolBtn = document.getElementById("eraserToolBtn");
   const fillToolBtn = document.getElementById("fillToolBtn");
   const undoLayerBtn = document.getElementById("undoLayerBtn");
+  
   const gamePressureToggle = document.getElementById("gamePressureToggle");
-
 const gameStabilizerToggle = document.getElementById("gameStabilizerToggle");
 const gameStabilizerStrength = document.getElementById("gameStabilizerStrength");
+const toolSettingsBtn = document.getElementById("toolSettingsBtn");
+const toolSettingsPanel = document.querySelector(".game-tool-settings-panel");
 
   function updateToolButtons() {
     if (penToolBtn) {
@@ -2659,6 +2673,17 @@ const gameStabilizerStrength = document.getElementById("gameStabilizerStrength")
     if (fillToolBtn) {
       fillToolBtn.classList.toggle("is-active", currentTool === "fill");
     }
+    if (toolSettingsBtn && toolSettingsPanel) {
+  toolSettingsBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    toolSettingsOpen = !toolSettingsOpen;
+
+    toolSettingsBtn.classList.toggle("is-active", toolSettingsOpen);
+    toolSettingsPanel.classList.toggle("is-open", toolSettingsOpen);
+  });
+}
   }
 
   if (penToolBtn) {
