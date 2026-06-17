@@ -64,18 +64,25 @@ function setFormState() {
   setMessage("部屋を作成できます。");
 }
 
+function getDefaultRoomTitle() {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hour = String(now.getHours()).padStart(2, "0");
+  const minute = String(now.getMinutes()).padStart(2, "0");
+
+  return `${year}/${month}/${day} ${hour}:${minute}`;
+}
+
 async function createRoom() {
   if (!currentUser) {
     setMessage("部屋を作るにはログインしてください。");
     return;
   }
 
-  const title = roomTitle.value.trim();
-
-  if (!title) {
-    setMessage("部屋名を入力してください。");
-    return;
-  }
+  const title = roomTitle.value.trim() || getDefaultRoomTitle();
 
   const selectedTurnSeconds = Number(turnSeconds.value || 120);
   const selectedMaxPlayers = Number(maxPlayers.value || 4);
