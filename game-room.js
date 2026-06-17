@@ -1416,7 +1416,10 @@ function renderLayerTools() {
         </button>
       </div>
 
-      <div class="game-tool-setting-button-area">
+      <div
+  id="toolSettingsPanel"
+  class="game-tool-settings-panel ${toolSettingsOpen ? "is-open" : ""}"
+>
         <button
           id="toolSettingsBtn"
           type="button"
@@ -2659,7 +2662,7 @@ const gamePenSizeText = document.getElementById("gamePenSizeText");
 const gameStabilizerToggle = document.getElementById("gameStabilizerToggle");
 const gameStabilizerStrength = document.getElementById("gameStabilizerStrength");
 const toolSettingsBtn = document.getElementById("toolSettingsBtn");
-const toolSettingsPanel = document.querySelector(".game-tool-settings-panel");
+const toolSettingsPanel = document.getElementById("toolSettingsPanel");
 
   function updateToolButtons() {
     if (penToolBtn) {
@@ -2676,6 +2679,8 @@ const toolSettingsPanel = document.querySelector(".game-tool-settings-panel");
   }
 
     if (toolSettingsBtn && toolSettingsPanel) {
+  toolSettingsPanel.hidden = !toolSettingsOpen;
+
   toolSettingsBtn.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -2684,6 +2689,7 @@ const toolSettingsPanel = document.querySelector(".game-tool-settings-panel");
 
     toolSettingsBtn.classList.toggle("is-active", toolSettingsOpen);
     toolSettingsPanel.classList.toggle("is-open", toolSettingsOpen);
+    toolSettingsPanel.hidden = !toolSettingsOpen;
   });
 }
 
