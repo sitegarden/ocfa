@@ -309,24 +309,18 @@ function getOriginalSubmittedCount() {
     submittedPlayerIds.add(original.data.playerId);
   });
 
-  return submittedPlayerIds.size;
+  return getOcPlayers().filter((player) => {
+    return submittedPlayerIds.has(player.id);
+  }).length;
 }
 
 function getTargetPlayerForCurrentRound(myPlayer) {
   if (!myPlayer) return null;
-  if (!currentPlayers.length) return null;
 
   const round = Number(currentRoom?.data?.currentRound || 0);
+  const targets = getFanartTargetsForPlayer(myPlayer);
 
-  const myIndex = currentPlayers.findIndex((player) => {
-    return player.id === myPlayer.id;
-  });
-
-  if (myIndex < 0) return null;
-
-  const targetIndex = (myIndex + round + 1) % currentPlayers.length;
-
-  return currentPlayers[targetIndex];
+  return targets[round] || null;
 }
 
 function getOriginalByPlayerId(playerId) {
@@ -620,11 +614,13 @@ async function createMissingFanartForPlayer(player) {
   return localFanart;
 }
 
-async function createMissingFanartsForCurrentRound() {
+async function createMissingOriginalsForAllPlayers() {
   await wait(TIME_UP_GRACE_MS);
 
-  for (const player of currentPlayers) {
-    await createMissingFanartForPlayer(player);
+  const ocPlayers = getOcPlayers();
+
+  for (const player of ocPlayers) {
+    await createMissingOriginalForPlayer(player);
   }
 }
 
@@ -660,9 +656,9 @@ async function advanceToFirstFanartRound() {
 async function advanceToNextFanartRoundOrReveal() {
   const currentRound = Number(currentRoom.data.currentRound || 0);
   const nextRound = currentRound + 1;
-  const lastRoundIndex = currentPlayers.length - 2;
+  const maxRoundCount = getMaxFanartRoundCount();
 
-  if (nextRound > lastRoundIndex) {
+  if (nextRound >= maxRoundCount) {
     await updateDoc(doc(db, "ocGameRooms", roomId), {
       status: "reveal",
       revealedAt: serverTimestamp(),
@@ -684,9 +680,13 @@ async function checkAllOriginalsSubmitted() {
   if (currentRoom.data.status !== "drawing_oc") return;
   if (!isOwner()) return;
   if (advancingToFa) return;
+
+  const ocPlayers = getOcPlayers();
+
+  if (ocPlayers.length < 1) return;
   if (currentPlayers.length < 2) return;
 
-  const allSubmitted = currentPlayers.every((player) => {
+  const allSubmitted = ocPlayers.every((player) => {
     return getSubmittedOriginalByPlayerId(player.id);
   });
 
@@ -732,6 +732,53 @@ function getFanartsForCurrentRound() {
   return [...fanartMap.values()];
 }
 
+function isFaOnlyPlayer(player) {
+  return player?.data?.playStyle === "fa_only";
+}
+
+function isOcPlayer(player) {
+  return !isFaOnlyPlayer(player);
+}
+
+function getOcPlayers() {
+  return currentPlayers.filter((player) => {
+    return player.data.isLeft !== true && isOcPlayer(player);
+  });
+}
+
+function getFanartTargetsForPlayer(player) {
+  if (!player) return [];
+
+  const ocPlayers = getOcPlayers();
+
+  return ocPlayers.filter((targetPlayer) => {
+    // 普通参加者は自分のOCには描かない
+    if (!isFaOnlyPlayer(player) && targetPlayer.id === player.id) {
+      return false;
+    }
+
+    // 元OCが存在する人だけ対象
+    return Boolean(getOriginalByPlayerId(targetPlayer.id));
+  });
+}
+
+function getMaxFanartRoundCount() {
+  if (!currentPlayers.length) return 0;
+
+  const counts = currentPlayers.map((player) => {
+    return getFanartTargetsForPlayer(player).length;
+  });
+
+  return Math.max(0, ...counts);
+}
+
+function hasFanartTargetThisRound(player) {
+  const round = Number(currentRoom?.data?.currentRound || 0);
+  const targets = getFanartTargetsForPlayer(player);
+
+  return Boolean(targets[round]);
+}
+
 function getFanartSubmittedCountForCurrentRound() {
   const artistIds = new Set();
 
@@ -761,9 +808,20 @@ async function checkAllFanartsSubmitted() {
   if (advancingRound) return;
   if (currentPlayers.length < 2) return;
 
-  const allSubmitted = currentPlayers.every((player) => {
-    return hasPlayerSubmittedFanartThisRound(player);
+  const activeArtists = currentPlayers.filter((player) => {
+    return hasFanartTargetThisRound(player);
   });
+
+  const maxRoundCount = getMaxFanartRoundCount();
+
+  if (maxRoundCount <= 0) return;
+
+  const allSubmitted =
+    activeArtists.length > 0
+      ? activeArtists.every((player) => {
+          return hasPlayerSubmittedFanartThisRound(player);
+        })
+      : true;
 
   const timeExpired = isFanartTimeExpired();
 
