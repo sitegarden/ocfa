@@ -2673,6 +2673,8 @@ const toolSettingsPanel = document.querySelector(".game-tool-settings-panel");
     if (fillToolBtn) {
       fillToolBtn.classList.toggle("is-active", currentTool === "fill");
     }
+  }
+
     if (toolSettingsBtn && toolSettingsPanel) {
   toolSettingsBtn.addEventListener("click", (event) => {
     event.preventDefault();
@@ -2684,7 +2686,6 @@ const toolSettingsPanel = document.querySelector(".game-tool-settings-panel");
     toolSettingsPanel.classList.toggle("is-open", toolSettingsOpen);
   });
 }
-  }
 
   if (penToolBtn) {
     penToolBtn.addEventListener("click", (event) => {
