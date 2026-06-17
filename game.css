@@ -2957,3 +2957,107 @@ body {
     max-width: 100% !important;
   }
 }
+
+
+/* =========================
+   OCFA mobile toolbar + canvas final fix
+========================= */
+
+@media (max-width: 700px) {
+  /* ⚙️パネルがツールバー内で切られるのを防ぐ */
+  .is-drawing-mode .game-tool-box {
+    overflow: visible !important;
+    max-height: none !important;
+    z-index: 10000 !important;
+  }
+
+  .is-drawing-mode .game-draw-toolbar {
+    overflow: visible !important;
+  }
+
+  /* 設定パネルをツールバーの右側に強制表示 */
+  .is-drawing-mode .game-tool-settings-panel {
+    position: fixed !important;
+    left: 76px !important;
+    top: 86px !important;
+    right: 10px !important;
+    bottom: auto !important;
+
+    width: auto !important;
+    max-width: none !important;
+    max-height: 64vh !important;
+    overflow-y: auto !important;
+
+    padding: 14px !important;
+    border-radius: 22px !important;
+
+    background: rgba(255, 253, 248, 0.98) !important;
+    border: 2px solid rgba(214, 198, 235, 0.95) !important;
+    box-shadow: 0 18px 42px rgba(49, 38, 60, 0.24) !important;
+
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    z-index: 10050 !important;
+  }
+
+  .is-drawing-mode .game-tool-settings-panel[hidden] {
+    display: none !important;
+  }
+
+  .is-drawing-mode .game-tool-settings-panel.is-open {
+    display: block !important;
+  }
+
+  #toolSettingsBtn {
+    position: relative !important;
+    z-index: 10060 !important;
+  }
+
+  /* ここからキャンバスの大きさ調整 */
+  .is-drawing-mode .game-stage-panel {
+    padding-left: 0 !important;
+    padding-right: 4px !important;
+  }
+
+  /* FA全体を右に寄せる。ただし二重に狭くしない */
+  .is-drawing-mode .game-fa-focus-card {
+    padding-left: 0 !important;
+    margin-left: 66px !important;
+    width: calc(100vw - 86px) !important;
+    max-width: calc(100vw - 86px) !important;
+    align-items: stretch !important;
+  }
+
+  .is-drawing-mode .game-fa-reference-inline,
+  .is-drawing-mode .game-fa-focus-card .game-canvas-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .is-drawing-mode .game-fa-focus-card .game-canvas {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* OC単体描画も同じく右寄せ */
+  .is-drawing-mode .game-draw-screen > .game-canvas-card {
+    margin-left: 66px !important;
+    width: calc(100vw - 86px) !important;
+    max-width: calc(100vw - 86px) !important;
+  }
+
+  .is-drawing-mode .game-draw-screen > .game-canvas-card .game-canvas {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* 提出バーも左バーに隠れないように */
+  .is-drawing-mode .game-submit-bar {
+    margin-left: 66px !important;
+    width: calc(100vw - 86px) !important;
+    max-width: calc(100vw - 86px) !important;
+  }
+}
