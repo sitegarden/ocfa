@@ -357,6 +357,50 @@ function getMyFanartForCurrentRound(myPlayer, targetPlayer) {
   return getLatestItem(fanarts);
 }
 
+
+function drawSubmissionWatermark(ctx, canvas, name = "匿名", label = "OC") {
+  const safeName = String(name || "匿名").trim() || "匿名";
+  const safeLabel = String(label || "OC").trim().toUpperCase();
+
+  const padding = Math.max(18, Math.floor(canvas.width * 0.022));
+  const labelFontSize = Math.max(24, Math.floor(canvas.width * 0.04));
+  const nameFontSize = Math.max(18, Math.floor(canvas.width * 0.028));
+
+  const x = canvas.width - padding;
+  const nameY = canvas.height - padding;
+  const labelY = nameY - nameFontSize - 8;
+
+  ctx.save();
+  ctx.textAlign = "right";
+  ctx.textBaseline = "bottom";
+  ctx.lineJoin = "round";
+
+  // OC / FA
+  ctx.globalAlpha = 0.26;
+  ctx.font = `900 ${labelFontSize}px sans-serif`;
+  ctx.lineWidth = Math.max(3, Math.floor(labelFontSize * 0.12));
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+  ctx.strokeText(safeLabel, x, labelY);
+
+  ctx.fillStyle =
+    safeLabel === "FA"
+      ? "rgba(110, 92, 255, 0.95)"
+      : "rgba(60, 150, 255, 0.95)";
+  ctx.fillText(safeLabel, x, labelY);
+
+  // by 名前
+  ctx.globalAlpha = 0.72;
+  ctx.font = `bold ${nameFontSize}px sans-serif`;
+  ctx.lineWidth = Math.max(2, Math.floor(nameFontSize * 0.12));
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.92)";
+  ctx.strokeText(`by ${safeName}`, x, nameY);
+
+  ctx.fillStyle = "rgba(43, 36, 48, 0.92)";
+  ctx.fillText(`by ${safeName}`, x, nameY);
+
+  ctx.restore();
+}
+
 function createTimeUpImageData(name, label = "OC") {
   const canvas = document.createElement("canvas");
   canvas.width = GAME_CANVAS_SIZE;
@@ -381,11 +425,24 @@ function createTimeUpImageData(name, label = "OC") {
     canvas.height / 2 + 26
   );
 
-  ctx.globalAlpha = 0.72;
-  ctx.textAlign = "right";
-  ctx.textBaseline = "bottom";
-  ctx.font = "bold 24px sans-serif";
-  ctx.fillText(`by ${name || "匿名"}`, canvas.width - 22, canvas.height - 18);
+  drawSubmissionWatermark(ctx, canvas, name, label);
+
+  return canvas.toDataURL("image/jpeg", 0.82);
+}
+
+function createSubmittedImageData(sourceCanvas, name, label = "OC") {
+  const canvas = document.createElement("canvas");
+  canvas.width = GAME_CANVAS_SIZE;
+  canvas.height = GAME_CANVAS_SIZE;
+
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#fffdf8";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.drawImage(sourceCanvas, 0, 0, canvas.width, canvas.height);
+
+  drawSubmissionWatermark(ctx, canvas, name, label);
 
   return canvas.toDataURL("image/jpeg", 0.82);
 }
@@ -2949,24 +3006,6 @@ function stopGameDraw(e) {
   }
 }
 
-function addWatermarkToGameCanvas(name) {
-  if (!gameCtx || !gameCanvas) return;
-
-  redrawGameCanvas();
-
-  gameCtx.save();
-
-  gameCtx.globalAlpha = 0.72;
-  gameCtx.fillStyle = "#2b2430";
-  gameCtx.font = "bold 24px sans-serif";
-  gameCtx.textAlign = "right";
-  gameCtx.textBaseline = "bottom";
-
-  gameCtx.fillText(`by ${name}`, gameCanvas.width - 22, gameCanvas.height - 18);
-
-  gameCtx.restore();
-}
-
 function getGameCanvasImageData() {
   if (!gameCanvas) return "";
 
@@ -3393,9 +3432,11 @@ async function submitOriginalOc(isAutoSubmit = false) {
       redrawGameCanvas();
     }
 
-    addWatermarkToGameCanvas(getPlayerCreditName(myPlayer));
-
-    const imageData = getGameCanvasImageData();
+    const imageData = createSubmittedImageData(
+  gameCanvas,
+  getPlayerCreditName(myPlayer),
+  "OC"
+);
 
     const originalData = {
       roomId,
@@ -3542,9 +3583,11 @@ async function submitFanart(isAutoSubmit = false) {
       redrawGameCanvas();
     }
 
-    addWatermarkToGameCanvas(getPlayerCreditName(myPlayer));
-
-    const imageData = getGameCanvasImageData();
+    const imageData = createSubmittedImageData(
+  gameCanvas,
+  getPlayerCreditName(myPlayer),
+  "FA"
+);
 
     const fanartData = {
       roomId,
