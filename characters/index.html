@@ -8,6 +8,7 @@
   <meta name="description" content="OCFAに登録されたオリジナルキャラクター一覧です。">
 
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/characters.css">
 
   <link rel="icon" type="image/png" href="/assets/favicon.png">
   <link rel="apple-touch-icon" href="/assets/favicon.png">
@@ -16,22 +17,20 @@
 <body>
   <header id="siteHeader"></header>
 
-  <main class="page">
-    <section class="page-head">
+  <main class="page characters-page">
+    <section class="characters-hero">
       <p class="eyebrow">Characters</p>
       <h1>キャラ一覧</h1>
-      <p>
-        下書きからキャラクターとして登録された、オリジナルキャラクターたちです。
-      </p>
+      <p>みんなのオリジナルキャラクターを見に行こう。</p>
     </section>
 
-    <section id="characterList" class="character-list">
+    <section id="characterList" class="characters-grid">
       <p>読み込み中...</p>
     </section>
   </main>
 
   <footer id="siteFooter"></footer>
-  
+
   <script type="module" src="/app.js"></script>
   <script type="module" src="/characters.js"></script>
 </body>
