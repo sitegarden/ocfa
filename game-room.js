@@ -1762,19 +1762,6 @@ if (!myPlayer) {
   `;
 }
 
-if (isFaOnlyPlayer(myPlayer)) {
-  return `
-    <section class="panel-soft">
-      <p class="mini-label">FA Only</p>
-      <h2>OCターン待機中</h2>
-      <p>
-        あなたはFAのみ参加です。
-        ほかの参加者がOCを提出するまで待ってください。
-      </p>
-    </section>
-  `;
-}
-
     const targetPlayer = getTargetPlayerForCurrentRound(myPlayer);
     const targetOriginal = targetPlayer
       ? getOriginalByPlayerId(targetPlayer.id)
@@ -1918,6 +1905,19 @@ if (isFaOnlyPlayer(myPlayer)) {
       </section>
     `;
   }
+
+  if (isFaOnlyPlayer(myPlayer)) {
+  return `
+    <section class="panel-soft">
+      <p class="mini-label">FA Only</p>
+      <h2>OCターン待機中</h2>
+      <p>
+        あなたはFAのみ参加です。
+        ほかの参加者がOCを提出するまで待ってください。
+      </p>
+    </section>
+  `;
+}
 
   const submitted = await getMyOriginal(myPlayer.id);
 
