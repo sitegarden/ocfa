@@ -903,6 +903,7 @@ async function forceAdvanceByOwner() {
 async function joinAsGuest() {
   const nameInput = document.getElementById("guestName");
   const handleInput = document.getElementById("guestHandle");
+  const faOnlyInput = document.getElementById("guestFaOnly");
   const message = document.getElementById("roomMessage");
 
   const alreadyJoined = getMyPlayer();
@@ -946,6 +947,7 @@ async function joinAsGuest() {
       guestId,
       name,
       guestHandle,
+      playStyle: faOnlyInput?.checked ? "fa_only" : "normal",
       isGuest: true,
       isOwner: false,
       order: currentPlayers.length,
@@ -968,6 +970,7 @@ async function joinAsGuest() {
 
 async function joinAsLoginUser() {
   const message = document.getElementById("roomMessage");
+  const faOnlyInput = document.getElementById("loginFaOnly");
 
   if (!currentUser) {
     if (message) {
@@ -1016,6 +1019,7 @@ async function joinAsLoginUser() {
       guestId: "",
       name,
       guestHandle: "",
+      playStyle: faOnlyInput?.checked ? "fa_only" : "normal",
       isGuest: false,
       isOwner: currentRoom.data.ownerId === currentUser.uid,
       order: currentPlayers.length,
@@ -1147,14 +1151,19 @@ function renderPlayers() {
                 }
 
                 <p class="mini-info">
-                  ${
-                    data.isOwner
-                      ? "オーナー"
-                      : data.isGuest
-                        ? "ゲスト"
-                        : "ログイン参加"
-                  }
-                </p>
+  ${
+    data.isOwner
+      ? "オーナー"
+      : data.isGuest
+        ? "ゲスト"
+        : "ログイン参加"
+  }
+  ${
+    data.playStyle === "fa_only"
+      ? " / FAのみ"
+      : ""
+  }
+</p>
               </div>
 
               <span>#${Number(data.order || 0) + 1}</span>
@@ -1212,11 +1221,19 @@ function renderJoinArea() {
           ? `
             <p>ログイン中の名前で参加できます。</p>
 
-            <div class="actions">
-              <button id="loginJoinBtn" class="primary-btn" type="button">
-                ログイン名で参加する
-              </button>
-            </div>
+<label class="game-join-style-option">
+  <input id="loginFaOnly" type="checkbox">
+  <span>
+    FAのみで参加する
+    <small>OCは描かず、FAターンから参加します</small>
+  </span>
+</label>
+
+<div class="actions">
+  <button id="loginJoinBtn" class="primary-btn" type="button">
+    ログイン名で参加する
+  </button>
+</div>
           `
           : `
             <p>ゲスト参加できます。名前なしの場合は匿名名になります。</p>
@@ -1243,6 +1260,14 @@ function renderJoinArea() {
                   autocomplete="off"
                 >
               </label>
+
+              <label class="game-join-style-option">
+  <input id="guestFaOnly" type="checkbox">
+  <span>
+    FAのみで参加する
+    <small>OCは描かず、FAターンから参加します</small>
+  </span>
+</label>
 
               <p class="mini-info">
                 入力すると参加者一覧に表示されます。誰かわかるためのメモなので、空欄でも参加できます。
