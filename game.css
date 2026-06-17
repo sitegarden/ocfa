@@ -3311,3 +3311,54 @@ body {
     max-width: calc(100vw - 72px) !important;
   }
 }
+
+/* =========================
+   OCFA canvas offset: phone only
+   iPadはずらさない
+========================= */
+
+/* まず700px以下で入れたズレを一旦リセット */
+@media (min-width: 501px) {
+  .is-drawing-mode .game-draw-screen > .game-canvas-card,
+  .is-drawing-mode .game-fa-focus-card,
+  .is-drawing-mode .game-submit-bar {
+    margin-left: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    padding-left: 0 !important;
+  }
+
+  .is-drawing-mode .game-fa-focus-card .game-canvas-card {
+    margin-left: 0 !important;
+    width: min(100%, 820px) !important;
+    max-width: 820px !important;
+  }
+}
+
+/* スマホだけ、左ツールバーを避けて少し右へ */
+@media (max-width: 500px) {
+  .is-drawing-mode .game-draw-screen > .game-canvas-card {
+    margin-left: 52px !important;
+    width: calc(100vw - 72px) !important;
+    max-width: calc(100vw - 72px) !important;
+  }
+
+  .is-drawing-mode .game-fa-focus-card {
+    margin-left: 52px !important;
+    width: calc(100vw - 72px) !important;
+    max-width: calc(100vw - 72px) !important;
+    padding-left: 0 !important;
+  }
+
+  .is-drawing-mode .game-fa-focus-card .game-canvas-card {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .is-drawing-mode .game-submit-bar {
+    margin-left: 52px !important;
+    width: calc(100vw - 72px) !important;
+    max-width: calc(100vw - 72px) !important;
+  }
+}
