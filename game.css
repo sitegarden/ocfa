@@ -3108,3 +3108,53 @@ body {
     width: 280px !important;
   }
 }
+
+
+/* =========================
+   OCFA owner skip button static + no selection
+========================= */
+
+/* 描画中の強制スキップボタンを固定しない */
+.is-drawing-mode .game-floating-owner-tools {
+  position: static !important;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: auto !important;
+
+  display: grid !important;
+  justify-items: stretch !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+
+  width: 100% !important;
+  max-width: none !important;
+  margin: 12px 0 0 !important;
+}
+
+/* ボタンを普通の下部ボタンっぽくする */
+.is-drawing-mode .game-floating-owner-tools .danger-btn {
+  width: 100% !important;
+  min-height: 44px !important;
+  padding: 10px 14px !important;
+  border-radius: 18px !important;
+  font-size: 13px !important;
+}
+
+/* 青い範囲選択・長押しメニューを防ぐ */
+.game-floating-owner-tools,
+.game-floating-owner-tools *,
+.game-floating-owner-tools .danger-btn {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-drag: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation !important;
+}
+
+/* 押した時の青っぽい選択感を消す */
+.game-floating-owner-tools .danger-btn:focus,
+.game-floating-owner-tools .danger-btn:active {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
