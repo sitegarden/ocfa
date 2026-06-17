@@ -1318,57 +1318,57 @@ function renderLayerTools() {
   return `
     <div class="game-draw-toolbar" aria-label="描画ツール">
       <div class="game-draw-tools">
-        <label class="game-color-tool">
+        <label class="game-color-tool" title="色" aria-label="色">
           <span>色</span>
           <input id="gamePenColor" type="color" value="${escapeHtml(gamePenColorValue)}">
         </label>
 
-        <label class="game-size-tool">
+        <label class="game-size-tool" title="太さ" aria-label="太さ">
           <span>太さ</span>
           <input id="gamePenSize" type="range" min="1" max="28" value="${gamePenSizeValue}">
-<strong id="gamePenSizeText">${gamePenSizeValue}</strong>
+          <strong id="gamePenSizeText">${gamePenSizeValue}</strong>
         </label>
       </div>
 
-     <button
-  id="penToolBtn"
-  type="button"
-  class="${currentTool === "pen" ? "is-active" : ""}"
-  title="ペン"
-  aria-label="ペン"
->
-  ✏️
-</button>
+      <div class="game-tool-actions">
+        <button
+          id="penToolBtn"
+          type="button"
+          class="${currentTool === "pen" ? "is-active" : ""}"
+          title="ペン"
+          aria-label="ペン"
+        >
+          ✏️
+        </button>
 
-<button
-  id="eraserToolBtn"
-  type="button"
-  class="${currentTool === "eraser" ? "is-active" : ""}"
-  title="消しゴム"
-  aria-label="消しゴム"
->
-  🧽
-</button>
+        <button
+          id="eraserToolBtn"
+          type="button"
+          class="${currentTool === "eraser" ? "is-active" : ""}"
+          title="消しゴム"
+          aria-label="消しゴム"
+        >
+          🧽
+        </button>
 
-<button
-  id="fillToolBtn"
-  type="button"
-  class="${currentTool === "fill" ? "is-active" : ""}"
-  title="塗りつぶし"
-  aria-label="塗りつぶし"
->
-  🪣
-</button>
+        <button
+          id="fillToolBtn"
+          type="button"
+          class="${currentTool === "fill" ? "is-active" : ""}"
+          title="塗りつぶし"
+          aria-label="塗りつぶし"
+        >
+          🪣
+        </button>
 
-<button
-  id="undoLayerBtn"
-  type="button"
-  title="1つ戻る"
-  aria-label="1つ戻る"
->
-  ↩️
-</button>
-
+        <button
+          id="undoLayerBtn"
+          type="button"
+          title="1つ戻る"
+          aria-label="1つ戻る"
+        >
+          ↩️
+        </button>
       </div>
 
       <div class="game-pressure-box">
@@ -1379,37 +1379,37 @@ function renderLayerTools() {
             ${pressureEnabled ? "checked" : ""}
           >
           <span>
-            筆圧を使う
-            <small>Apple Pencilなど対応ペンのみ</small>
+            筆圧
+            <small>ペンのみ</small>
           </span>
         </label>
       </div>
+
+      <div class="game-stabilizer-box">
+        <label class="game-stabilizer-toggle">
+          <input
+            id="gameStabilizerToggle"
+            type="checkbox"
+            ${stabilizerEnabled ? "checked" : ""}
+          >
+          <span>
+            手ぶれ補正
+            <small>なめらか</small>
+          </span>
+        </label>
+
+        <label class="game-stabilizer-strength">
+          <span>強さ</span>
+          <input
+            id="gameStabilizerStrength"
+            type="range"
+            min="0"
+            max="80"
+            value="${Math.round(stabilizerStrength * 100)}"
+          >
+        </label>
+      </div>
     </div>
-
-    <div class="game-stabilizer-box">
-  <label class="game-stabilizer-toggle">
-    <input
-      id="gameStabilizerToggle"
-      type="checkbox"
-      ${stabilizerEnabled ? "checked" : ""}
-    >
-    <span>
-      手ぶれ補正
-      <small>線をなめらかにします</small>
-    </span>
-  </label>
-
-  <label class="game-stabilizer-strength">
-    <span>強さ</span>
-    <input
-      id="gameStabilizerStrength"
-      type="range"
-      min="0"
-      max="80"
-      value="${Math.round(stabilizerStrength * 100)}"
-    >
-  </label>
-</div>
 
     <div class="game-layer-panel">
       <div class="game-layer-head">
@@ -1424,22 +1424,45 @@ function renderLayerTools() {
       </div>
 
       <div class="game-layer-tools">
-        <button id="toggleLayerBtn" type="button" title="表示/非表示" aria-label="表示/非表示">
-  👁
-</button>
+        <button
+          id="layerBtn1"
+          type="button"
+          class="layer-btn layer-top ${activeLayerIndex === 1 ? "is-active" : ""}"
+          title="上レイヤー"
+          aria-label="上レイヤー"
+        >
+          上
+        </button>
 
-<button id="clearLayerBtn" type="button" class="danger-btn" title="消す" aria-label="消す">
-  🗑
-</button>
+        <button
+          id="layerBtn0"
+          type="button"
+          class="layer-btn layer-bottom ${activeLayerIndex === 0 ? "is-active" : ""}"
+          title="下レイヤー"
+          aria-label="下レイヤー"
+        >
+          下
+        </button>
       </div>
 
       <div class="game-layer-actions">
-        <button id="toggleLayerBtn" type="button">
-          表示/非表示
+        <button
+          id="toggleLayerBtn"
+          type="button"
+          title="表示/非表示"
+          aria-label="表示/非表示"
+        >
+          👁
         </button>
 
-        <button id="clearLayerBtn" type="button" class="danger-btn">
-          消す
+        <button
+          id="clearLayerBtn"
+          type="button"
+          class="danger-btn"
+          title="消す"
+          aria-label="消す"
+        >
+          🗑
         </button>
       </div>
     </div>
