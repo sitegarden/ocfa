@@ -76,6 +76,9 @@ let stabilizerEnabled = true;
 let stabilizerStrength = 0.45;
 let toolSettingsOpen = false;
 
+let lastRenderedRoomStatus = "";
+let lastRenderedRoomRound = -1;
+
 
 /*
   筆圧ONでも細くなりすぎないようにする
@@ -1355,6 +1358,7 @@ function shouldProtectCanvasFromRealtimeRender(previousRoomData = null) {
   if (!currentRoom) return false;
 
   const status = currentRoom.data.status;
+  const currentRound = Number(currentRoom.data.currentRound || 0);
 
   if (status !== "drawing_oc" && status !== "drawing_fa") {
     return false;
@@ -1368,14 +1372,23 @@ function shouldProtectCanvasFromRealtimeRender(previousRoomData = null) {
     return false;
   }
 
+  /*
+    前回「実際に描画した画面」と今の部屋状態が違うなら、
+    キャンバス保護よりも画面更新を優先する。
+  */
+  if (lastRenderedRoomStatus && lastRenderedRoomStatus !== status) {
+    return false;
+  }
+
+  if (lastRenderedRoomRound !== -1 && lastRenderedRoomRound !== currentRound) {
+    return false;
+  }
+
   if (previousRoomData) {
     const previousStatus = previousRoomData.status;
-    const currentStatus = currentRoom.data.status;
-
     const previousRound = Number(previousRoomData.currentRound || 0);
-    const currentRound = Number(currentRoom.data.currentRound || 0);
 
-    if (previousStatus !== currentStatus) {
+    if (previousStatus !== status) {
       return false;
     }
 
@@ -2163,6 +2176,9 @@ async function renderRoom() {
   const isDrawingStatus =
   room.status === "drawing_oc" || room.status === "drawing_fa";
 
+  lastRenderedRoomStatus = room.status;
+lastRenderedRoomRound = Number(room.currentRound || 0);
+
   gameRoomContent.innerHTML = `
   <div class="game-shell ${isDrawingStatus ? "is-drawing-mode" : ""}">
     <header class="game-topbar">
@@ -2813,6 +2829,35 @@ function updateLayerUi() {
 
 function canSwitchLayerNow() {
   return !gameDrawing;
+}
+
+function syncToolSettingsPanel() {
+  const toolSettingsBtn = document.getElementById("toolSettingsBtn");
+  const toolSettingsPanel = document.getElementById("toolSettingsPanel");
+
+  if (!toolSettingsBtn || !toolSettingsPanel) return;
+
+  toolSettingsBtn.classList.toggle("is-active", toolSettingsOpen);
+  toolSettingsPanel.classList.toggle("is-open", toolSettingsOpen);
+  toolSettingsPanel.hidden = !toolSettingsOpen;
+}
+
+function setupToolSettingsDelegation() {
+  if (window.ocfaToolSettingsDelegationReady) return;
+
+  window.ocfaToolSettingsDelegationReady = true;
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("#toolSettingsBtn");
+
+    if (!button) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    toolSettingsOpen = !toolSettingsOpen;
+    syncToolSettingsPanel();
+  });
 }
 
 function setupLayerButtons() {
