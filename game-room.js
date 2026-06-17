@@ -1326,33 +1326,45 @@ function renderLayerTools() {
         </label>
       </div>
 
-      <button
+     <button
   id="penToolBtn"
   type="button"
   class="${currentTool === "pen" ? "is-active" : ""}"
+  title="ペン"
+  aria-label="ペン"
 >
-  ペン
+  ✏️
 </button>
 
 <button
   id="eraserToolBtn"
   type="button"
   class="${currentTool === "eraser" ? "is-active" : ""}"
+  title="消しゴム"
+  aria-label="消しゴム"
 >
-  消しゴム
+  🧽
 </button>
 
 <button
   id="fillToolBtn"
   type="button"
   class="${currentTool === "fill" ? "is-active" : ""}"
+  title="塗りつぶし"
+  aria-label="塗りつぶし"
 >
-  塗りつぶし
+  🪣
 </button>
 
-        <button id="undoLayerBtn" type="button">
-          1つ戻る
-        </button>
+<button
+  id="undoLayerBtn"
+  type="button"
+  title="1つ戻る"
+  aria-label="1つ戻る"
+>
+  ↩️
+</button>
+
       </div>
 
       <div class="game-pressure-box">
@@ -1383,15 +1395,13 @@ function renderLayerTools() {
       </div>
 
       <div class="game-layer-tools">
-        <button id="layerBtn1" type="button" class="layer-btn layer-top is-active">
-          <span class="layer-order">上</span>
-          <strong>レイヤー2</strong>
-        </button>
+        <button id="toggleLayerBtn" type="button" title="表示/非表示" aria-label="表示/非表示">
+  👁
+</button>
 
-        <button id="layerBtn0" type="button" class="layer-btn layer-bottom">
-          <span class="layer-order">下</span>
-          <strong>レイヤー1</strong>
-        </button>
+<button id="clearLayerBtn" type="button" class="danger-btn" title="消す" aria-label="消す">
+  🗑
+</button>
       </div>
 
       <div class="game-layer-actions">
