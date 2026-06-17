@@ -795,6 +795,12 @@ function getFanartSubmittedCountForCurrentRound() {
   return artistIds.size;
 }
 
+function getActiveFanartArtistCountForCurrentRound() {
+  return currentPlayers.filter((player) => {
+    return hasFanartTargetThisRound(player);
+  }).length;
+}
+
 function hasPlayerSubmittedFanartThisRound(player) {
   const round = Number(currentRoom?.data?.currentRound || 0);
 
@@ -2156,7 +2162,7 @@ async function renderRoom() {
                     ? `
                       <div>
                         <strong>現在のFA提出</strong>
-                        <span>${getFanartSubmittedCountForCurrentRound()} / ${currentPlayers.length}人</span>
+                        <span>${getFanartSubmittedCountForCurrentRound()} / ${getActiveFanartArtistCountForCurrentRound()}人</span>
                       </div>
                     `
                     : ""
