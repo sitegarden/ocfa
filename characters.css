@@ -7,45 +7,39 @@
 }
 
 .characters-hero {
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 28px;
-  padding: clamp(24px, 5vw, 48px);
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  border-radius: 34px;
-  background:
-    radial-gradient(circle at top left, rgba(255, 122, 182, 0.25), transparent 34%),
-    radial-gradient(circle at bottom right, rgba(139, 198, 255, 0.28), transparent 36%),
-    radial-gradient(circle, rgba(255, 255, 255, 0.78) 1.5px, transparent 1.5px),
-    #fff7fb;
-  background-size: auto, auto, 18px 18px, auto;
-  box-shadow: 0 18px 45px rgba(80, 55, 80, 0.14);
+  margin-bottom: 24px;
+  padding: 22px;
+  border: 2px solid #f3d7e6;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(80, 55, 80, 0.08);
 }
 
 .characters-hero::after {
-  content: "OCFA";
-  position: absolute;
-  right: clamp(14px, 4vw, 38px);
-  bottom: -14px;
-  color: rgba(255, 122, 182, 0.14);
-  font-size: clamp(56px, 15vw, 150px);
-  font-weight: 1000;
-  line-height: 1;
-  pointer-events: none;
+  display: none;
 }
 
 .characters-hero h1 {
-  position: relative;
-  z-index: 1;
   margin: 0;
-  font-size: clamp(36px, 8vw, 76px);
-  line-height: 1;
-  letter-spacing: 0.04em;
+  color: #3a2d35;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
 }
 
 .characters-hero p {
-  position: relative;
-  z-index: 1;
+  margin: 8px 0 0;
+  color: #7a6070;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.characters-hero .eyebrow {
+  margin: 0 0 6px;
+  color: #ff7ab6;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
 }
 
 .characters-grid {
