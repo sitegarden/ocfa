@@ -2290,3 +2290,175 @@ body {
 .is-drawing-mode .game-tool-actions button.is-active {
   transform: scale(1.08);
 }
+
+/* =========================
+   OCFA game / left tool bar
+========================= */
+
+.is-drawing-mode .game-stage-panel {
+  position: relative;
+}
+
+.is-drawing-mode .game-tool-box {
+  position: fixed;
+  left: 10px;
+  top: 92px;
+  z-index: 80;
+
+  width: 76px;
+  max-height: calc(100vh - 108px);
+  overflow-y: auto;
+
+  padding: 8px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 2px solid rgba(175, 155, 255, 0.42);
+  box-shadow: 0 14px 34px rgba(88, 72, 160, 0.18);
+  backdrop-filter: blur(10px);
+}
+
+.is-drawing-mode .game-draw-toolbar,
+.is-drawing-mode .game-layer-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.is-drawing-mode .game-draw-tools,
+.is-drawing-mode .game-tool-actions,
+.is-drawing-mode .game-layer-tools,
+.is-drawing-mode .game-layer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.is-drawing-mode .game-tool-actions button,
+.is-drawing-mode .game-layer-tools button,
+.is-drawing-mode .game-layer-actions button {
+  width: 56px;
+  min-height: 48px;
+  padding: 6px;
+  border-radius: 17px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.is-drawing-mode .game-tool-actions button.is-active,
+.is-drawing-mode .game-layer-tools button.is-active {
+  transform: scale(1.06);
+  box-shadow: 0 0 0 3px rgba(150, 130, 255, 0.22);
+}
+
+.is-drawing-mode .game-color-tool,
+.is-drawing-mode .game-size-tool,
+.is-drawing-mode .game-pressure-toggle,
+.is-drawing-mode .game-stabilizer-toggle,
+.is-drawing-mode .game-stabilizer-strength {
+  width: 56px;
+  padding: 7px 5px;
+  border-radius: 17px;
+  text-align: center;
+}
+
+.is-drawing-mode .game-color-tool span,
+.is-drawing-mode .game-size-tool span,
+.is-drawing-mode .game-pressure-toggle small,
+.is-drawing-mode .game-stabilizer-toggle small,
+.is-drawing-mode .game-stabilizer-strength span,
+.is-drawing-mode .game-layer-head {
+  display: none;
+}
+
+.is-drawing-mode #gamePenColor {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.is-drawing-mode #gamePenSize,
+.is-drawing-mode #gameStabilizerStrength {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 42px;
+  height: 96px;
+}
+
+.is-drawing-mode #gamePenSizeText {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.is-drawing-mode .game-pressure-box,
+.is-drawing-mode .game-stabilizer-box,
+.is-drawing-mode .game-layer-panel {
+  padding-top: 8px;
+  border-top: 1px dashed rgba(130, 110, 210, 0.24);
+}
+
+.is-drawing-mode .game-pressure-toggle span,
+.is-drawing-mode .game-stabilizer-toggle span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.is-drawing-mode .game-pressure-toggle input,
+.is-drawing-mode .game-stabilizer-toggle input {
+  margin: 0 0 4px;
+}
+
+.is-drawing-mode .game-canvas-card,
+.is-drawing-mode .game-fa-focus-card {
+  margin-left: 88px;
+}
+
+@media (max-width: 700px) {
+  .is-drawing-mode .game-tool-box {
+    left: 6px;
+    top: 74px;
+    width: 64px;
+    max-height: calc(100vh - 88px);
+    padding: 6px;
+    border-radius: 20px;
+  }
+
+  .is-drawing-mode .game-tool-actions button,
+  .is-drawing-mode .game-layer-tools button,
+  .is-drawing-mode .game-layer-actions button {
+    width: 50px;
+    min-height: 44px;
+    font-size: 20px;
+    border-radius: 15px;
+  }
+
+  .is-drawing-mode .game-color-tool,
+  .is-drawing-mode .game-size-tool,
+  .is-drawing-mode .game-pressure-toggle,
+  .is-drawing-mode .game-stabilizer-toggle,
+  .is-drawing-mode .game-stabilizer-strength {
+    width: 50px;
+    padding: 6px 4px;
+    border-radius: 15px;
+  }
+
+  .is-drawing-mode #gamePenColor {
+    width: 38px;
+    height: 38px;
+  }
+
+  .is-drawing-mode #gamePenSize,
+  .is-drawing-mode #gameStabilizerStrength {
+    width: 38px;
+    height: 82px;
+  }
+
+  .is-drawing-mode .game-canvas-card,
+  .is-drawing-mode .game-fa-focus-card {
+    margin-left: 70px;
+  }
+}
