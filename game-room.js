@@ -72,6 +72,9 @@ let layerHistory = [[], []];
 let gamePenColorValue = "#2b2430";
 let gamePenSizeValue = 6;
 
+let stabilizerEnabled = true;
+let stabilizerStrength = 0.45;
+
 /*
   筆圧ONでも細くなりすぎないようにする
   OFFなら普通のブラシとして描ける
@@ -1382,6 +1385,31 @@ function renderLayerTools() {
       </div>
     </div>
 
+    <div class="game-stabilizer-box">
+  <label class="game-stabilizer-toggle">
+    <input
+      id="gameStabilizerToggle"
+      type="checkbox"
+      ${stabilizerEnabled ? "checked" : ""}
+    >
+    <span>
+      手ぶれ補正
+      <small>線を少しなめらかにします</small>
+    </span>
+  </label>
+
+  <label class="game-stabilizer-strength">
+    <span>補正</span>
+    <input
+      id="gameStabilizerStrength"
+      type="range"
+      min="0"
+      max="80"
+      value="${Math.round(stabilizerStrength * 100)}"
+    >
+  </label>
+</div>
+
     <div class="game-layer-panel">
       <div class="game-layer-head">
         <div>
@@ -2592,6 +2620,9 @@ const gamePenSizeText = document.getElementById("gamePenSizeText");
   const undoLayerBtn = document.getElementById("undoLayerBtn");
   const gamePressureToggle = document.getElementById("gamePressureToggle");
 
+const gameStabilizerToggle = document.getElementById("gameStabilizerToggle");
+const gameStabilizerStrength = document.getElementById("gameStabilizerStrength");
+
   function updateToolButtons() {
     if (penToolBtn) {
       penToolBtn.classList.toggle("is-active", currentTool === "pen");
@@ -2654,6 +2685,22 @@ const gamePenSizeText = document.getElementById("gamePenSizeText");
       gameSmoothedPressure = 0.5;
     });
   }
+
+  if (gameStabilizerToggle) {
+  gameStabilizerToggle.checked = stabilizerEnabled;
+
+  gameStabilizerToggle.addEventListener("change", () => {
+    stabilizerEnabled = gameStabilizerToggle.checked;
+  });
+}
+
+if (gameStabilizerStrength) {
+  gameStabilizerStrength.value = String(Math.round(stabilizerStrength * 100));
+
+  gameStabilizerStrength.addEventListener("input", () => {
+    stabilizerStrength = Number(gameStabilizerStrength.value || 0) / 100;
+  });
+}
 
   if (layerBtn0) {
     layerBtn0.addEventListener("click", (event) => {
@@ -2971,6 +3018,14 @@ function drawGameCanvas(e) {
   const point = getGamePoint(e);
   const targetCtx = getActiveLayerCtx();
 
+  const drawPoint = stabilizerEnabled
+  ? {
+      ...point,
+      x: gameLastX + (point.x - gameLastX) * (1 - stabilizerStrength),
+      y: gameLastY + (point.y - gameLastY) * (1 - stabilizerStrength)
+    }
+  : point;
+
   const gamePenColor = document.getElementById("gamePenColor");
   const gamePenSize = document.getElementById("gamePenSize");
 
@@ -2999,13 +3054,13 @@ function drawGameCanvas(e) {
 
   targetCtx.beginPath();
   targetCtx.moveTo(gameLastX, gameLastY);
-  targetCtx.lineTo(point.x, point.y);
+  targetCtx.lineTo(drawPoint.x, drawPoint.y);
   targetCtx.stroke();
 
   targetCtx.restore();
 
-  gameLastX = point.x;
-  gameLastY = point.y;
+  gameLastX = drawPoint.x;
+gameLastY = drawPoint.y;
   gameLastPressure = pressure;
   gameHasDrawn = true;
 
