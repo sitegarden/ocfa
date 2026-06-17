@@ -524,7 +524,9 @@ async function createMissingOriginalForPlayer(player) {
 async function createMissingOriginalsForAllPlayers() {
   await wait(TIME_UP_GRACE_MS);
 
-  for (const player of currentPlayers) {
+  const ocPlayers = getOcPlayers();
+
+  for (const player of ocPlayers) {
     await createMissingOriginalForPlayer(player);
   }
 }
@@ -614,13 +616,15 @@ async function createMissingFanartForPlayer(player) {
   return localFanart;
 }
 
-async function createMissingOriginalsForAllPlayers() {
+async function createMissingFanartsForCurrentRound() {
   await wait(TIME_UP_GRACE_MS);
 
-  const ocPlayers = getOcPlayers();
+  const activeArtists = currentPlayers.filter((player) => {
+    return hasFanartTargetThisRound(player);
+  });
 
-  for (const player of ocPlayers) {
-    await createMissingOriginalForPlayer(player);
+  for (const player of activeArtists) {
+    await createMissingFanartForPlayer(player);
   }
 }
 
@@ -1750,13 +1754,26 @@ async function renderGameStageArea() {
   if (currentRoom.data.status === "drawing_fa") {
     const myPlayer = getMyPlayer();
 
-    if (!myPlayer) {
-      return `
-        <section class="panel-soft">
-          <p>FAターン中です。参加者のみ描画できます。</p>
-        </section>
-      `;
-    }
+if (!myPlayer) {
+  return `
+    <section class="panel-soft">
+      <p>ゲームは開始されています。参加者のみ描画できます。</p>
+    </section>
+  `;
+}
+
+if (isFaOnlyPlayer(myPlayer)) {
+  return `
+    <section class="panel-soft">
+      <p class="mini-label">FA Only</p>
+      <h2>OCターン待機中</h2>
+      <p>
+        あなたはFAのみ参加です。
+        ほかの参加者がOCを提出するまで待ってください。
+      </p>
+    </section>
+  `;
+}
 
     const targetPlayer = getTargetPlayerForCurrentRound(myPlayer);
     const targetOriginal = targetPlayer
@@ -2094,10 +2111,10 @@ async function renderRoom() {
           !isDrawingStatus
             ? `
               <div class="game-room-status">
-                <div>
-                  <strong>OC提出</strong>
-                  <span>${getOriginalSubmittedCount()} / ${currentPlayers.length}人</span>
-                </div>
+  <div>
+    <strong>OC提出</strong>
+    <span>${getOriginalSubmittedCount()} / ${getOcPlayers().length}人</span>
+  </div>
 
                 ${
                   room.status === "drawing_fa"
