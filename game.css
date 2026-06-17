@@ -2682,3 +2682,55 @@ body {
 .is-drawing-mode .game-tool-settings-panel.is-open {
   display: block !important;
 }
+
+
+/* iPhoneでツールボタンが横並び・重なりになるのを防ぐ */
+.is-drawing-mode .game-tool-box,
+.is-drawing-mode .game-draw-toolbar,
+.is-drawing-mode .game-draw-tools,
+.is-drawing-mode .game-tool-actions,
+.is-drawing-mode .game-layer-tools,
+.is-drawing-mode .game-layer-actions,
+.is-drawing-mode .game-tool-setting-button-area {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.is-drawing-mode .game-tool-actions button,
+.is-drawing-mode .game-layer-tools button,
+.is-drawing-mode .game-layer-actions button,
+.is-drawing-mode .game-tool-setting-button-area button {
+  flex: 0 0 auto !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+}
+
+/* FA画面でも描画キャンバスを中央寄せにする */
+.is-drawing-mode .game-fa-focus-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.is-drawing-mode .game-fa-focus-card .game-canvas-card {
+  width: min(100%, 820px);
+  margin-right: auto;
+}
+
+.is-drawing-mode .game-fa-reference-inline {
+  width: min(100%, 520px);
+  align-self: center;
+}
+
+@media (max-width: 700px) {
+  .is-drawing-mode .game-fa-focus-card {
+    align-items: stretch;
+  }
+
+  .is-drawing-mode .game-fa-focus-card .game-canvas-card {
+    width: 100%;
+    margin-right: 0;
+  }
+}
