@@ -2932,3 +2932,28 @@ body {
     max-height: 62vh !important;
   }
 }
+
+/* =========================
+   OCFA smartphone canvas offset
+========================= */
+
+@media (max-width: 700px) {
+  .is-drawing-mode .game-canvas-card {
+    margin-left: 72px !important;
+    width: calc(100% - 72px) !important;
+  }
+
+  .is-drawing-mode .game-fa-focus-card {
+    padding-left: 72px !important;
+  }
+
+  .is-drawing-mode .game-fa-focus-card .game-canvas-card {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .is-drawing-mode .game-canvas {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
