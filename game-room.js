@@ -1916,7 +1916,7 @@ if (!myPlayer) {
       <p>
         Round ${Number(currentRoom.data.currentRound || 0) + 1}
         /
-        ${Math.max(1, currentPlayers.length - 1)}
+        ${Math.max(1, getMaxFanartRoundCount())}
       </p>
 
       <button id="submitFanartBtn" class="btn primary" type="button">
