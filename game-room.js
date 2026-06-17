@@ -2877,8 +2877,10 @@ const gamePenSizeText = document.getElementById("gamePenSizeText");
   const gamePressureToggle = document.getElementById("gamePressureToggle");
 const gameStabilizerToggle = document.getElementById("gameStabilizerToggle");
 const gameStabilizerStrength = document.getElementById("gameStabilizerStrength");
-const toolSettingsBtn = document.getElementById("toolSettingsBtn");
-const toolSettingsPanel = document.getElementById("toolSettingsPanel");
+
+  syncToolSettingsPanel();
+setupToolSettingsDelegation();
+
 
   function updateToolButtons() {
     if (penToolBtn) {
@@ -2893,21 +2895,6 @@ const toolSettingsPanel = document.getElementById("toolSettingsPanel");
       fillToolBtn.classList.toggle("is-active", currentTool === "fill");
     }
   }
-
-    if (toolSettingsBtn && toolSettingsPanel) {
-  toolSettingsPanel.hidden = !toolSettingsOpen;
-
-  toolSettingsBtn.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    toolSettingsOpen = !toolSettingsOpen;
-
-    toolSettingsBtn.classList.toggle("is-active", toolSettingsOpen);
-    toolSettingsPanel.classList.toggle("is-open", toolSettingsOpen);
-    toolSettingsPanel.hidden = !toolSettingsOpen;
-  });
-}
 
   if (penToolBtn) {
     penToolBtn.addEventListener("click", (event) => {
