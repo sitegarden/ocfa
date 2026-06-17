@@ -75,6 +75,7 @@ let gamePenSizeValue = 6;
 let stabilizerEnabled = true;
 let stabilizerStrength = 0.45;
 
+
 /*
   筆圧ONでも細くなりすぎないようにする
   OFFなら普通のブラシとして描ける
@@ -1394,12 +1395,12 @@ function renderLayerTools() {
     >
     <span>
       手ぶれ補正
-      <small>線を少しなめらかにします</small>
+      <small>線をなめらかにします</small>
     </span>
   </label>
 
   <label class="game-stabilizer-strength">
-    <span>補正</span>
+    <span>強さ</span>
     <input
       id="gameStabilizerStrength"
       type="range"
