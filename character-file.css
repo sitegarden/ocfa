@@ -1,0 +1,252 @@
+/* =========================
+   Character File Custom Page
+========================= */
+
+#characterFile {
+  width: 100%;
+}
+
+.cf-page {
+  --cf-bg: #fff7fb;
+  --cf-main: #ff7ab6;
+  --cf-sub: #8bc6ff;
+  --cf-text: #3a2d35;
+  --cf-card: #ffffff;
+  --cf-radius: 24px;
+
+  position: relative;
+  overflow: hidden;
+  min-height: 80vh;
+  padding: clamp(18px, 4vw, 42px);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--cf-main) 24%, transparent), transparent 34%),
+    radial-gradient(circle at bottom right, color-mix(in srgb, var(--cf-sub) 28%, transparent), transparent 36%),
+    var(--cf-bg);
+  color: var(--cf-text);
+  box-shadow: 0 18px 50px rgba(80, 55, 80, 0.16);
+}
+
+.cf-pattern-dot {
+  background-image:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--cf-main) 24%, transparent), transparent 34%),
+    radial-gradient(circle at bottom right, color-mix(in srgb, var(--cf-sub) 28%, transparent), transparent 36%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.75) 1.5px, transparent 1.5px);
+  background-size: auto, auto, 18px 18px;
+}
+
+.cf-pattern-stripe {
+  background-image:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--cf-main) 24%, transparent), transparent 34%),
+    radial-gradient(circle at bottom right, color-mix(in srgb, var(--cf-sub) 28%, transparent), transparent 36%),
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.35) 0 10px,
+      transparent 10px 22px
+    );
+}
+
+.cf-pattern-none {
+  background-image:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--cf-main) 24%, transparent), transparent 34%),
+    radial-gradient(circle at bottom right, color-mix(in srgb, var(--cf-sub) 28%, transparent), transparent 36%);
+}
+
+.cf-profile-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 360px) 1fr;
+  gap: clamp(20px, 4vw, 42px);
+  align-items: center;
+  max-width: 980px;
+  margin: 0 auto 24px;
+  padding: clamp(18px, 4vw, 34px);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: var(--cf-radius);
+  background: color-mix(in srgb, var(--cf-card) 88%, transparent);
+  box-shadow: 0 14px 34px rgba(80, 55, 80, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.cf-image-wrap {
+  position: relative;
+}
+
+.cf-image-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  z-index: 0;
+  border-radius: calc(var(--cf-radius) + 8px);
+  background: linear-gradient(135deg, var(--cf-main), var(--cf-sub));
+  transform: rotate(-3deg);
+}
+
+.cf-main-image,
+.cf-no-image {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 4px solid #fff;
+  border-radius: var(--cf-radius);
+  background: #fff;
+  object-fit: cover;
+  box-shadow: 0 12px 28px rgba(80, 55, 80, 0.16);
+}
+
+.cf-no-image {
+  color: color-mix(in srgb, var(--cf-text) 55%, white);
+  font-weight: 900;
+}
+
+.cf-label {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0 0 10px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--cf-main);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.cf-main-info h1 {
+  margin: 0;
+  color: var(--cf-text);
+  font-size: clamp(34px, 7vw, 66px);
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+.cf-kana {
+  margin: 10px 0 0;
+  color: color-mix(in srgb, var(--cf-text) 70%, white);
+  font-weight: 900;
+}
+
+.cf-badges,
+.cf-tags,
+.cf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.cf-badges span,
+.cf-tags span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 11px;
+  border: 1px solid color-mix(in srgb, var(--cf-main) 38%, white);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cf-main) 14%, white);
+  color: color-mix(in srgb, var(--cf-text) 86%, var(--cf-main));
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.cf-link-list {
+  display: grid;
+  gap: 16px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.cf-link-card {
+  padding: clamp(16px, 3vw, 24px);
+  border: 2px solid rgba(255, 255, 255, 0.88);
+  border-radius: var(--cf-radius);
+  background: color-mix(in srgb, var(--cf-card) 90%, transparent);
+  box-shadow: 0 12px 28px rgba(80, 55, 80, 0.11);
+  backdrop-filter: blur(10px);
+}
+
+.cf-link-card h2 {
+  margin: 0 0 10px;
+  color: var(--cf-text);
+  font-size: 22px;
+}
+
+.cf-link-card h3 {
+  margin: 8px 0;
+  color: var(--cf-text);
+}
+
+.cf-link-card p {
+  margin: 0;
+  color: color-mix(in srgb, var(--cf-text) 78%, white);
+  line-height: 1.85;
+  font-weight: 700;
+}
+
+.cf-link-card a {
+  color: var(--cf-main);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.cf-mini-link {
+  display: inline-flex;
+  margin-top: 12px;
+}
+
+.cf-fanart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cf-fanart-grid .character-card {
+  border-color: color-mix(in srgb, var(--cf-main) 28%, white);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(80, 55, 80, 0.1);
+}
+
+.cf-fanart-grid .character-card::before {
+  display: none;
+}
+
+.cf-fanart-grid .character-body {
+  padding: 10px;
+}
+
+.cf-fanart-grid .character-body h2 {
+  font-size: 15px;
+}
+
+.cf-fanart-grid .character-body p {
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .cf-page {
+    padding: 16px;
+    border-radius: 26px;
+  }
+
+  .cf-profile-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .cf-image-wrap {
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  .cf-label,
+  .cf-badges,
+  .cf-tags,
+  .cf-actions {
+    justify-content: center;
+  }
+}
