@@ -2280,3 +2280,13 @@ body {
     margin-left: 66px;
   }
 }
+
+.is-drawing-mode .game-tool-actions button,
+.is-drawing-mode .game-layer-actions button,
+.is-drawing-mode .game-layer-tools button {
+  font-size: 22px;
+}
+
+.is-drawing-mode .game-tool-actions button.is-active {
+  transform: scale(1.08);
+}
