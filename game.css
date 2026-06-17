@@ -2107,3 +2107,39 @@ body {
     border-radius: 12px;
   }
 }
+
+
+/* =========================
+   Drawing / prevent text selection
+========================= */
+
+.game-draw-screen,
+.game-draw-screen *,
+.game-stage-panel,
+.game-stage-panel *,
+.game-canvas-card,
+.game-canvas-card *,
+.game-draw-tools,
+.game-draw-tools *,
+#gameCanvas {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#gameCanvas {
+  touch-action: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  cursor: crosshair;
+}
+
+/* 入力欄だけは普通に文字選択・入力できるように戻す */
+.game-draw-screen input,
+.game-draw-screen textarea,
+.game-stage-panel input,
+.game-stage-panel textarea {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
