@@ -47,6 +47,51 @@ function getDisplayName(userData) {
   return userData.displayName || "名無し";
 }
 
+function getUserBadges(userData) {
+  const badges = [];
+
+  if (userData.officialLevel === "official") {
+    badges.push({
+      className: "user-badge-official",
+      label: "公式"
+    });
+  }
+
+  if (userData.officialLevel === "sample") {
+    badges.push({
+      className: "user-badge-sample",
+      label: "公式サンプル"
+    });
+  }
+
+  if (userData.uploadAllowed === true) {
+    badges.push({
+      className: "user-badge-upload",
+      label: "アップロード許可"
+    });
+  }
+
+  return badges;
+}
+
+function renderUserBadges(userData) {
+  const badges = getUserBadges(userData);
+
+  if (badges.length === 0) return "";
+
+  return `
+    <div class="user-badges">
+      ${badges
+        .map((badge) => `
+          <span class="user-badge ${escapeHtml(badge.className)}">
+            ${escapeHtml(badge.label)}
+          </span>
+        `)
+        .join("")}
+    </div>
+  `;
+}
+
 function getCharacterImage(data) {
   return data.imageUrl || data.imageData || "";
 }
@@ -507,6 +552,8 @@ function renderUserPage(user, characters, isFavorite) {
         <div>
           <p class="eyebrow">User Page</p>
           <h1>${escapeHtml(displayName)}</h1>
+
+          ${renderUserBadges(data)}
 
           ${
             data.handle
