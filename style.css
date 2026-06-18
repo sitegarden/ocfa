@@ -6688,3 +6688,40 @@ textarea {
   place-items: center;
   color: #ff7ab6;
 }
+
+.user-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 10px;
+}
+
+.user-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  border: 1px solid rgba(255, 122, 182, 0.25);
+  background: #fff;
+}
+
+.user-badge-official {
+  color: #fff;
+  background: linear-gradient(135deg, #ff7ab6, #ffb347);
+  border-color: transparent;
+}
+
+.user-badge-sample {
+  color: #7a4b00;
+  background: #fff1bf;
+  border-color: #ffd56a;
+}
+
+.user-badge-upload {
+  color: #2563eb;
+  background: #eaf3ff;
+  border-color: #a9d2ff;
+}
