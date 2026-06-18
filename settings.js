@@ -23,7 +23,6 @@ const settingsContent = document.getElementById("settingsContent");
 let currentUser = null;
 let currentUserData = null;
 
-const ICON_ALLOWED_ROLES = ["admin", "owner", "moderator"];
 const MAX_ICON_SIZE = 2 * 1024 * 1024; // 2MB
 
 function escapeHtml(text) {
@@ -87,7 +86,7 @@ function renderSettings(userData) {
   const profileText = userData.profileText || "";
   const genreText = userData.genreText || "";
   const linkUrl = userData.linkUrl || "";
-  const photoURL = userData.photoURL || currentUser.photoURL || "";
+  const photoURL = userData.photoURL || "";
   const uploadAllowed = canUploadIcon(userData);
 
   settingsContent.innerHTML = `
@@ -193,7 +192,7 @@ function renderSettings(userData) {
       <h2>公開ページ</h2>
       <p>あなたの公開ページでは、登録したキャラクターとプロフィールが表示されます。</p>
 
-      <a class="text-link" href="/users/?uid=${encodeURIComponent(currentUser.uid)}">
+      <a class="text-link" href="/users/?id=${encodeURIComponent(currentUserData.handle || currentUser.uid)}">
         公開ページを見る
       </a>
     </section>
