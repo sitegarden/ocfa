@@ -51,7 +51,7 @@ function normalizeUrl(url) {
 }
 
 function canUploadIcon(userData) {
-  return ICON_ALLOWED_ROLES.includes(userData.role);
+  return userData.role === "admin" || userData.uploadAllowed === true;
 }
 
 async function ensureUserDoc(user) {
