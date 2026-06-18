@@ -109,19 +109,22 @@ async function setMyProfilePublic(isPublic) {
 }
 
 function getMypageIconHtml(user, userData, displayName) {
-  const iconImage = userData?.iconImageData || user.photoURL || "";
+  const iconImage = userData?.photoURL || userData?.iconImageData || user.photoURL || "";
 
   if (iconImage) {
     return `
       <img
-        src="${iconImage}"
+        class="mypage-icon"
+        src="${escapeHtml(iconImage)}"
         alt="${escapeHtml(displayName)}のアイコン"
-      >
+      />
     `;
   }
 
   return `
-    <span>${escapeHtml(displayName.slice(0, 1) || "？")}</span>
+    <div class="mypage-icon mypage-icon-placeholder">
+      ${escapeHtml(displayName.slice(0, 1) || "？")}
+    </div>
   `;
 }
 
