@@ -1,27 +1,33 @@
-import { auth, db } from "/firebase.js";
+import { auth, db, storage } from "/firebase.js";
 
 import {
   doc,
   getDoc,
-  runTransaction,
   serverTimestamp,
-  setDoc
+  setDoc,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+
 const settingsContent = document.getElementById("settingsContent");
 
-const HANDLE_MIN_LENGTH = 4;
-const HANDLE_MAX_LENGTH = 20;
-const HANDLE_CHANGE_INTERVAL_MS = 30 * 24 * 60 * 60 * 1000;
-
 let currentUser = null;
+let currentUserData = null;
+
+const ICON_ALLOWED_ROLES = ["admin", "owner", "moderator"];
+const MAX_ICON_SIZE = 2 * 1024 * 1024; // 2MB
 
 function escapeHtml(text) {
-  return String(text || "")
+  return String(text)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -41,60 +47,11 @@ function isValidHttpsUrl(url) {
 }
 
 function normalizeUrl(url) {
-  return String(url || "").trim();
+  return url.trim();
 }
 
-function normalizeHandle(handle) {
-  return String(handle || "")
-    .trim()
-    .replace(/^@+/, "")
-    .toLowerCase();
-}
-
-function isValidHandle(handle) {
-  return /^[a-z0-9_]+$/.test(handle)
-    && handle.length >= HANDLE_MIN_LENGTH
-    && handle.length <= HANDLE_MAX_LENGTH;
-}
-
-function timestampToMs(timestamp) {
-  if (!timestamp?.seconds) return 0;
-  return timestamp.seconds * 1000;
-}
-
-function getHandleRemainingText(handleUpdatedAt) {
-  const lastChangedMs = timestampToMs(handleUpdatedAt);
-
-  if (!lastChangedMs) return "";
-
-  const nextChangeMs = lastChangedMs + HANDLE_CHANGE_INTERVAL_MS;
-  const remainingMs = nextChangeMs - Date.now();
-
-  if (remainingMs <= 0) return "";
-
-  const remainingDays = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
-
-  return `次にIDを変更できるまで、あと約${remainingDays}日です。`;
-}
-
-function canChangeHandle(userData, nextHandle) {
-  const currentHandle = normalizeHandle(userData.handle || "");
-
-  if (nextHandle === currentHandle) {
-    return true;
-  }
-
-  if (!currentHandle) {
-    return true;
-  }
-
-  const lastChangedMs = timestampToMs(userData.handleUpdatedAt);
-
-  if (!lastChangedMs) {
-    return true;
-  }
-
-  return Date.now() - lastChangedMs >= HANDLE_CHANGE_INTERVAL_MS;
+function canUploadIcon(userData) {
+  return ICON_ALLOWED_ROLES.includes(userData.role);
 }
 
 async function ensureUserDoc(user) {
@@ -107,166 +64,148 @@ async function ensureUserDoc(user) {
 
   const initialData = {
     uid: user.uid,
-    email: user.email || "",
+    email: user.email,
     displayName: user.displayName || "",
     photoURL: user.photoURL || "",
     role: "user",
-    uploadAllowed: false,
     handle: "",
-    handleUpdatedAt: null,
     profileText: "",
     genreText: "",
     linkUrl: "",
-    isPublic: true,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   };
 
   await setDoc(userRef, initialData);
-
   return initialData;
 }
 
-function getPublicPageUrl(userData = {}) {
-  const handle = normalizeHandle(userData.handle || "");
-
-  if (handle) {
-    return `/users/?id=${encodeURIComponent(handle)}`;
-  }
-
-  return `/users/?id=${encodeURIComponent(currentUser.uid)}`;
-}
-
 function renderSettings(userData) {
+  currentUserData = userData;
+
   const displayName = userData.displayName || currentUser.displayName || "";
-  const handle = userData.handle || "";
   const profileText = userData.profileText || "";
   const genreText = userData.genreText || "";
   const linkUrl = userData.linkUrl || "";
-  const publicPageUrl = getPublicPageUrl(userData);
-  const handleRemainingText = getHandleRemainingText(userData.handleUpdatedAt);
+  const photoURL = userData.photoURL || currentUser.photoURL || "";
+  const uploadAllowed = canUploadIcon(userData);
 
   settingsContent.innerHTML = `
-    <section class="settings-layout">
-      <form id="settingsForm" class="panel">
-        <p class="eyebrow">Profile</p>
-        <h2>公開プロフィール</h2>
+    <section class="panel">
+      <h2>公開プロフィール</h2>
 
+      <form id="settingsForm" class="form-stack">
         <label>
-          表示名
+          <span>表示名</span>
           <input
             id="displayName"
             type="text"
-            maxlength="40"
             value="${escapeHtml(displayName)}"
+            maxlength="30"
             required
           />
         </label>
 
         <label>
-          ID
-          <input
-            id="handle"
-            type="text"
-            maxlength="${HANDLE_MAX_LENGTH}"
-            value="${escapeHtml(handle)}"
-            placeholder="例：ocfa_user"
-            autocomplete="off"
-          />
-        </label>
-
-        <p class="mini-info">
-          IDは4文字以上20文字以内、英数字と_のみ使えます。大文字は自動で小文字になります。
-          ${
-            handle
-              ? "IDの変更は基本1ヶ月に1回までです。"
-              : "初回設定はいつでもできます。"
-          }
-        </p>
-
-        ${
-          handleRemainingText
-            ? `<p class="status-pill muted-pill">${escapeHtml(handleRemainingText)}</p>`
-            : ""
-        }
-
-        <label>
-          ひとこと紹介
-          <textarea id="profileText" rows="5" maxlength="500">${escapeHtml(profileText)}</textarea>
+          <span>ひとこと紹介</span>
+          <textarea
+            id="profileText"
+            rows="4"
+            maxlength="300"
+          >${escapeHtml(profileText)}</textarea>
         </label>
 
         <label>
-          好きな創作ジャンル
-          <textarea id="genreText" rows="4" maxlength="500">${escapeHtml(genreText)}</textarea>
+          <span>好きな創作ジャンル</span>
+          <textarea
+            id="genreText"
+            rows="3"
+            maxlength="200"
+          >${escapeHtml(genreText)}</textarea>
         </label>
 
         <label>
-          リンクURL
+          <span>リンクURL</span>
           <input
             id="linkUrl"
             type="url"
             value="${escapeHtml(linkUrl)}"
-            placeholder="https://..."
+            placeholder="https://example.com"
           />
         </label>
 
-        <p class="mini-info">リンクは https:// から始まるURLのみ保存できます。</p>
+        <p class="note">リンクは https:// から始まるURLのみ保存できます。</p>
 
-        <div class="actions">
-          <button class="primary-btn" type="submit">保存する</button>
-          <a class="ghost-btn" href="${publicPageUrl}">公開ページを見る</a>
-        </div>
-
-        <p id="settingsMessage" class="message"></p>
+        <button type="submit" class="primary-btn">保存する</button>
+        <p id="settingsMessage" class="form-message"></p>
       </form>
+    </section>
 
-      <aside class="panel profile-preview">
+    <section class="panel">
+      <h2>アイコン設定</h2>
+
+      <div class="profile-preview">
         ${
-          currentUser.photoURL
-            ? `<img class="mypage-avatar" src="${escapeHtml(currentUser.photoURL)}" alt="">`
-            : `<div class="mypage-avatar placeholder">OC</div>`
+          photoURL
+            ? `<img class="profile-preview-icon" src="${escapeHtml(photoURL)}" alt="プロフィールアイコン" />`
+            : `<div class="profile-preview-icon profile-preview-placeholder">OC</div>`
         }
 
         <div>
-          <p class="eyebrow">Public Page</p>
           <h3>${escapeHtml(displayName || "名前未設定")}</h3>
-
-          ${
-            handle
-              ? `<p class="mini-info">@${escapeHtml(handle)}</p>`
-              : `<p class="mini-info">ID未設定</p>`
-          }
-
           <p>${escapeHtml(profileText || "紹介文はまだありません。")}</p>
-
-          ${
-            genreText
-              ? `<p class="mini-info">${escapeHtml(genreText)}</p>`
-              : ""
-          }
-
-          ${
-            linkUrl
-              ? `<a class="text-link" href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener noreferrer">リンクを見る</a>`
-              : ""
-          }
         </div>
-      </aside>
+      </div>
+
+      ${
+        uploadAllowed
+          ? `
+            <div class="form-stack icon-upload-box">
+              <label>
+                <span>アイコン画像をアップロード</span>
+                <input
+                  id="iconFile"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                />
+              </label>
+
+              <p class="note">
+                PNG / JPG / WebP / GIF対応。2MB以内がおすすめです。
+              </p>
+
+              <button id="uploadIconBtn" type="button" class="primary-btn">
+                アイコンをアップロード
+              </button>
+
+              <p id="iconUploadMessage" class="form-message"></p>
+            </div>
+          `
+          : `
+            <p class="note">
+              アイコンのアップロードは、権限のあるユーザーのみ利用できます。
+            </p>
+          `
+      }
+    </section>
+
+    <section class="panel">
+      <h2>公開ページ</h2>
+      <p>あなたの公開ページでは、登録したキャラクターとプロフィールが表示されます。</p>
+
+      <a class="text-link" href="/users/?uid=${encodeURIComponent(currentUser.uid)}">
+        公開ページを見る
+      </a>
     </section>
   `;
 
+  setupProfileForm();
+  setupIconUpload();
+}
+
+function setupProfileForm() {
   const form = document.getElementById("settingsForm");
   const message = document.getElementById("settingsMessage");
-
-  const handleInput = document.getElementById("handle");
-
-  handleInput.addEventListener("input", () => {
-    const normalized = normalizeHandle(handleInput.value);
-
-    if (handleInput.value !== normalized) {
-      handleInput.value = normalized;
-    }
-  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -277,24 +216,12 @@ function renderSettings(userData) {
     const linkUrlInput = document.getElementById("linkUrl");
 
     const nextDisplayName = displayNameInput.value.trim();
-    const nextHandle = normalizeHandle(handleInput.value);
     const nextProfileText = profileTextInput.value.trim();
     const nextGenreText = genreTextInput.value.trim();
     const nextLinkUrl = normalizeUrl(linkUrlInput.value);
 
     if (!nextDisplayName) {
       message.textContent = "表示名を入力してください。";
-      return;
-    }
-
-    if (nextHandle && !isValidHandle(nextHandle)) {
-      message.textContent = "IDは4文字以上20文字以内、英数字と_のみ使えます。";
-      return;
-    }
-
-    if (!canChangeHandle(userData, nextHandle)) {
-      message.textContent = getHandleRemainingText(userData.handleUpdatedAt)
-        || "IDは基本1ヶ月に1回まで変更できます。";
       return;
     }
 
@@ -306,70 +233,87 @@ function renderSettings(userData) {
     try {
       message.textContent = "プロフィールを保存しています...";
 
-      const userRef = doc(db, "users", currentUser.uid);
-
-      await runTransaction(db, async (transaction) => {
-        const latestUserSnap = await transaction.get(userRef);
-
-        if (!latestUserSnap.exists()) {
-          throw new Error("ユーザー情報が見つかりません。");
-        }
-
-        const latestUserData = latestUserSnap.data();
-        const currentHandle = normalizeHandle(latestUserData.handle || "");
-        const handleChanged = nextHandle !== currentHandle;
-
-        if (handleChanged && !canChangeHandle(latestUserData, nextHandle)) {
-          throw new Error(
-            getHandleRemainingText(latestUserData.handleUpdatedAt)
-            || "IDは基本1ヶ月に1回まで変更できます。"
-          );
-        }
-
-        if (nextHandle) {
-          const nextHandleRef = doc(db, "handles", nextHandle);
-          const nextHandleSnap = await transaction.get(nextHandleRef);
-
-          if (nextHandleSnap.exists()) {
-            const ownerUid = nextHandleSnap.data().uid;
-
-            if (ownerUid !== currentUser.uid) {
-              throw new Error("このIDはすでに使われています。");
-            }
-          }
-
-          transaction.set(nextHandleRef, {
-            uid: currentUser.uid,
-            handle: nextHandle,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-        }
-
-        if (handleChanged && currentHandle) {
-          const oldHandleRef = doc(db, "handles", currentHandle);
-          transaction.delete(oldHandleRef);
-        }
-
-        transaction.update(userRef, {
-          displayName: nextDisplayName,
-          handle: nextHandle,
-          profileText: nextProfileText,
-          genreText: nextGenreText,
-          linkUrl: nextLinkUrl,
-          updatedAt: serverTimestamp(),
-          ...(handleChanged
-            ? { handleUpdatedAt: serverTimestamp() }
-            : {})
-        });
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        displayName: nextDisplayName,
+        profileText: nextProfileText,
+        genreText: nextGenreText,
+        linkUrl: nextLinkUrl,
+        updatedAt: serverTimestamp()
       });
 
-      message.textContent = "プロフィールを保存しました。";
+      currentUserData = {
+        ...currentUserData,
+        displayName: nextDisplayName,
+        profileText: nextProfileText,
+        genreText: nextGenreText,
+        linkUrl: nextLinkUrl
+      };
 
-      const refreshedSnap = await getDoc(doc(db, "users", currentUser.uid));
-      renderSettings(refreshedSnap.data());
+      message.textContent = "プロフィールを保存しました。";
     } catch (error) {
       console.error(error);
-      message.textContent = error.message || "プロフィールの保存に失敗しました。";
+      message.textContent = "プロフィールの保存に失敗しました。少し時間を置いて、もう一度お試しください。";
+    }
+  });
+}
+
+function setupIconUpload() {
+  const uploadBtn = document.getElementById("uploadIconBtn");
+  const fileInput = document.getElementById("iconFile");
+  const message = document.getElementById("iconUploadMessage");
+
+  if (!uploadBtn || !fileInput || !message) return;
+
+  uploadBtn.addEventListener("click", async () => {
+    const file = fileInput.files?.[0];
+
+    if (!file) {
+      message.textContent = "アップロードする画像を選んでください。";
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      message.textContent = "画像ファイルを選んでください。";
+      return;
+    }
+
+    if (file.size > MAX_ICON_SIZE) {
+      message.textContent = "画像サイズは2MB以内にしてください。";
+      return;
+    }
+
+    if (!canUploadIcon(currentUserData)) {
+      message.textContent = "アイコンを変更する権限がありません。";
+      return;
+    }
+
+    try {
+      message.textContent = "アイコンをアップロードしています...";
+
+      const ext = file.name.split(".").pop() || "png";
+      const filePath = `profileIcons/${currentUser.uid}/icon_${Date.now()}.${ext}`;
+      const iconRef = ref(storage, filePath);
+
+      await uploadBytes(iconRef, file);
+      const downloadURL = await getDownloadURL(iconRef);
+
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        photoURL: downloadURL,
+        iconPath: filePath,
+        updatedAt: serverTimestamp()
+      });
+
+      currentUserData = {
+        ...currentUserData,
+        photoURL: downloadURL,
+        iconPath: filePath
+      };
+
+      message.textContent = "アイコンを保存しました。";
+      renderSettings(currentUserData);
+    } catch (error) {
+      console.error(error);
+      message.textContent = "アイコンのアップロードに失敗しました。権限やStorageルールを確認してください。";
     }
   });
 }
@@ -378,8 +322,8 @@ onAuthStateChanged(auth, async (user) => {
   if (!user) {
     settingsContent.innerHTML = `
       <section class="panel">
-        <h1>ログインが必要です</h1>
-        <p>プロフィール設定を使うにはログインしてください。</p>
+        <h2>ログインが必要です</h2>
+        <p>プロフィール設定を使うには、Googleログインしてください。</p>
       </section>
     `;
     return;
@@ -395,7 +339,7 @@ onAuthStateChanged(auth, async (user) => {
 
     settingsContent.innerHTML = `
       <section class="panel">
-        <h1>読み込みに失敗しました</h1>
+        <h2>読み込みに失敗しました</h2>
         <p>ページを再読み込みしてみてください。</p>
       </section>
     `;
