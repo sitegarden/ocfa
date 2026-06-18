@@ -437,6 +437,8 @@ function renderUserList(users) {
                 <div class="user-list-body">
                   <h2>${escapeHtml(displayName)}</h2>
 
+                  ${renderUserBadges(data)}
+
                   ${
                     data.handle
                       ? `<p class="mini-info">@${escapeHtml(data.handle)}</p>`
