@@ -62,18 +62,19 @@ async function ensureUserDoc(user) {
   }
 
   const initialData = {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName || "",
-    photoURL: user.photoURL || "",
-    role: "user",
-    handle: "",
-    profileText: "",
-    genreText: "",
-    linkUrl: "",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  };
+  uid: user.uid,
+  email: user.email,
+  displayName: user.displayName || "",
+  photoURL: "",
+  googlePhotoURL: user.photoURL || "",
+  role: "user",
+  handle: "",
+  profileText: "",
+  genreText: "",
+  linkUrl: "",
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp()
+};
 
   await setDoc(userRef, initialData);
   return initialData;
