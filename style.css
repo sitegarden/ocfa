@@ -6659,3 +6659,32 @@ textarea {
 .icon-upload-box {
   margin-top: 14px;
 }
+
+.cf-owner-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.cf-owner-link:hover {
+  text-decoration: underline;
+}
+
+.cf-owner-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  object-fit: cover;
+  background: #fff;
+  border: 2px solid rgba(255, 122, 182, 0.35);
+  flex-shrink: 0;
+}
+
+.cf-owner-placeholder {
+  display: inline-grid;
+  place-items: center;
+  color: #ff7ab6;
+}
