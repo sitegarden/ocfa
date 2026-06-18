@@ -7819,3 +7819,8 @@ textarea {
     flex-direction: column;
   }
 }
+
+.atelier-game-card-wide {
+  max-width: 760px;
+  margin: 0 auto;
+}
