@@ -435,9 +435,9 @@ const photoURL = userData?.photoURL || user.photoURL || "";
               </span>
             `
             : `
-              <a class="ghost-btn" href="/users/?id=${encodeURIComponent(user.uid)}">
-                公開ページを見る
-              </a>
+              <a class="secondary-btn" href="/users/?id=${encodeURIComponent(user.uid)}">
+  公開ページを見る
+</a>
             `
         }
       </div>
