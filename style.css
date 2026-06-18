@@ -6629,3 +6629,33 @@ textarea {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+.profile-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.profile-preview-icon {
+  width: 84px;
+  height: 84px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 8px 20px rgba(120, 80, 40, 0.16);
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.profile-preview-placeholder {
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #a66a4a;
+  background: linear-gradient(135deg, #fff7df, #ffe6ee);
+}
+
+.icon-upload-box {
+  margin-top: 14px;
+}
