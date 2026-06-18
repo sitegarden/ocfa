@@ -8,6 +8,7 @@ import {
   onSnapshot,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -69,12 +70,14 @@ let roomData = null;
 let players = [];
 let themes = [];
 let works = [];
+let votes = [];
 let myPlayer = null;
 
 let unsubscribeRoom = null;
 let unsubscribePlayers = null;
 let unsubscribeThemes = null;
 let unsubscribeWorks = null;
+let unsubscribeVotes = null;
 
 let drawingTimerId = null;
 let canvasReady = false;
@@ -145,7 +148,6 @@ function sortByCreatedAt(items) {
   return [...items].sort((a, b) => {
     const aTime = timestampToMillis(a.createdAt || a.joinedAt);
     const bTime = timestampToMillis(b.createdAt || b.joinedAt);
-
     return aTime - bTime;
   });
 }
@@ -216,6 +218,11 @@ function getMyWork() {
   return works.find((work) => {
     return work.playerId === myPlayer.id && !work.isDeleted;
   }) || null;
+}
+
+function getPlayerNameById(playerId) {
+  const player = players.find((item) => item.id === playerId);
+  return player?.name || "参加者";
 }
 
 function canJoin() {
@@ -617,15 +624,246 @@ function renderDrawingArea() {
   `;
 }
 
-function renderVotingPlaceholder() {
+function getMyVoteForWork(workId) {
+  if (!myPlayer) return null;
+
+  return votes.find((vote) => {
+    return vote.voterPlayerId === myPlayer.id && vote.workId === workId;
+  }) || null;
+}
+
+function renderHeartButtons(work) {
+  const myVote = getMyVoteForWork(work.id);
+
+  return `
+    <div class="battle-heart-buttons">
+      ${Object.entries(HEART_TYPES).map(([heartKey, heart]) => {
+        const isSelected = myVote?.heart === heartKey;
+
+        return `
+          <button
+            class="battle-heart-btn ${isSelected ? "is-selected" : ""}"
+            type="button"
+            data-action="vote-heart"
+            data-work-id="${work.id}"
+            data-heart="${heartKey}"
+          >
+            <span>${heart.emoji}</span>
+            <small>${escapeHtml(heart.label)}</small>
+          </button>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderVotingArea() {
   if (roomData.status !== "voting") return "";
+
+  const activeWorks = works.filter((work) => !work.isDeleted);
 
   return `
     <section class="battle-section">
-      <h2>投票</h2>
-      <p class="battle-note">
-        次の段階で、色別ハート投票をここに追加します。
-      </p>
+      <div class="battle-drawing-head">
+        <div>
+          <h2>投票</h2>
+          <p class="battle-note">
+            1つの作品につき、送れるハートは1種類だけです。
+            ハートを押し直すと変更できます。
+          </p>
+        </div>
+
+        ${
+          isOwner()
+            ? `
+              <button id="finishVotingBtn" class="battle-main-btn" type="button">
+                結果発表へ
+              </button>
+            `
+            : ""
+        }
+      </div>
+
+      ${
+        !myPlayer
+          ? `<p class="battle-note">参加者のみ投票できます。</p>`
+          : ""
+      }
+
+      <div class="battle-work-grid">
+        ${
+          activeWorks.length
+            ? activeWorks.map((work, index) => {
+              const isMine = myPlayer?.id === work.playerId;
+
+              return `
+                <article class="battle-work-card">
+                  <div class="battle-work-number">作品 ${index + 1}</div>
+                  <img src="${escapeHtml(work.imageUrl)}" alt="投稿作品" />
+
+                  ${
+                    isMine
+                      ? `<p class="battle-note">自分の作品には投票できません。</p>`
+                      : myPlayer
+                        ? renderHeartButtons(work)
+                        : `<p class="battle-note">参加すると投票できます。</p>`
+                  }
+                </article>
+              `;
+            }).join("")
+            : `<p class="battle-empty">まだ提出作品がありません。</p>`
+        }
+      </div>
+    </section>
+  `;
+}
+
+function buildVoteSummary() {
+  const activeWorks = works.filter((work) => !work.isDeleted);
+
+  const summary = activeWorks.map((work) => {
+    const workVotes = votes.filter((vote) => vote.workId === work.id);
+
+    const heartCounts = {};
+
+    Object.keys(HEART_TYPES).forEach((heartKey) => {
+      heartCounts[heartKey] = workVotes.filter((vote) => vote.heart === heartKey).length;
+    });
+
+    const total = workVotes.length;
+
+    return {
+      work,
+      heartCounts,
+      total
+    };
+  });
+
+  return summary;
+}
+
+function sortRankingByHeart(summary, heartKey) {
+  return [...summary]
+    .filter((item) => item.heartCounts[heartKey] > 0)
+    .sort((a, b) => {
+      const diff = b.heartCounts[heartKey] - a.heartCounts[heartKey];
+
+      if (diff !== 0) return diff;
+
+      return b.total - a.total;
+    })
+    .slice(0, 3);
+}
+
+function sortRankingByTotal(summary) {
+  return [...summary]
+    .filter((item) => item.total > 0)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 3);
+}
+
+function renderRankingItem(item, rank, heartKey = "") {
+  const count = heartKey ? item.heartCounts[heartKey] : item.total;
+  const playerName = getPlayerNameById(item.work.playerId);
+
+  return `
+    <article class="battle-result-item">
+      <div class="battle-rank">#${rank}</div>
+
+      <img src="${escapeHtml(item.work.imageUrl)}" alt="入賞作品" />
+
+      <div>
+        <h4>${escapeHtml(playerName)}</h4>
+        <p>${count}票</p>
+      </div>
+    </article>
+  `;
+}
+
+function renderResultsArea() {
+  if (roomData.status !== "result" && roomData.status !== "finished") return "";
+
+  const summary = buildVoteSummary();
+  const totalRanking = sortRankingByTotal(summary);
+
+  return `
+    <section class="battle-section">
+      <div class="battle-drawing-head">
+        <div>
+          <h2>結果発表</h2>
+          <p class="battle-note">
+            部門別に上位3名まで表示されます。
+          </p>
+        </div>
+
+        ${
+          isOwner() && roomData.status !== "finished"
+            ? `
+              <button id="finishRoomBtn" class="battle-sub-btn" type="button">
+                終了する
+              </button>
+            `
+            : ""
+        }
+      </div>
+
+      <div class="battle-result-block">
+        <h3>総合ハート数 TOP3</h3>
+
+        ${
+          totalRanking.length
+            ? totalRanking.map((item, index) => {
+              return renderRankingItem(item, index + 1);
+            }).join("")
+            : `<p class="battle-empty">まだ投票がありません。</p>`
+        }
+      </div>
+
+      <div class="battle-result-grid">
+        ${Object.entries(HEART_TYPES).map(([heartKey, heart]) => {
+          const ranking = sortRankingByHeart(summary, heartKey);
+
+          return `
+            <section class="battle-result-block">
+              <h3>${heart.emoji} ${escapeHtml(heart.label)} TOP3</h3>
+
+              ${
+                ranking.length
+                  ? ranking.map((item, index) => {
+                    return renderRankingItem(item, index + 1, heartKey);
+                  }).join("")
+                  : `<p class="battle-empty">この部門の投票はまだありません。</p>`
+              }
+            </section>
+          `;
+        }).join("")}
+      </div>
+
+      <div class="battle-work-grid">
+        ${summary.map((item, index) => {
+          const playerName = getPlayerNameById(item.work.playerId);
+
+          return `
+            <article class="battle-work-card">
+              <div class="battle-work-number">作品 ${index + 1}</div>
+              <img src="${escapeHtml(item.work.imageUrl)}" alt="投稿作品" />
+
+              <h3>${escapeHtml(playerName)}</h3>
+
+              <div class="battle-heart-counts">
+                ${Object.entries(HEART_TYPES).map(([heartKey, heart]) => `
+                  <span>
+                    ${heart.emoji}
+                    ${item.heartCounts[heartKey]}
+                  </span>
+                `).join("")}
+              </div>
+
+              <p class="battle-note">合計：${item.total}票</p>
+            </article>
+          `;
+        }).join("")}
+      </div>
     </section>
   `;
 }
@@ -691,7 +929,8 @@ function renderMain() {
       }
 
       ${renderDrawingArea()}
-      ${renderVotingPlaceholder()}
+      ${renderVotingArea()}
+      ${renderResultsArea()}
     </div>
   `);
 
@@ -776,6 +1015,22 @@ function bindRenderedEvents() {
     });
   }
 
+  const finishVotingBtn = document.getElementById("finishVotingBtn");
+
+  if (finishVotingBtn) {
+    finishVotingBtn.addEventListener("click", async () => {
+      await finishVoting();
+    });
+  }
+
+  const finishRoomBtn = document.getElementById("finishRoomBtn");
+
+  if (finishRoomBtn) {
+    finishRoomBtn.addEventListener("click", async () => {
+      await finishRoom();
+    });
+  }
+
   const themeActionButtons = app.querySelectorAll("[data-action][data-theme-id]");
 
   themeActionButtons.forEach((button) => {
@@ -790,6 +1045,17 @@ function bindRenderedEvents() {
       if (action === "reject-theme") {
         await setThemeStatus(themeId, false);
       }
+    });
+  });
+
+  const voteButtons = app.querySelectorAll('[data-action="vote-heart"]');
+
+  voteButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const workId = button.dataset.workId;
+      const heart = button.dataset.heart;
+
+      await voteWork(workId, heart);
     });
   });
 }
@@ -1223,6 +1489,80 @@ async function startVoting() {
   });
 }
 
+async function voteWork(workId, heart) {
+  if (!myPlayer) {
+    alert("参加者のみ投票できます。");
+    return;
+  }
+
+  if (roomData.status !== "voting") {
+    alert("現在は投票できません。");
+    return;
+  }
+
+  if (!HEART_TYPES[heart]) {
+    alert("ハートの種類が正しくありません。");
+    return;
+  }
+
+  const work = works.find((item) => item.id === workId && !item.isDeleted);
+
+  if (!work) {
+    alert("作品が見つかりません。");
+    return;
+  }
+
+  if (work.playerId === myPlayer.id) {
+    alert("自分の作品には投票できません。");
+    return;
+  }
+
+  const voteId = `${roomId}_${myPlayer.id}_${workId}`;
+  const voteRef = doc(db, "odaiBattleVotes", voteId);
+
+  await setDoc(voteRef, {
+    roomId,
+
+    voterPlayerId: myPlayer.id,
+    voterName: myPlayer.name || "参加者",
+
+    workId,
+    workPlayerId: work.playerId,
+
+    heart,
+
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  }, {
+    merge: true
+  });
+}
+
+async function finishVoting() {
+  if (!isOwner()) {
+    alert("ホストのみ操作できます。");
+    return;
+  }
+
+  await updateDoc(getRoomRef(), {
+    status: "result",
+    resultStartedAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+}
+
+async function finishRoom() {
+  if (!isOwner()) {
+    alert("ホストのみ操作できます。");
+    return;
+  }
+
+  await updateDoc(getRoomRef(), {
+    status: "finished",
+    updatedAt: serverTimestamp()
+  });
+}
+
 function subscribeRoom() {
   if (!roomId) {
     renderError("ルームIDがありません。");
@@ -1328,11 +1668,36 @@ function subscribeWorks() {
   );
 }
 
+function subscribeVotes() {
+  const votesQuery = query(
+    collection(db, "odaiBattleVotes"),
+    where("roomId", "==", roomId)
+  );
+
+  unsubscribeVotes = onSnapshot(
+    votesQuery,
+    (snapshot) => {
+      votes = sortByCreatedAt(
+        snapshot.docs.map((voteDoc) => ({
+          id: voteDoc.id,
+          ...voteDoc.data()
+        }))
+      );
+
+      renderMain();
+    },
+    (error) => {
+      console.error(error);
+    }
+  );
+}
+
 function cleanup() {
   if (unsubscribeRoom) unsubscribeRoom();
   if (unsubscribePlayers) unsubscribePlayers();
   if (unsubscribeThemes) unsubscribeThemes();
   if (unsubscribeWorks) unsubscribeWorks();
+  if (unsubscribeVotes) unsubscribeVotes();
 
   stopDrawingTimer();
 
@@ -1340,6 +1705,7 @@ function cleanup() {
   unsubscribePlayers = null;
   unsubscribeThemes = null;
   unsubscribeWorks = null;
+  unsubscribeVotes = null;
 }
 
 window.addEventListener("beforeunload", cleanup);
@@ -1360,4 +1726,5 @@ onAuthStateChanged(auth, (user) => {
   subscribePlayers();
   subscribeThemes();
   subscribeWorks();
+  subscribeVotes();
 });
