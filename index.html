@@ -31,173 +31,107 @@
 <body>
   <header id="siteHeader"></header>
 
-  <main class="home home-lp">
-    <div class="floating-deco deco-star">✦</div>
-    <div class="floating-deco deco-heart">♡</div>
-    <div class="floating-deco deco-dot">●</div>
-    <div class="floating-deco deco-pen">✎</div>
-
-    <section class="lp-hero">
-      <div class="lp-hero-copy">
+  <main class="home home-atelier">
+    <section class="atelier-hero">
+      <div class="atelier-hero-copy">
         <p class="eyebrow">Original Character Fan Art</p>
 
         <h1>
-          オリキャラを登録して、<br>
-          FAを描いたり描いてもらえる場所。
+          オリキャラを置いて、<br>
+          描いたり描いてもらったり。
         </h1>
 
         <p class="lead">
-          OCFAは、オリジナルキャラクターのプロフィール・イラスト・ファンアートをまとめて楽しめる創作サイトです。
+          OCFAは、オリジナルキャラクターのプロフィールやファンアートをまとめて楽しめる創作サイトです。
         </p>
 
-        <div class="lp-hero-notice">
+        <div class="atelier-guide-box">
           <strong>はじめての方へ</strong>
-          <span>まずはプロフィール設定 → キャラ登録 → FAを見る・描く、の順番がおすすめです。</span>
+          <span>
+            まずはプロフィールを設定して、キャラを描いて登録してみてください。
+          </span>
         </div>
 
-        <div class="actions lp-hero-actions">
-          <a class="primary-btn" href="/settings/">まずプロフィール設定</a>
+        <div class="actions atelier-hero-actions">
+          <a class="primary-btn" href="/settings/">プロフィール設定</a>
           <a class="ghost-btn" href="/draw/">キャラを描く</a>
           <a class="ghost-btn" href="/characters/">キャラを見る</a>
         </div>
 
-        <div class="mini-tags">
-          <span>OC専用</span>
-          <span>お絵描き登録OK</span>
+        <div class="atelier-tags">
+          <span>OC登録</span>
           <span>FA投稿</span>
+          <span>お絵描き登録</span>
           <span>イベント</span>
         </div>
       </div>
 
-      <div class="lp-hero-card" aria-hidden="true">
-        <div class="lp-card-back"></div>
+      <div class="atelier-hero-illust" aria-hidden="true">
+        <div class="desk-illust">
+          <div class="paper paper-sub"></div>
 
-        <div class="lp-main-card">
-          <div class="lp-card-head">
-            <span>OC FILE</span>
-            <b>★</b>
-          </div>
-
-          <div class="fake-canvas" id="homeOcPreview">
-            <img
-              id="homeOcImage"
-              class="home-oc-image"
-              src=""
-              alt="ランダム表示されたキャラクター"
-              hidden
-            >
-
-            <div id="homeOcFallback" class="hero-profile-preview">
-              <div class="hero-profile-icon">OC</div>
-              <div class="hero-profile-info">
-                <span>Character File</span>
-                <strong>うちの子プロフィール</strong>
-                <small>画像・設定・FAをまとめて表示</small>
-              </div>
+          <div class="paper paper-main">
+            <div class="paper-tape"></div>
+            <div class="paper-icon">OC</div>
+            <div class="paper-lines">
+              <span></span>
+              <span></span>
+              <span></span>
             </div>
           </div>
 
-          <div class="lp-card-lines">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
+          <div class="pencil pencil-one"></div>
+          <div class="pencil pencil-two"></div>
+          <div class="eraser"></div>
         </div>
       </div>
     </section>
 
-    <section class="lp-start panel">
-      <div class="lp-section-head">
-        <p class="eyebrow">How to Start</p>
+    <section class="atelier-start panel">
+      <div class="atelier-section-head">
+        <p class="eyebrow">Start</p>
         <h2>最初にやること</h2>
         <p>
-          迷ったら、この順番で進めればOKです。画像アップロードが使えない場合でも、サイト内のお絵描き機能からキャラ登録できます。
+          迷ったら、この順番で進めればOKです。
+          画像アップロードが使えない場合でも、お絵描き機能から登録できます。
         </p>
       </div>
 
-      <div class="lp-step-grid">
-        <article class="lp-step-card">
-          <span class="lp-step-num">1</span>
-          <h3>ログインする</h3>
-          <p>Googleログイン、またはメール登録でOCFAを使い始められます。</p>
-          <a href="/settings/">設定へ進む</a>
+      <div class="atelier-step-list">
+        <article class="atelier-step">
+          <span>1</span>
+          <div>
+            <h3>プロフィールを設定する</h3>
+            <p>表示名・ID・紹介文を設定すると、作者ページが分かりやすくなります。</p>
+            <a href="/settings/">プロフィール設定へ</a>
+          </div>
         </article>
 
-        <article class="lp-step-card">
-          <span class="lp-step-num">2</span>
-          <h3>プロフィールを設定</h3>
-          <p>表示名・ID・紹介文を設定すると、作者ページが分かりやすくなります。</p>
-          <a href="/settings/">プロフィール設定</a>
+        <article class="atelier-step">
+          <span>2</span>
+          <div>
+            <h3>キャラを描いて登録する</h3>
+            <p>「キャラを描く」から画像を作って、そのままキャラクター登録へ進めます。</p>
+            <a href="/draw/">キャラを描く</a>
+          </div>
         </article>
 
-        <article class="lp-step-card">
-          <span class="lp-step-num">3</span>
-          <h3>キャラを登録</h3>
-          <p>「描く」からキャラ画像を作って、そのままキャラクター登録へ進めます。</p>
-          <a href="/draw/">キャラを描く</a>
-        </article>
-
-        <article class="lp-step-card">
-          <span class="lp-step-num">4</span>
-          <h3>FAを楽しむ</h3>
-          <p>気になるキャラを見つけて、ファンアートを描いたり一覧を見たりできます。</p>
-          <a href="/fanarts/">FAを見る</a>
+        <article class="atelier-step">
+          <span>3</span>
+          <div>
+            <h3>FAを見る・描く</h3>
+            <p>気になるキャラを見つけたら、ファンアートを見たり描いたりできます。</p>
+            <a href="/fanarts/">FAを見る</a>
+          </div>
         </article>
       </div>
+
+      <p class="atelier-note">
+        ※画像アップロードは一部の認定クリエイター向け機能です。
+      </p>
     </section>
 
-    <section class="lp-quick-links">
-      <a class="lp-link-card lp-link-main" href="/characters/">
-        <span>Characters</span>
-        <strong>キャラ一覧を見る</strong>
-        <small>みんなのオリキャラを探せます。</small>
-      </a>
-
-      <a class="lp-link-card" href="/users/">
-        <span>Users</span>
-        <strong>ユーザー一覧を見る</strong>
-        <small>作者ページや公開キャラを見られます。</small>
-      </a>
-
-      <a class="lp-link-card" href="/works/">
-        <span>Works</span>
-        <strong>世界観を見る</strong>
-        <small>作品・共有世界観を探せます。</small>
-      </a>
-
-      <a class="lp-link-card" href="/events/">
-        <span>Events</span>
-        <strong>イベントを見る</strong>
-        <small>開催中の企画を確認できます。</small>
-      </a>
-    </section>
-
-    <section class="home-event-banner lp-event-banner">
-      <div>
-        <p class="eyebrow">Event</p>
-        <h2>OCFAイベント開催中！</h2>
-        <p>
-          オリジナルキャラクターを登録して、FAを描いたり描いてもらったりできるイベントを開催中です。
-          創作好きの方は、ぜひ気軽に参加してみてください。
-        </p>
-        <p class="mini-info">
-          ※現在も調整しながら運営しています。バグや待ち時間が発生する場合があります。
-        </p>
-
-        <div class="actions">
-          <a class="primary-btn" href="/events/">イベントを見る</a>
-          <a class="ghost-btn" href="/draw/">キャラを登録する</a>
-        </div>
-      </div>
-
-      <div class="event-badge" aria-hidden="true">
-        <span>OCFA</span>
-        <strong>EVENT</strong>
-        <small>開催中</small>
-      </div>
-    </section>
-
-    <section class="home-notice-panel">
+    <section class="atelier-notice-panel">
       <div class="section-title-row">
         <div>
           <p class="eyebrow">News</p>
@@ -208,46 +142,75 @@
       </div>
 
       <div id="homeNoticeList" class="home-notice-list">
-  <p class="mini-info">お知らせを読み込み中...</p>
-</div>
-    </section>
-
-    <section class="lp-feature-section">
-      <div class="lp-section-head">
-        <p class="eyebrow">What You Can Do</p>
-        <h2>OCFAでできること</h2>
-      </div>
-
-      <div class="cute-feature-grid">
-        <article class="cute-feature-card">
-          <span>✎</span>
-          <h2>サイト内で描ける</h2>
-          <p>キャンバスで描いたイラストを、そのままキャラクター画像として登録できます。</p>
-        </article>
-
-        <article class="cute-feature-card">
-          <span>♡</span>
-          <h2>FAを投稿できる</h2>
-          <p>気になるキャラに向けて、ファンアートを描いたり一覧で見たりできます。</p>
-        </article>
-
-        <article class="cute-feature-card">
-          <span>★</span>
-          <h2>うちの子をまとめられる</h2>
-          <p>自分のOCを登録して、プロフィールや注意事項を見やすくまとめられます。</p>
-        </article>
-
-        <article class="cute-feature-card">
-          <span>✦</span>
-          <h2>ゆるく描き合える</h2>
-          <p>ランキングや画力勝負より、「描きたい」「描いてもらえた」を大事にする場所です。</p>
-        </article>
+        <p class="mini-info">お知らせを読み込み中...</p>
       </div>
     </section>
 
-    <section class="cute-concept lp-concept">
+        <section class="atelier-games">
+      <div class="atelier-section-head">
+        <p class="eyebrow">Games</p>
+        <h2>OCFAで遊べるゲーム</h2>
+        <p>
+          登録したキャラクターやその場で描いた絵を使って、ゆるく遊べるゲームも用意しています。
+        </p>
+      </div>
+
+      <div class="atelier-game-grid">
+        <article class="atelier-game-card">
+          <div class="atelier-game-icon">✎</div>
+          <div>
+            <h3>オリキャラ描き合いゲーム</h3>
+            <p>
+              参加者同士でオリキャラを描き合う、OCFAらしいお絵描きゲームです。
+            </p>
+            <a class="text-link" href="/game/">ゲームで遊ぶ</a>
+          </div>
+        </article>
+
+        <article class="atelier-game-card">
+          <div class="atelier-game-icon">♡</div>
+          <div>
+            <h3>FAゲーム</h3>
+            <p>
+              みんなで気軽にファンアートを描いて楽しめる、交流向けのゲームです。
+            </p>
+            <a class="text-link" href="/game/">ゲーム一覧へ</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="atelier-event">
+      <div>
+        <p class="eyebrow">Event</p>
+        <h2>OCFAイベント開催中</h2>
+
+        <p>
+          オリジナルキャラクターを登録して、FAを描いたり描いてもらったりできるイベントを開催中です。
+        </p>
+
+        <p class="mini-info">
+          ※現在も調整しながら運営しています。バグや待ち時間が発生する場合があります。
+        </p>
+
+        <div class="actions">
+          <a class="primary-btn" href="/events/">イベントを見る</a>
+          <a class="ghost-btn" href="/draw/">キャラを登録する</a>
+        </div>
+      </div>
+
+      <div class="atelier-event-card" aria-hidden="true">
+        <span>OCFA</span>
+        <strong>EVENT</strong>
+        <small>開催中</small>
+      </div>
+    </section>
+
+    <section class="atelier-concept">
       <p class="eyebrow">Concept</p>
+
       <h2>上手さより、描いてくれたことが嬉しい場所。</h2>
+
       <p>
         OCFAは、ランキングや画力勝負よりも、
         「描きたい」「描いてもらえた」を大事にする場所として作っています。
@@ -255,7 +218,7 @@
 
       <div class="actions">
         <a class="primary-btn" href="/characters/">キャラを探す</a>
-        <a class="ghost-btn" href="/settings/">自分のページを整える</a>
+        <a class="ghost-btn" href="/users/">作者を見る</a>
       </div>
     </section>
   </main>
