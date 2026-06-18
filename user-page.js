@@ -55,6 +55,8 @@ function getUserBadges(userData) {
       className: "user-badge-official",
       label: "公式"
     });
+
+    return badges;
   }
 
   if (userData.officialLevel === "sample") {
@@ -62,6 +64,8 @@ function getUserBadges(userData) {
       className: "user-badge-sample",
       label: "公式サンプル"
     });
+
+    return badges;
   }
 
   if (userData.uploadAllowed === true) {
