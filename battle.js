@@ -42,40 +42,15 @@ async function getOwnerName(user) {
     if (userSnap.exists()) {
       const userData = userSnap.data();
 
-      if (userData.displayName) {
-        return userData.displayName;
-      }
-
-      if (userData.name) {
-        return userData.name;
-      }
-
-      if (userData.nickname) {
-        return userData.nickname;
-      }
+      if (userData.displayName) return userData.displayName;
+      if (userData.name) return userData.name;
+      if (userData.nickname) return userData.nickname;
     }
   } catch (error) {
     console.error(error);
   }
 
-  return (
-    user.displayName ||
-    user.email?.split("@")[0] ||
-    "ホスト"
-  );
-}
-
-function setFormState() {
-  if (!createBattleRoomBtn) return;
-
-  if (!currentUser) {
-    setButtonDisabled(true);
-    setMessage("部屋を作るにはログインしてください。");
-    return;
-  }
-
-  setButtonDisabled(false);
-  setMessage("部屋を作成できます。");
+  return user.displayName || user.email?.split("@")[0] || "ホスト";
 }
 
 function getDefaultRoomTitle() {
@@ -118,6 +93,19 @@ function validateRoomSettings(selectedDrawSeconds, selectedVoteSeconds, selected
   return "";
 }
 
+function setFormState() {
+  if (!createBattleRoomBtn) return;
+
+  if (!currentUser) {
+    setButtonDisabled(true);
+    setMessage("部屋を作るにはログインしてください。");
+    return;
+  }
+
+  setButtonDisabled(false);
+  setMessage("部屋を作成できます。");
+}
+
 async function createBattleRoom() {
   if (!currentUser) {
     setMessage("部屋を作るにはログインしてください。");
@@ -147,7 +135,7 @@ async function createBattleRoom() {
 
     const ownerName = await getOwnerName(currentUser);
 
-    const roomRef = await addDoc(collection(db, "ocBattleRooms"), {
+    const roomRef = await addDoc(collection(db, "odaiBattleRooms"), {
       ownerId: currentUser.uid,
       ownerName,
       title,
@@ -172,7 +160,7 @@ async function createBattleRoom() {
       updatedAt: serverTimestamp()
     });
 
-    await addDoc(collection(db, "ocBattlePlayers"), {
+    await addDoc(collection(db, "odaiBattlePlayers"), {
       roomId: roomRef.id,
 
       userId: currentUser.uid,
