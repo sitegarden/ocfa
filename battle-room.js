@@ -1,17 +1,13 @@
-import { auth, db } from "/firebase.js";
+import { auth, db, storage } from "/firebase.js";
 
 import {
   addDoc,
   collection,
-  deleteDoc,
   doc,
   getDoc,
-  getDocs,
   onSnapshot,
-  orderBy,
   query,
   serverTimestamp,
-  setDoc,
   updateDoc,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -19,6 +15,12 @@ import {
 import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+import {
+  getDownloadURL,
+  ref,
+  uploadString
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
 const app = document.getElementById("battleRoomApp");
 
@@ -66,11 +68,22 @@ let currentUser = null;
 let roomData = null;
 let players = [];
 let themes = [];
+let works = [];
 let myPlayer = null;
 
 let unsubscribeRoom = null;
 let unsubscribePlayers = null;
 let unsubscribeThemes = null;
+let unsubscribeWorks = null;
+
+let drawingTimerId = null;
+let canvasReady = false;
+let isDrawing = false;
+let lastPoint = null;
+
+let currentTool = "pen";
+let currentColor = "#222222";
+let currentSize = 8;
 
 function escapeHtml(text) {
   return String(text ?? "")
@@ -114,6 +127,45 @@ function getPlayerIdentity() {
   };
 }
 
+function timestampToMillis(value) {
+  if (!value) return 0;
+
+  if (typeof value.toMillis === "function") {
+    return value.toMillis();
+  }
+
+  if (value.seconds) {
+    return value.seconds * 1000;
+  }
+
+  return 0;
+}
+
+function sortByCreatedAt(items) {
+  return [...items].sort((a, b) => {
+    const aTime = timestampToMillis(a.createdAt || a.joinedAt);
+    const bTime = timestampToMillis(b.createdAt || b.joinedAt);
+
+    return aTime - bTime;
+  });
+}
+
+function sortPlayers(items) {
+  return [...items].sort((a, b) => {
+    const aOrder = Number(a.order ?? 9999);
+    const bOrder = Number(b.order ?? 9999);
+
+    if (aOrder !== bOrder) {
+      return aOrder - bOrder;
+    }
+
+    const aTime = timestampToMillis(a.joinedAt);
+    const bTime = timestampToMillis(b.joinedAt);
+
+    return aTime - bTime;
+  });
+}
+
 async function getUserName(user) {
   if (!user) return "";
 
@@ -148,10 +200,22 @@ function findMyPlayer() {
   const identity = getPlayerIdentity();
 
   if (identity.userId) {
-    return players.find((player) => player.userId === identity.userId && !player.isLeft) || null;
+    return players.find((player) => {
+      return player.userId === identity.userId && !player.isLeft;
+    }) || null;
   }
 
-  return players.find((player) => player.guestId === identity.guestId && !player.isLeft) || null;
+  return players.find((player) => {
+    return player.guestId === identity.guestId && !player.isLeft;
+  }) || null;
+}
+
+function getMyWork() {
+  if (!myPlayer) return null;
+
+  return works.find((work) => {
+    return work.playerId === myPlayer.id && !work.isDeleted;
+  }) || null;
 }
 
 function canJoin() {
@@ -184,6 +248,30 @@ function renderError(message) {
   `);
 }
 
+function getDrawingRemainingSeconds() {
+  if (!roomData?.drawingStartedAt) {
+    return Number(roomData?.drawSeconds || 600);
+  }
+
+  const startedAt = timestampToMillis(roomData.drawingStartedAt);
+
+  if (!startedAt) {
+    return Number(roomData?.drawSeconds || 600);
+  }
+
+  const limit = Number(roomData.drawSeconds || 600);
+  const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+
+  return Math.max(0, limit - elapsed);
+}
+
+function formatSeconds(seconds) {
+  const minute = Math.floor(seconds / 60);
+  const second = seconds % 60;
+
+  return `${minute}:${String(second).padStart(2, "0")}`;
+}
+
 function renderPlayers() {
   const activePlayers = players.filter((player) => !player.isLeft);
 
@@ -198,8 +286,12 @@ function renderPlayers() {
           <span class="battle-player-name">
             ${escapeHtml(player.name || "参加者")}
           </span>
+
           ${player.isOwner ? `<span class="battle-badge">ホスト</span>` : ""}
-          ${myPlayer?.id === player.id ? `<span class="battle-badge battle-badge-soft">あなた</span>` : ""}
+
+          ${myPlayer?.id === player.id ? `
+            <span class="battle-badge battle-badge-soft">あなた</span>
+          ` : ""}
         </div>
       `).join("")}
     </div>
@@ -210,7 +302,11 @@ function renderJoinArea() {
   if (myPlayer) {
     return `
       <div class="battle-mini-card">
-        <p>あなたは <strong>${escapeHtml(myPlayer.name || "参加者")}</strong> として参加中です。</p>
+        <p>
+          あなたは
+          <strong>${escapeHtml(myPlayer.name || "参加者")}</strong>
+          として参加中です。
+        </p>
       </div>
     `;
   }
@@ -268,6 +364,7 @@ function renderThemesForHost() {
 
         <div class="battle-theme-meta">
           <span>${escapeHtml(theme.playerName || "参加者")}</span>
+
           ${
             status === "approved"
               ? `<span class="battle-badge">承認済み</span>`
@@ -382,6 +479,7 @@ function renderThemeSubmitArea() {
               return `
                 <article class="battle-theme-card battle-theme-${status}">
                   <p>${escapeHtml(theme.text)}</p>
+
                   <div class="battle-theme-meta">
                     ${
                       status === "approved"
@@ -406,9 +504,8 @@ function renderSelectedTheme() {
 
   return `
     <section class="battle-section battle-selected-theme">
-      <p class="battle-kicker">SELECTED THEME</p>
-      <h2>今回のお題</h2>
-      <p class="battle-big-theme">${escapeHtml(roomData.selectedThemeText)}</p>
+      <p class="battle-kicker">今回のお題</p>
+      <h2>${escapeHtml(roomData.selectedThemeText)}</h2>
     </section>
   `;
 }
@@ -429,14 +526,105 @@ function renderWaitingControls() {
   `;
 }
 
-function renderDrawingPlaceholder() {
+function renderDrawingArea() {
   if (roomData.status !== "drawing") return "";
+
+  if (!myPlayer) {
+    return `
+      <section class="battle-section">
+        <h2>お絵描き</h2>
+        <p class="battle-note">
+          参加者のみ絵を描けます。
+        </p>
+      </section>
+    `;
+  }
+
+  const myWork = getMyWork();
+
+  return `
+    <section class="battle-section battle-drawing-section">
+      <div class="battle-drawing-head">
+        <div>
+          <h2>お絵描き</h2>
+          <p class="battle-note">
+            残り時間：
+            <strong id="drawingTimer">${formatSeconds(getDrawingRemainingSeconds())}</strong>
+          </p>
+        </div>
+
+        ${
+          isOwner()
+            ? `
+              <button id="startVotingBtn" class="battle-main-btn" type="button">
+                投票へ進む
+              </button>
+            `
+            : ""
+        }
+      </div>
+
+      ${
+        myWork
+          ? `
+            <div class="battle-submitted-card">
+              <h3>提出済み</h3>
+              <p>あなたの作品は提出されています。</p>
+              <img src="${escapeHtml(myWork.imageUrl)}" alt="提出した作品" />
+            </div>
+          `
+          : `
+            <div class="battle-tool-bar">
+              <label>
+                色
+                <input id="penColor" type="color" value="#222222" />
+              </label>
+
+              <label>
+                太さ
+                <input id="penSize" type="range" min="2" max="40" value="8" />
+              </label>
+
+              <button id="penToolBtn" class="battle-small-btn is-active" type="button">
+                ペン
+              </button>
+
+              <button id="eraserToolBtn" class="battle-small-btn" type="button">
+                消しゴム
+              </button>
+
+              <button id="clearCanvasBtn" class="battle-small-btn battle-danger-btn" type="button">
+                全消し
+              </button>
+            </div>
+
+            <div class="battle-canvas-wrap">
+              <canvas id="drawingCanvas" width="900" height="650"></canvas>
+            </div>
+
+            <div class="battle-submit-area">
+              <button id="submitWorkBtn" class="battle-main-btn" type="button">
+                作品を提出
+              </button>
+
+              <p class="battle-note">
+                提出後は今のところ描き直しできません。
+              </p>
+            </div>
+          `
+      }
+    </section>
+  `;
+}
+
+function renderVotingPlaceholder() {
+  if (roomData.status !== "voting") return "";
 
   return `
     <section class="battle-section">
-      <h2>お絵描き</h2>
+      <h2>投票</h2>
       <p class="battle-note">
-        次の段階でキャンバスをここに追加します。
+        次の段階で、色別ハート投票をここに追加します。
       </p>
     </section>
   `;
@@ -459,8 +647,10 @@ function renderMain() {
         <div>
           <p class="battle-kicker">お題バトル</p>
           <h1>${escapeHtml(roomData.title || "お題バトル")}</h1>
+
           <p class="battle-note">
-            状態：<strong>${escapeHtml(STATUS_LABELS[roomData.status] || roomData.status)}</strong>
+            状態：
+            <strong>${escapeHtml(STATUS_LABELS[roomData.status] || roomData.status)}</strong>
             ／ 参加者：${activePlayers.length}/${Number(roomData.maxPlayers || 6)}人
           </p>
         </div>
@@ -468,6 +658,7 @@ function renderMain() {
         <div class="battle-share-box">
           <p>共有URL</p>
           <input id="roomUrlInput" type="text" value="${escapeHtml(roomUrl)}" readonly />
+
           <button id="copyRoomUrlBtn" class="battle-small-btn" type="button">
             コピー
           </button>
@@ -499,11 +690,20 @@ function renderMain() {
           : ""
       }
 
-      ${renderDrawingPlaceholder()}
+      ${renderDrawingArea()}
+      ${renderVotingPlaceholder()}
     </div>
   `);
 
+  canvasReady = false;
   bindRenderedEvents();
+
+  if (roomData.status === "drawing") {
+    setupCanvas();
+    startDrawingTimer();
+  } else {
+    stopDrawingTimer();
+  }
 }
 
 function bindRenderedEvents() {
@@ -568,6 +768,14 @@ function bindRenderedEvents() {
     });
   }
 
+  const startVotingBtn = document.getElementById("startVotingBtn");
+
+  if (startVotingBtn) {
+    startVotingBtn.addEventListener("click", async () => {
+      await startVoting();
+    });
+  }
+
   const themeActionButtons = app.querySelectorAll("[data-action][data-theme-id]");
 
   themeActionButtons.forEach((button) => {
@@ -584,6 +792,260 @@ function bindRenderedEvents() {
       }
     });
   });
+}
+
+function setupCanvas() {
+  const canvas = document.getElementById("drawingCanvas");
+
+  if (!canvas || canvasReady || getMyWork()) return;
+
+  const context = canvas.getContext("2d");
+
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  context.lineCap = "round";
+  context.lineJoin = "round";
+
+  canvas.style.touchAction = "none";
+
+  const penColor = document.getElementById("penColor");
+  const penSize = document.getElementById("penSize");
+  const penToolBtn = document.getElementById("penToolBtn");
+  const eraserToolBtn = document.getElementById("eraserToolBtn");
+  const clearCanvasBtn = document.getElementById("clearCanvasBtn");
+  const submitWorkBtn = document.getElementById("submitWorkBtn");
+
+  if (penColor) {
+    penColor.addEventListener("input", () => {
+      currentColor = penColor.value;
+      currentTool = "pen";
+      updateToolButtons();
+    });
+  }
+
+  if (penSize) {
+    penSize.addEventListener("input", () => {
+      currentSize = Number(penSize.value);
+    });
+  }
+
+  if (penToolBtn) {
+    penToolBtn.addEventListener("click", () => {
+      currentTool = "pen";
+      updateToolButtons();
+    });
+  }
+
+  if (eraserToolBtn) {
+    eraserToolBtn.addEventListener("click", () => {
+      currentTool = "eraser";
+      updateToolButtons();
+    });
+  }
+
+  if (clearCanvasBtn) {
+    clearCanvasBtn.addEventListener("click", () => {
+      const ok = confirm("キャンバスを全消ししますか？");
+
+      if (!ok) return;
+
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    });
+  }
+
+  if (submitWorkBtn) {
+    submitWorkBtn.addEventListener("click", async () => {
+      await submitWork();
+    });
+  }
+
+  canvas.addEventListener("pointerdown", startDraw);
+  canvas.addEventListener("pointermove", moveDraw);
+  canvas.addEventListener("pointerup", endDraw);
+  canvas.addEventListener("pointerleave", endDraw);
+  canvas.addEventListener("pointercancel", endDraw);
+
+  canvasReady = true;
+}
+
+function updateToolButtons() {
+  const penToolBtn = document.getElementById("penToolBtn");
+  const eraserToolBtn = document.getElementById("eraserToolBtn");
+
+  if (penToolBtn) {
+    penToolBtn.classList.toggle("is-active", currentTool === "pen");
+  }
+
+  if (eraserToolBtn) {
+    eraserToolBtn.classList.toggle("is-active", currentTool === "eraser");
+  }
+}
+
+function getCanvasPoint(event) {
+  const canvas = document.getElementById("drawingCanvas");
+  const rect = canvas.getBoundingClientRect();
+
+  return {
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+function startDraw(event) {
+  const canvas = document.getElementById("drawingCanvas");
+
+  if (!canvas) return;
+
+  event.preventDefault();
+
+  isDrawing = true;
+  lastPoint = getCanvasPoint(event);
+
+  canvas.setPointerCapture(event.pointerId);
+}
+
+function moveDraw(event) {
+  if (!isDrawing || !lastPoint) return;
+
+  const canvas = document.getElementById("drawingCanvas");
+  const context = canvas.getContext("2d");
+  const nextPoint = getCanvasPoint(event);
+
+  event.preventDefault();
+
+  context.beginPath();
+  context.moveTo(lastPoint.x, lastPoint.y);
+  context.lineTo(nextPoint.x, nextPoint.y);
+
+  context.lineWidth = currentSize;
+  context.globalCompositeOperation = "source-over";
+
+  if (currentTool === "eraser") {
+    context.strokeStyle = "#ffffff";
+  } else {
+    context.strokeStyle = currentColor;
+  }
+
+  context.stroke();
+
+  lastPoint = nextPoint;
+}
+
+function endDraw(event) {
+  if (!isDrawing) return;
+
+  const canvas = document.getElementById("drawingCanvas");
+
+  if (canvas && event.pointerId !== undefined) {
+    try {
+      canvas.releasePointerCapture(event.pointerId);
+    } catch (error) {
+      // 無視
+    }
+  }
+
+  isDrawing = false;
+  lastPoint = null;
+}
+
+function startDrawingTimer() {
+  stopDrawingTimer();
+
+  const timerElement = document.getElementById("drawingTimer");
+
+  if (!timerElement) return;
+
+  const updateTimer = () => {
+    const remaining = getDrawingRemainingSeconds();
+    timerElement.textContent = formatSeconds(remaining);
+
+    if (remaining <= 0) {
+      timerElement.textContent = "0:00";
+      stopDrawingTimer();
+    }
+  };
+
+  updateTimer();
+  drawingTimerId = setInterval(updateTimer, 1000);
+}
+
+function stopDrawingTimer() {
+  if (drawingTimerId) {
+    clearInterval(drawingTimerId);
+    drawingTimerId = null;
+  }
+}
+
+async function submitWork() {
+  if (!myPlayer) {
+    alert("参加してから提出してください。");
+    return;
+  }
+
+  if (roomData.status !== "drawing") {
+    alert("現在は提出できません。");
+    return;
+  }
+
+  if (getMyWork()) {
+    alert("すでに提出済みです。");
+    return;
+  }
+
+  const canvas = document.getElementById("drawingCanvas");
+
+  if (!canvas) {
+    alert("キャンバスが見つかりません。");
+    return;
+  }
+
+  const ok = confirm("この作品を提出しますか？");
+
+  if (!ok) return;
+
+  const submitWorkBtn = document.getElementById("submitWorkBtn");
+
+  if (submitWorkBtn) {
+    submitWorkBtn.disabled = true;
+    submitWorkBtn.textContent = "提出中...";
+  }
+
+  try {
+    const imageData = canvas.toDataURL("image/png");
+    const filePath = `odai-battle/${roomId}/${myPlayer.id}_${Date.now()}.png`;
+    const imageRef = ref(storage, filePath);
+
+    await uploadString(imageRef, imageData, "data_url");
+
+    const imageUrl = await getDownloadURL(imageRef);
+
+    await addDoc(collection(db, "odaiBattleWorks"), {
+      roomId,
+
+      playerId: myPlayer.id,
+      playerName: myPlayer.name || "参加者",
+
+      imageUrl,
+      storagePath: filePath,
+
+      isDeleted: false,
+
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    alert("提出しました。");
+  } catch (error) {
+    console.error(error);
+    alert("提出に失敗しました。");
+
+    if (submitWorkBtn) {
+      submitWorkBtn.disabled = false;
+      submitWorkBtn.textContent = "作品を提出";
+    }
+  }
 }
 
 async function joinRoom() {
@@ -718,20 +1180,45 @@ async function selectRandomTheme() {
     return;
   }
 
-  const approvedThemes = themes.filter((theme) => theme.isApproved && !theme.isRejected);
+  const approvedThemes = themes.filter((theme) => {
+    return theme.isApproved && !theme.isRejected;
+  });
 
   if (approvedThemes.length === 0) {
     alert("承認済みのお題がありません。");
     return;
   }
 
-  const selectedTheme = approvedThemes[Math.floor(Math.random() * approvedThemes.length)];
+  const selectedTheme = approvedThemes[
+    Math.floor(Math.random() * approvedThemes.length)
+  ];
 
   await updateDoc(getRoomRef(), {
     status: "drawing",
     selectedThemeId: selectedTheme.id,
     selectedThemeText: selectedTheme.text,
     drawingStartedAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+}
+
+async function startVoting() {
+  if (!isOwner()) {
+    alert("ホストのみ操作できます。");
+    return;
+  }
+
+  const activeWorks = works.filter((work) => !work.isDeleted);
+
+  if (activeWorks.length === 0) {
+    const ok = confirm("提出作品がまだありません。このまま投票へ進みますか？");
+
+    if (!ok) return;
+  }
+
+  await updateDoc(getRoomRef(), {
+    status: "voting",
+    votingStartedAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
 }
@@ -772,17 +1259,18 @@ function subscribeRoom() {
 function subscribePlayers() {
   const playersQuery = query(
     collection(db, "odaiBattlePlayers"),
-    where("roomId", "==", roomId),
-    orderBy("order", "asc")
+    where("roomId", "==", roomId)
   );
 
   unsubscribePlayers = onSnapshot(
     playersQuery,
     (snapshot) => {
-      players = snapshot.docs.map((playerDoc) => ({
-        id: playerDoc.id,
-        ...playerDoc.data()
-      }));
+      players = sortPlayers(
+        snapshot.docs.map((playerDoc) => ({
+          id: playerDoc.id,
+          ...playerDoc.data()
+        }))
+      );
 
       renderMain();
     },
@@ -795,17 +1283,42 @@ function subscribePlayers() {
 function subscribeThemes() {
   const themesQuery = query(
     collection(db, "odaiBattleThemes"),
-    where("roomId", "==", roomId),
-    orderBy("createdAt", "asc")
+    where("roomId", "==", roomId)
   );
 
   unsubscribeThemes = onSnapshot(
     themesQuery,
     (snapshot) => {
-      themes = snapshot.docs.map((themeDoc) => ({
-        id: themeDoc.id,
-        ...themeDoc.data()
-      }));
+      themes = sortByCreatedAt(
+        snapshot.docs.map((themeDoc) => ({
+          id: themeDoc.id,
+          ...themeDoc.data()
+        }))
+      );
+
+      renderMain();
+    },
+    (error) => {
+      console.error(error);
+    }
+  );
+}
+
+function subscribeWorks() {
+  const worksQuery = query(
+    collection(db, "odaiBattleWorks"),
+    where("roomId", "==", roomId)
+  );
+
+  unsubscribeWorks = onSnapshot(
+    worksQuery,
+    (snapshot) => {
+      works = sortByCreatedAt(
+        snapshot.docs.map((workDoc) => ({
+          id: workDoc.id,
+          ...workDoc.data()
+        }))
+      );
 
       renderMain();
     },
@@ -819,6 +1332,14 @@ function cleanup() {
   if (unsubscribeRoom) unsubscribeRoom();
   if (unsubscribePlayers) unsubscribePlayers();
   if (unsubscribeThemes) unsubscribeThemes();
+  if (unsubscribeWorks) unsubscribeWorks();
+
+  stopDrawingTimer();
+
+  unsubscribeRoom = null;
+  unsubscribePlayers = null;
+  unsubscribeThemes = null;
+  unsubscribeWorks = null;
 }
 
 window.addEventListener("beforeunload", cleanup);
@@ -838,4 +1359,5 @@ onAuthStateChanged(auth, (user) => {
   subscribeRoom();
   subscribePlayers();
   subscribeThemes();
+  subscribeWorks();
 });
