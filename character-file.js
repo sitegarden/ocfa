@@ -84,7 +84,7 @@ async function getOwnerInfo(userId) {
 
 function renderOwnerLink(ownerInfo) {
   const href = ownerInfo.pageId
-    ? `/users/profile/?id=${encodeURIComponent(ownerInfo.pageId)}`
+    ? `/users/?id=${encodeURIComponent(ownerInfo.pageId)}`
     : "/characters/";
 
   return `
