@@ -333,14 +333,12 @@ function setupPublicProfileButton() {
 }
 
 function renderMypage(user, userData, characters) {
-  const displayName =
-    userData?.displayName ||
-    user.displayName ||
-    "名前未設定";
 
-  const profileText = userData?.profileText || "";
-  const genreText = userData?.genreText || "";
-  const linkUrl = userData?.linkUrl || "";
+  const displayName = userData?.displayName || user.displayName || "名前未設定";
+const profileText = userData?.profileText || "";
+const genreText = userData?.genreText || "";
+const linkUrl = userData?.linkUrl || "";
+const photoURL = userData?.photoURL || user.photoURL || "";
 
   const publicCharacters = characters.filter((character) => {
     return character.data.isPublic !== false;
