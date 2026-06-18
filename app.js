@@ -32,45 +32,44 @@ async function getOcfaUserData(user) {
   const userRef = doc(db, "users", user.uid);
   const snap = await getDoc(userRef);
 
-  if (snap.exists()) {
-    const data = snap.data();
-    const latestPhotoURL = user.photoURL || "";
+ if (snap.exists()) {
+  const data = snap.data();
+  const updateData = {};
 
-    const updateData = {};
-
-    if ((data.photoURL || "") !== latestPhotoURL) {
-      updateData.photoURL = latestPhotoURL;
-    }
-
-    if (!("uploadAllowed" in data)) {
-      updateData.uploadAllowed = false;
-    }
-
-    if (Object.keys(updateData).length > 0) {
-      updateData.updatedAt = serverTimestamp();
-      await updateDoc(userRef, updateData);
-      return { ...data, ...updateData };
-    }
-
-    return data;
+  if (!("googlePhotoURL" in data)) {
+    updateData.googlePhotoURL = user.photoURL || "";
   }
+
+  if (!("uploadAllowed" in data)) {
+    updateData.uploadAllowed = false;
+  }
+
+  if (Object.keys(updateData).length > 0) {
+    updateData.updatedAt = serverTimestamp();
+    await updateDoc(userRef, updateData);
+    return { ...data, ...updateData };
+  }
+
+  return data;
+}
 
   const emailName = user.email ? user.email.split("@")[0] : "";
 
   const initialData = {
-    uid: user.uid,
-    email: user.email || "",
-    displayName: user.displayName || emailName || "",
-    photoURL: user.photoURL || "",
-    role: "user",
-    uploadAllowed: false,
-    handle: "",
-    profileText: "",
-    genreText: "",
-    linkUrl: "",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  };
+  uid: user.uid,
+  email: user.email || "",
+  displayName: user.displayName || emailName || "",
+  photoURL: "",
+  googlePhotoURL: user.photoURL || "",
+  role: "user",
+  uploadAllowed: false,
+  handle: "",
+  profileText: "",
+  genreText: "",
+  linkUrl: "",
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp()
+};
 
   await setDoc(userRef, initialData);
   return initialData;
