@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>お題バトル｜ルーム</title>
+
+  <meta
+    name="description"
+    content="お題バトルのルームページです。お題を出して、時間内に描いて、色別ハートで投票できます。"
+  />
+
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+
+  <meta property="og:title" content="OCFA Battle｜ルーム" />
+  <meta
+    property="og:description"
+    content="お題を決めて10分で描く、ゆるく競えるOCFAのお絵描きバトル。"
+  />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://ocfa.site/battle/room/" />
+  <meta property="og:image" content="https://ocfa.site/ogp.png" />
+
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/game.css" />
+  <link rel="stylesheet" href="/battle.css" />
+
+  <script type="module" src="/battle-room.js" defer></script>
+</head>
+
+<body>
+  <header class="site-header">
+    <a class="site-logo" href="/">OCFA</a>
+
+    <nav class="site-nav">
+      <a href="/">ホーム</a>
+      <a href="/characters/">キャラ一覧</a>
+      <a href="/games/">ゲーム</a>
+      <a href="/battle/">バトル</a>
+    </nav>
+  </header>
+
+  <main class="battle-room-page">
+    <section id="battleRoomApp" class="battle-room-app">
+      <div class="battle-loading-card">
+        <p class="battle-kicker">OCFA BATTLE</p>
+        <h1>ルームを読み込んでいます...</h1>
+        <p>
+          少し時間がかかる場合があります。
+          ルームIDが正しいか確認してください。
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>&copy; OCFA</small>
+  </footer>
+</body>
+</html>
