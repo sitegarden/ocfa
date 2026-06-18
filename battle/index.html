@@ -4,30 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>お題バトル｜ルーム</title>
+  <title>お題バトル｜お絵描きゲーム</title>
 
   <meta
     name="description"
-    content="お題バトルのルームページです。お題を出して、時間内に描いて、色別ハートで投票できます。"
+    content="お題バトルは、みんなでお題を出し合い、決まったお題を時間内に描いて、色別ハートで投票するお絵描きゲームです。"
   />
 
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/favicon.png" />
 
-  <meta property="og:title" content="お題バトル｜ルーム" />
+  <meta property="og:title" content="お題バトル｜お絵描きゲーム" />
   <meta
     property="og:description"
     content="お題を決めて10分で描く、ゆるく競えるお絵描きゲーム。"
   />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://ocfa.site/battle/room/" />
+  <meta property="og:url" content="https://ocfa.site/battle/" />
   <meta property="og:image" content="https://ocfa.site/ogp.png" />
 
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/game.css" />
   <link rel="stylesheet" href="/battle.css" />
 
-  <script type="module" src="/battle-room.js" defer></script>
+  <script type="module" src="/battle.js" defer></script>
 </head>
 
 <body>
@@ -42,18 +42,210 @@
     </nav>
   </header>
 
-  <main class="battle-room-page">
-    <section id="battleRoomApp" class="battle-room-app">
-      <div class="battle-loading-card">
-        <p class="battle-kicker">DRAWING GAME</p>
+  <main class="battle-page">
+    <section class="battle-hero">
+      <p class="battle-kicker">DRAWING GAME</p>
 
-        <h1>ルームを読み込んでいます...</h1>
+      <h1>お題バトル</h1>
 
-        <p>
-          ルームIDが正しいか確認してください。
-          読み込みに少し時間がかかる場合があります。
-        </p>
+      <p class="battle-lead">
+        みんなでお題を出し合って、決まったお題を時間内に描くお絵描きゲームです。
+        投票は色別ハート式なので、上手さだけじゃなく「かわいい」「発想」「再現率」でも評価されます。
+      </p>
+    </section>
+
+    <section class="battle-section">
+      <h2>遊び方</h2>
+
+      <ol class="battle-steps">
+        <li>
+          <span>1</span>
+          <p>参加者がそれぞれお題を書きます。</p>
+        </li>
+
+        <li>
+          <span>2</span>
+          <p>ホストが不適切なお題や遊びにくいお題をチェックします。</p>
+        </li>
+
+        <li>
+          <span>3</span>
+          <p>残ったお題からランダムで1つ選ばれます。</p>
+        </li>
+
+        <li>
+          <span>4</span>
+          <p>決まったお題の絵を、制限時間内にみんなで描きます。</p>
+        </li>
+
+        <li>
+          <span>5</span>
+          <p>完成した絵を匿名で見ながら、好きな作品にハート投票します。</p>
+        </li>
+
+        <li>
+          <span>6</span>
+          <p>色別ハートごとに結果が表示されます。</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="battle-section">
+      <h2>ハート部門</h2>
+
+      <p class="battle-note">
+        1つの作品につき、送れるハートは1種類だけです。
+        たとえば🩷を入れた作品には、同じ人が💙や💜を追加で入れることはできません。
+      </p>
+
+      <div class="heart-grid">
+        <article class="heart-card">
+          <div class="heart-emoji">🩷</div>
+          <h3>かわいい</h3>
+          <p>可愛さ、雰囲気、癒やし力が強い作品に。</p>
+        </article>
+
+        <article class="heart-card">
+          <div class="heart-emoji">💙</div>
+          <h3>かっこいい</h3>
+          <p>構図、ポーズ、迫力、かっこよさが光る作品に。</p>
+        </article>
+
+        <article class="heart-card">
+          <div class="heart-emoji">💛</div>
+          <h3>絵柄が好み</h3>
+          <p>絵柄やタッチが刺さった作品に。</p>
+        </article>
+
+        <article class="heart-card">
+          <div class="heart-emoji">💚</div>
+          <h3>クオリティが高い</h3>
+          <p>完成度や丁寧さが高い作品に。</p>
+        </article>
+
+        <article class="heart-card">
+          <div class="heart-emoji">💜</div>
+          <h3>発想が素晴らしい</h3>
+          <p>お題の解釈やアイデアが面白い作品に。</p>
+        </article>
+
+        <article class="heart-card">
+          <div class="heart-emoji">🧡</div>
+          <h3>再現率高すぎ</h3>
+          <p>お題への寄せ方や表現がうまい作品に。</p>
+        </article>
       </div>
+    </section>
+
+    <section class="battle-section">
+      <h2>ルール</h2>
+
+      <div class="battle-rule-list">
+        <article class="battle-rule-card">
+          <h3>お題について</h3>
+          <p>
+            参加者は自由にお題を投稿できます。
+            不適切なお題・攻撃的なお題・描く人が困るお題はホストが除外できます。
+          </p>
+        </article>
+
+        <article class="battle-rule-card">
+          <h3>お絵描きについて</h3>
+          <p>
+            決まったお題を、制限時間内に描きます。
+            上手さだけでなく、発想・勢い・ネタ・雰囲気も大歓迎です。
+          </p>
+        </article>
+
+        <article class="battle-rule-card">
+          <h3>投票について</h3>
+          <p>
+            投票では、1つの作品につき1種類だけハートを送れます。
+            ハートを押し直すと変更できます。
+          </p>
+        </article>
+
+        <article class="battle-rule-card">
+          <h3>自分の作品への投票</h3>
+          <p>
+            自分の作品には投票できません。
+            他の人の作品を見て、合っていると思うハートを選んでください。
+          </p>
+        </article>
+
+        <article class="battle-rule-card">
+          <h3>結果について</h3>
+          <p>
+            結果はハートの色ごとに部門別で表示されます。
+            いろいろな形で評価されるため、上手さだけで決まるゲームではありません。
+          </p>
+        </article>
+
+        <article class="battle-rule-card">
+          <h3>参加マナー</h3>
+          <p>
+            他の人の作品を傷つける発言や荒らし行為は禁止です。
+            楽しく遊べるように、お互いの絵を大切にしてください。
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="battle-section battle-create-section">
+      <h2>部屋を作る</h2>
+
+      <p class="battle-note">
+        部屋を作ったら、URLを共有して参加者を集められます。
+      </p>
+
+      <form id="battleRoomCreateForm" class="battle-form">
+        <label class="battle-field">
+          <span>部屋名</span>
+          <input
+            id="battleRoomTitle"
+            type="text"
+            maxlength="40"
+            placeholder="例：10分お題バトル"
+          />
+        </label>
+
+        <label class="battle-field">
+          <span>お絵描き時間</span>
+          <select id="drawSeconds">
+            <option value="300">5分</option>
+            <option value="600" selected>10分</option>
+            <option value="900">15分</option>
+            <option value="1200">20分</option>
+          </select>
+        </label>
+
+        <label class="battle-field">
+          <span>投票時間</span>
+          <select id="voteSeconds">
+            <option value="120">2分</option>
+            <option value="180" selected>3分</option>
+            <option value="300">5分</option>
+          </select>
+        </label>
+
+        <label class="battle-field">
+          <span>最大人数</span>
+          <select id="battleMaxPlayers">
+            <option value="4">4人</option>
+            <option value="6" selected>6人</option>
+            <option value="8">8人</option>
+            <option value="10">10人</option>
+          </select>
+        </label>
+
+        <button id="createBattleRoomBtn" class="battle-main-btn" type="submit">
+          部屋を作る
+        </button>
+
+        <p id="battleMessage" class="battle-message">
+          読み込み中です...
+        </p>
+      </form>
     </section>
   </main>
 
