@@ -67,7 +67,7 @@ function getUserBadges(userData) {
   if (userData.uploadAllowed === true) {
     badges.push({
       className: "user-badge-upload",
-      label: "アップロード許可"
+      label: "クリエイター"
     });
   }
 
