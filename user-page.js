@@ -101,19 +101,21 @@ function renderNotFound() {
 
 function renderUserIcon(userData, className = "user-page-icon") {
   const displayName = getDisplayName(userData);
-  const iconImage = userData.iconImageData || userData.photoURL || "";
+  const iconImage = userData.photoURL || "";
 
   if (iconImage) {
     return `
-      <div class="${className}">
-        <img src="${escapeHtml(iconImage)}" alt="${escapeHtml(displayName)}">
-      </div>
+      <img
+        class="${escapeHtml(className)}"
+        src="${escapeHtml(iconImage)}"
+        alt="${escapeHtml(displayName)}のアイコン"
+      />
     `;
   }
 
   return `
-    <div class="${className}">
-      <span>${escapeHtml(displayName.slice(0, 1) || "？")}</span>
+    <div class="${escapeHtml(className)}">
+      ${escapeHtml(displayName.slice(0, 1) || "？")}
     </div>
   `;
 }
