@@ -7066,3 +7066,152 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =========================
+   Home Landing Page Atelier Tone
+========================= */
+
+.home-lp {
+  background:
+    radial-gradient(circle at 8% 8%, rgba(139, 198, 255, 0.16), transparent 26%),
+    radial-gradient(circle at 92% 14%, rgba(196, 181, 253, 0.12), transparent 24%),
+    linear-gradient(180deg, #fffdf8, #f8fbff);
+}
+
+.lp-hero {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 253, 255, 0.94)),
+    repeating-linear-gradient(
+      0deg,
+      rgba(139, 198, 255, 0.06) 0,
+      rgba(139, 198, 255, 0.06) 1px,
+      transparent 1px,
+      transparent 28px
+    );
+  border: 1px solid rgba(120, 145, 180, 0.18);
+  box-shadow: 0 18px 46px rgba(90, 120, 160, 0.12);
+}
+
+.lp-hero h1 {
+  color: #354052;
+}
+
+.lp-hero .lead,
+.lp-hero-notice span,
+.lp-section-head p,
+.lp-step-card p,
+.lp-link-card small {
+  color: #667085;
+}
+
+.lp-hero-notice {
+  background: #ffffff;
+  border: 1px solid rgba(120, 145, 180, 0.16);
+  box-shadow: 0 10px 28px rgba(90, 120, 160, 0.08);
+}
+
+.lp-hero-notice strong {
+  color: #5277a8;
+}
+
+.lp-card-back {
+  background: #eaf4ff;
+  box-shadow: 0 20px 38px rgba(90, 120, 160, 0.12);
+}
+
+.lp-main-card {
+  background: #fffefb;
+  border: 1px solid rgba(120, 145, 180, 0.18);
+  box-shadow: 0 24px 54px rgba(90, 120, 160, 0.14);
+}
+
+.lp-card-head {
+  color: #5277a8;
+}
+
+.lp-card-head b {
+  color: #d8a84f;
+}
+
+.lp-card-lines span {
+  background: linear-gradient(
+    90deg,
+    rgba(82, 119, 168, 0.18),
+    rgba(196, 181, 253, 0.14)
+  );
+}
+
+.lp-start {
+  background:
+    linear-gradient(180deg, #fffefb, #f9fcff);
+  border: 1px solid rgba(120, 145, 180, 0.16);
+  box-shadow: 0 18px 42px rgba(90, 120, 160, 0.1);
+}
+
+.lp-step-card {
+  background: #ffffff;
+  border: 1px solid rgba(120, 145, 180, 0.16);
+  box-shadow: 0 12px 26px rgba(90, 120, 160, 0.08);
+}
+
+.lp-step-num {
+  background: #6f93c2;
+  box-shadow: 0 8px 16px rgba(90, 120, 160, 0.16);
+}
+
+.lp-step-card a {
+  color: #5277a8;
+}
+
+.lp-link-card {
+  background: #ffffff;
+  border: 1px solid rgba(120, 145, 180, 0.16);
+  box-shadow: 0 12px 26px rgba(90, 120, 160, 0.08);
+}
+
+.lp-link-card:hover {
+  box-shadow: 0 18px 38px rgba(90, 120, 160, 0.12);
+}
+
+.lp-link-card span {
+  color: #6f93c2;
+}
+
+.lp-link-main {
+  background: #f6fbff;
+  border-color: rgba(111, 147, 194, 0.24);
+}
+
+.primary-btn {
+  background: #5277a8;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(82, 119, 168, 0.22);
+}
+
+.primary-btn:hover {
+  background: #456892;
+}
+
+.ghost-btn {
+  background: #ffffff;
+  color: #5277a8;
+  border: 1px solid rgba(82, 119, 168, 0.22);
+}
+
+.ghost-btn:hover {
+  background: #f3f8ff;
+}
+
+.mini-tags span {
+  background: #ffffff;
+  color: #5277a8;
+  border: 1px solid rgba(82, 119, 168, 0.18);
+}
+
+.event-badge {
+  background: #fffefb;
+  color: #5277a8;
+  border: 1px solid rgba(120, 145, 180, 0.18);
+  box-shadow: 0 16px 34px rgba(90, 120, 160, 0.12);
+}
