@@ -1,0 +1,292 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family:
+    "Hiragino Maru Gothic ProN",
+    "Yu Gothic",
+    system-ui,
+    sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(255, 221, 160, 0.45), transparent 32%),
+    radial-gradient(circle at top right, rgba(176, 220, 255, 0.55), transparent 34%),
+    #fffaf1;
+  color: #2e2a25;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  align-items: flex-start;
+  padding: 40px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 246, 226, 0.92));
+  border-bottom: 1px solid rgba(84, 65, 35, 0.12);
+}
+
+.site-label,
+.section-kicker {
+  margin: 0 0 8px;
+  color: #9a6a24;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 16px;
+  font-size: clamp(32px, 6vw, 58px);
+  line-height: 1.05;
+  letter-spacing: 0.03em;
+}
+
+.lead {
+  max-width: 720px;
+  margin-bottom: 0;
+  color: #5d5348;
+  font-size: 17px;
+  line-height: 1.9;
+}
+
+.header-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  min-width: 260px;
+}
+
+.header-nav a {
+  padding: 10px 14px;
+  border: 1px solid rgba(84, 65, 35, 0.16);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #5a4730;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(63, 47, 25, 0.06);
+}
+
+main {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 56px;
+}
+
+.intro-card,
+.section {
+  margin-bottom: 32px;
+  padding: 28px;
+  border: 1px solid rgba(84, 65, 35, 0.12);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 18px 40px rgba(69, 50, 22, 0.07);
+}
+
+.intro-card h2,
+.section-heading h2 {
+  margin-bottom: 12px;
+  font-size: clamp(24px, 4vw, 34px);
+}
+
+.intro-card p,
+.section-heading p,
+.word-card p,
+.room-card p {
+  color: #5f564d;
+  line-height: 1.85;
+}
+
+.word-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.word-card {
+  padding: 24px;
+  border-radius: 22px;
+  background: #fff7e5;
+  border: 1px solid rgba(154, 106, 36, 0.16);
+}
+
+.word-card h3 {
+  margin-bottom: 10px;
+  color: #7c5119;
+  font-size: 28px;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.step-card {
+  min-height: 132px;
+  padding: 20px;
+  border-radius: 22px;
+  background: #ffffff;
+  border: 1px solid rgba(84, 65, 35, 0.12);
+}
+
+.step-card span {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: #f2b84b;
+  color: #fff;
+  font-weight: 900;
+}
+
+.step-card p {
+  margin-bottom: 0;
+  color: #453c33;
+  font-weight: 700;
+  line-height: 1.65;
+}
+
+.filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 24px 0;
+}
+
+.filter-btn {
+  padding: 10px 15px;
+  border: 1px solid rgba(84, 65, 35, 0.16);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #5b4b39;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.filter-btn.active {
+  background: #2f7d70;
+  color: #ffffff;
+  border-color: #2f7d70;
+}
+
+.room-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.room-card {
+  padding: 22px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(84, 65, 35, 0.12);
+  box-shadow: 0 12px 28px rgba(69, 50, 22, 0.06);
+}
+
+.room-card.is-hidden {
+  display: none;
+}
+
+.room-card h3 {
+  margin-bottom: 10px;
+  color: #2f7d70;
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+.room-card p {
+  margin-bottom: 0;
+  font-size: 14px;
+}
+
+.room-card .credit {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #fff1cc;
+  color: #795214;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.site-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 40px;
+  background: #302a23;
+  color: #fff8eb;
+}
+
+.site-footer p {
+  margin-bottom: 0;
+  font-weight: 800;
+}
+
+.site-footer a {
+  color: #ffe1a3;
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .site-header {
+    display: block;
+    padding: 28px 20px;
+  }
+
+  .header-nav {
+    justify-content: flex-start;
+    min-width: 0;
+    margin-top: 24px;
+  }
+
+  main {
+    width: min(100% - 24px, 1120px);
+    padding-top: 20px;
+  }
+
+  .word-grid,
+  .steps,
+  .room-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .intro-card,
+  .section {
+    padding: 22px;
+    border-radius: 22px;
+  }
+
+  .site-footer {
+    display: block;
+    padding: 22px;
+  }
+
+  .site-footer p {
+    margin-bottom: 8px;
+  }
+}
