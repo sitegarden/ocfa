@@ -96,6 +96,7 @@ function renderHeader() {
 
       <div id="headerMenu" class="header-menu">
         <nav class="nav">
+          <a href="/tutorial/">OCFAとは？</a>
           <a href="/characters/">キャラ一覧</a>
           <a href="/fanarts/">ファンアート一覧</a>
           <a href="/works/">世界観</a>
