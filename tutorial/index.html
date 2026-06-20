@@ -11,30 +11,31 @@
     content="OCFAの基本用語、遊び方、絵チャで行われるさまざまなOCFA部屋をわかりやすく紹介します。"
   />
 
+  <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="./style.css" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/favicon.png" />
 </head>
 
 <body>
-  <header class="site-header">
-    <div>
-      <p class="site-label">OCFA GUIDE</p>
+  <header id="siteHeader"></header>
+
+  <main class="page tutorial-page">
+    <section class="hero tutorial-hero">
+      <p class="eyebrow">OCFA GUIDE</p>
       <h1>OCFAとは？</h1>
       <p class="lead">
         OCFAは、絵チャで行われるオリキャラ交流ゲームです。<br />
         自分のOCを描いたり、誰かのOCにFAで返したりしながら、ゆるく楽しく創作で遊びます。
       </p>
-    </div>
 
-    <nav class="header-nav" aria-label="ページ内メニュー">
-      <a href="#words">基本用語</a>
-      <a href="#howto">遊び方</a>
-      <a href="#rooms">部屋一覧</a>
-    </nav>
-  </header>
+      <nav class="header-nav" aria-label="ページ内メニュー">
+        <a href="#words">基本用語</a>
+        <a href="#howto">遊び方</a>
+        <a href="#rooms">部屋一覧</a>
+      </nav>
+    </section>
 
-  <main>
     <section class="intro-card">
       <p class="section-kicker">First</p>
       <h2>はじめての人へ</h2>
@@ -126,8 +127,7 @@
       </div>
 
       <div class="room-grid">
-
-         <article class="room-card" data-category="basic">
+        <article class="room-card" data-category="basic">
           <h3>OCFA</h3>
           <p>
             左にOC枠、右にFA枠がある基本形の部屋。
@@ -144,7 +144,7 @@
           <p class="credit">Lane考案</p>
         </article>
 
-         <article class="room-card" data-category="basic random">
+        <article class="room-card" data-category="basic random">
           <h3>10分でOCFA</h3>
           <p>
             ルーレットでOCを選び、10分以内にFAを描くスピード感のある部屋。
@@ -306,11 +306,9 @@
     </section>
   </main>
 
-  <footer class="site-footer">
-    <p>OCFA Guide</p>
-    <a href="/">OCFA.jpへ戻る</a>
-  </footer>
+  <footer id="siteFooter"></footer>
 
-  <script src="./tutorial.js"></script>
+  <script type="module" src="/app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
