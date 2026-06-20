@@ -161,7 +161,10 @@ function updateThemePreview() {
   preview.style.setProperty("--preview-sub", theme.subColor);
   preview.style.setProperty("--preview-text", theme.textColor);
   preview.style.setProperty("--preview-card", theme.cardColor);
-  preview.style.setProperty("--preview-radius", `${Number(theme.radius) || 24}px`);
+  preview.style.setProperty(
+    "--preview-radius",
+    `${Number(theme.radius) || 24}px`
+  );
 
   if (radiusText) {
     radiusText.textContent = `${theme.radius}px`;
@@ -172,7 +175,9 @@ async function getCharacter() {
   const characterRef = doc(db, "v2Characters", characterId);
   const snap = await getDoc(characterRef);
 
-  if (!snap.exists()) return null;
+  if (!snap.exists()) {
+    return null;
+  }
 
   return {
     id: snap.id,
@@ -222,7 +227,10 @@ function renderNoPermission() {
       <p>このキャラクターを編集できるのは、登録した本人だけです。</p>
 
       <div class="actions">
-        <a class="ghost-btn" href="/characters/file/?id=${encodeURIComponent(characterId)}">
+        <a
+          class="ghost-btn"
+          href="/characters/file/?id=${encodeURIComponent(characterId)}"
+        >
           キャラファイルへ
         </a>
       </div>
@@ -237,7 +245,6 @@ function renderEditForm(character) {
   const kana = data.kana || "";
   const profile = data.profile || "";
   const tagText = tagsToText(data.tags);
-  const faOk = data.faOk === true;
   const ngText = data.ngText || "";
   const isPublic = data.isPublic !== false;
   const theme = getTheme(data);
@@ -287,11 +294,6 @@ function renderEditForm(character) {
         <p class="help-text">タグはカンマ区切りで入力できます。</p>
 
         <label class="check-row">
-          <input id="faOk" type="checkbox" ${faOk ? "checked" : ""}>
-          ファンアート歓迎にする
-        </label>
-
-        <label class="check-row">
           <input id="isPublic" type="checkbox" ${isPublic ? "checked" : ""}>
           公開する
         </label>
@@ -326,27 +328,47 @@ function renderEditForm(character) {
           <div class="theme-grid">
             <label class="theme-field">
               背景色
-              <input id="themeBgColor" type="color" value="${escapeHtml(theme.bgColor)}">
+              <input
+                id="themeBgColor"
+                type="color"
+                value="${escapeHtml(theme.bgColor)}"
+              >
             </label>
 
             <label class="theme-field">
               メイン色
-              <input id="themeMainColor" type="color" value="${escapeHtml(theme.mainColor)}">
+              <input
+                id="themeMainColor"
+                type="color"
+                value="${escapeHtml(theme.mainColor)}"
+              >
             </label>
 
             <label class="theme-field">
               サブ色
-              <input id="themeSubColor" type="color" value="${escapeHtml(theme.subColor)}">
+              <input
+                id="themeSubColor"
+                type="color"
+                value="${escapeHtml(theme.subColor)}"
+              >
             </label>
 
             <label class="theme-field">
               文字色
-              <input id="themeTextColor" type="color" value="${escapeHtml(theme.textColor)}">
+              <input
+                id="themeTextColor"
+                type="color"
+                value="${escapeHtml(theme.textColor)}"
+              >
             </label>
 
             <label class="theme-field">
               カード色
-              <input id="themeCardColor" type="color" value="${escapeHtml(theme.cardColor)}">
+              <input
+                id="themeCardColor"
+                type="color"
+                value="${escapeHtml(theme.cardColor)}"
+              >
             </label>
 
             <label class="theme-field">
@@ -382,7 +404,10 @@ function renderEditForm(character) {
         <div class="actions">
           <button class="primary-btn" type="submit">保存する</button>
 
-          <a class="ghost-btn" href="/characters/file/?id=${encodeURIComponent(character.id)}">
+          <a
+            class="ghost-btn"
+            href="/characters/file/?id=${encodeURIComponent(character.id)}"
+          >
             キャラファイルへ戻る
           </a>
         </div>
@@ -420,21 +445,23 @@ function renderEditForm(character) {
 
   themePreset.addEventListener("change", () => {
     const preset = THEME_PRESETS[themePreset.value];
-    if (!preset) return;
+
+    if (!preset) {
+      return;
+    }
 
     setThemeToForm(preset);
   });
 
   updateThemePreview();
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
     const nextName = document.getElementById("charName").value.trim();
     const nextKana = document.getElementById("charKana").value.trim();
     const nextProfile = document.getElementById("charProfile").value.trim();
     const nextTags = textToTags(document.getElementById("charTags").value);
-    const nextFaOk = document.getElementById("faOk").checked;
     const nextIsPublic = document.getElementById("isPublic").checked;
     const nextNgText = document.getElementById("ngText").value.trim();
     const nextTheme = getThemeFromForm();
@@ -452,7 +479,6 @@ function renderEditForm(character) {
         kana: nextKana,
         profile: nextProfile,
         tags: nextTags,
-        faOk: nextFaOk,
         isPublic: nextIsPublic,
         ngText: nextNgText,
         customTheme: nextTheme,
@@ -466,7 +492,8 @@ function renderEditForm(character) {
       }, 700);
     } catch (error) {
       console.error(error);
-      message.textContent = "保存に失敗しました。少し時間を置いて、もう一度お試しください。";
+      message.textContent =
+        "保存に失敗しました。少し時間を置いて、もう一度お試しください。";
     }
   });
 }
