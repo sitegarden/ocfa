@@ -3,13 +3,13 @@ import { auth, db } from "/firebase.js";
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   getDocs,
   limit,
   query,
   serverTimestamp,
-  where,
-  doc,
-  getDoc
+  where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 import {
@@ -22,11 +22,12 @@ const workId = params.get("id");
 const joinContent = document.getElementById("joinContent");
 
 let currentUser = null;
+let currentUserData = null;
 let currentWork = null;
 let existingMember = null;
 
 function escapeHtml(text) {
-  return String(text)
+  return String(text ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -34,21 +35,44 @@ function escapeHtml(text) {
     .replaceAll("'", "&#039;");
 }
 
+function nl2br(text) {
+  return escapeHtml(text).replaceAll("\n", "<br>");
+}
+
 function getJoinTypeLabel(type) {
   if (type === "free") return "自由参加";
   if (type === "approval") return "承認制";
+
   return "募集なし";
+}
+
+function getUserName() {
+  return currentUserData?.displayName || "名前未設定";
+}
+
+function getUserPhotoUrl() {
+  return (
+    currentUserData?.iconImageUrl ||
+    currentUserData?.iconImageData ||
+    currentUserData?.photoURL ||
+    currentUserData?.googlePhotoURL ||
+    currentUser?.photoURL ||
+    ""
+  );
 }
 
 function renderMessage(title, body, linkHtml = "") {
   joinContent.innerHTML = `
-    <section class="card message-card">
+    <section class="panel message-card">
       <h2>${escapeHtml(title)}</h2>
       <p>${escapeHtml(body)}</p>
 
       <div class="button-row">
         ${linkHtml}
-        <a class="primary-link" href="/works/">作品一覧へ</a>
+
+        <a class="ghost-btn" href="/works/">
+          作品一覧へ
+        </a>
       </div>
     </section>
   `;
@@ -66,6 +90,17 @@ async function getWork() {
     id: snap.id,
     data: snap.data()
   };
+}
+
+async function getUserData(user) {
+  if (!user) return null;
+
+  const userRef = doc(db, "users", user.uid);
+  const snap = await getDoc(userRef);
+
+  if (!snap.exists()) return null;
+
+  return snap.data();
 }
 
 async function getExistingMember(user) {
@@ -96,13 +131,23 @@ function renderJoinPage() {
     renderMessage(
       "この作品のオーナーです",
       "オーナーはすでに作品を管理できます。",
-      `<a class="primary-link" href="/works/file/?id=${currentWork.id}">作品詳細へ</a>`
+      `
+        <a
+          class="primary-link"
+          href="/works/file/?id=${encodeURIComponent(currentWork.id)}"
+        >
+          作品詳細へ
+        </a>
+      `
     );
     return;
   }
 
   if (data.isDeleted === true || data.isPublic !== true) {
-    renderMessage("参加できません", "この作品は現在参加できません。");
+    renderMessage(
+      "参加できません",
+      "この作品は現在参加できません。"
+    );
     return;
   }
 
@@ -110,7 +155,14 @@ function renderJoinPage() {
     renderMessage(
       "参加できません",
       "この作品は共有作品ではありません。",
-      `<a class="primary-link" href="/works/file/?id=${currentWork.id}">作品詳細へ</a>`
+      `
+        <a
+          class="primary-link"
+          href="/works/file/?id=${encodeURIComponent(currentWork.id)}"
+        >
+          作品詳細へ
+        </a>
+      `
     );
     return;
   }
@@ -122,8 +174,21 @@ function renderJoinPage() {
       renderMessage(
         "参加済みです",
         "この作品にはすでに参加しています。",
-        `<a class="primary-link" href="/works/add-character/?id=${currentWork.id}">キャラを追加する</a>
-         <a class="primary-link" href="/works/file/?id=${currentWork.id}">作品詳細へ</a>`
+        `
+          <a
+            class="primary-link"
+            href="/works/add-character/?id=${encodeURIComponent(currentWork.id)}"
+          >
+            キャラを追加する
+          </a>
+
+          <a
+            class="ghost-btn"
+            href="/works/file/?id=${encodeURIComponent(currentWork.id)}"
+          >
+            作品詳細へ
+          </a>
+        `
       );
       return;
     }
@@ -132,7 +197,14 @@ function renderJoinPage() {
       renderMessage(
         "申請中です",
         "参加申請を送信済みです。オーナーの承認をお待ちください。",
-        `<a class="primary-link" href="/works/file/?id=${currentWork.id}">作品詳細へ</a>`
+        `
+          <a
+            class="primary-link"
+            href="/works/file/?id=${encodeURIComponent(currentWork.id)}"
+          >
+            作品詳細へ
+          </a>
+        `
       );
       return;
     }
@@ -140,7 +212,14 @@ function renderJoinPage() {
     renderMessage(
       "参加できません",
       "この作品への参加状態を確認できませんでした。",
-      `<a class="primary-link" href="/works/file/?id=${currentWork.id}">作品詳細へ</a>`
+      `
+        <a
+          class="primary-link"
+          href="/works/file/?id=${encodeURIComponent(currentWork.id)}"
+        >
+          作品詳細へ
+        </a>
+      `
     );
     return;
   }
@@ -149,19 +228,29 @@ function renderJoinPage() {
     renderMessage(
       "現在は募集していません",
       "この作品は現在、参加募集をしていません。",
-      `<a class="primary-link" href="/works/file/?id=${currentWork.id}">作品詳細へ</a>`
+      `
+        <a
+          class="primary-link"
+          href="/works/file/?id=${encodeURIComponent(currentWork.id)}"
+        >
+          作品詳細へ
+        </a>
+      `
     );
     return;
   }
 
   joinContent.innerHTML = `
-    <section class="card">
+    <section class="panel works-join-card">
       <p class="eyebrow">Join Work</p>
+
       <h2>${escapeHtml(data.title || "作品名未設定")}</h2>
 
       <div class="badge-row">
         <span class="badge">共有作品</span>
-        <span class="badge muted">${escapeHtml(getJoinTypeLabel(data.joinType))}</span>
+        <span class="badge muted">
+          ${escapeHtml(getJoinTypeLabel(data.joinType))}
+        </span>
       </div>
 
       <p>
@@ -177,7 +266,7 @@ function renderJoinPage() {
           ? `
             <section class="mini-section">
               <h3>ルール・注意事項</h3>
-              <p>${escapeHtml(data.rulesText)}</p>
+              <p>${nl2br(data.rulesText)}</p>
             </section>
           `
           : ""
@@ -185,15 +274,22 @@ function renderJoinPage() {
 
       <div class="button-row">
         <button id="joinButton" type="button" class="primary-btn">
-          ${data.joinType === "free" ? "この作品に参加する" : "参加申請を送る"}
+          ${
+            data.joinType === "free"
+              ? "この作品に参加する"
+              : "参加申請を送る"
+          }
         </button>
 
-        <a class="ghost-btn" href="/works/file/?id=${currentWork.id}">
+        <a
+          class="ghost-btn"
+          href="/works/file/?id=${encodeURIComponent(currentWork.id)}"
+        >
           作品詳細へ戻る
         </a>
       </div>
 
-      <p id="message"></p>
+      <p id="message" class="form-message"></p>
     </section>
   `;
 
@@ -203,8 +299,7 @@ function renderJoinPage() {
 async function joinWork() {
   const message = document.getElementById("message");
 
-  if (!currentUser || !currentWork) {
-    message.textContent = "ログイン情報または作品情報が見つかりません。";
+  if (!currentUser || !currentWork || !message) {
     return;
   }
 
@@ -213,17 +308,18 @@ async function joinWork() {
   try {
     message.textContent = "参加情報を作成しています...";
 
-    const status = data.joinType === "free" ? "approved" : "pending";
+    const status = data.joinType === "free"
+      ? "approved"
+      : "pending";
 
     await addDoc(collection(db, "workMembers"), {
       workId,
       workTitle: data.title || "",
-
       ownerUid: data.userId || "",
 
       userId: currentUser.uid,
-      userName: currentUser.displayName || "名前未設定",
-      userPhotoURL: currentUser.photoURL || "",
+      userName: getUserName(),
+      userPhotoURL: getUserPhotoUrl(),
 
       status,
       isDeleted: false,
@@ -236,7 +332,8 @@ async function joinWork() {
       message.textContent = "作品に参加しました。";
 
       setTimeout(() => {
-        location.href = `/works/add-character/?id=${workId}`;
+        location.href =
+          `/works/add-character/?id=${encodeURIComponent(workId)}`;
       }, 700);
 
       return;
@@ -245,26 +342,40 @@ async function joinWork() {
     message.textContent = "参加申請を送りました。";
 
     setTimeout(() => {
-      location.href = `/works/file/?id=${workId}`;
+      location.href =
+        `/works/file/?id=${encodeURIComponent(workId)}`;
     }, 700);
   } catch (error) {
     console.error("作品参加エラー:", error);
-    message.textContent = `参加に失敗しました。${error.message || ""}`;
+
+    message.textContent =
+      `参加に失敗しました。${error.message || ""}`;
   }
 }
 
 async function init(user) {
   if (!user) {
-    renderMessage("ログインが必要です", "作品に参加するにはログインしてください。");
+    renderMessage(
+      "ログインが必要です",
+      "作品に参加するにはログインしてください。"
+    );
     return;
   }
 
   currentUser = user;
 
-  const work = await getWork();
+  const [work, userData] = await Promise.all([
+    getWork(),
+    getUserData(user)
+  ]);
+
+  currentUserData = userData;
 
   if (!work) {
-    renderMessage("作品が見つかりません", "削除されたか、URLが変わっている可能性があります。");
+    renderMessage(
+      "作品が見つかりません",
+      "削除されたか、URLが変わっている可能性があります。"
+    );
     return;
   }
 
@@ -277,6 +388,10 @@ async function init(user) {
 onAuthStateChanged(auth, (user) => {
   init(user).catch((error) => {
     console.error(error);
-    renderMessage("読み込みに失敗しました", "ページを再読み込みしてみてください。");
+
+    renderMessage(
+      "読み込みに失敗しました",
+      "ページを再読み込みしてみてください。"
+    );
   });
 });
