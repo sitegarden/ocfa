@@ -158,12 +158,12 @@ function renderUserIcon(userData, className = "user-page-icon") {
         class="${escapeHtml(className)}"
         src="${escapeHtml(iconImage)}"
         alt="${escapeHtml(displayName)}のアイコン"
-      />
+      >
     `;
   }
 
   return `
-    <div class="${escapeHtml(className)}">
+    <div class="${escapeHtml(className)} user-icon-placeholder">
       ${escapeHtml(displayName.slice(0, 1) || "？")}
     </div>
   `;
@@ -186,7 +186,6 @@ async function resolveUserId(rawId) {
 
   if (!originalId) return "";
 
-  // UIDは大文字小文字があるので、そのまま読む
   const directUserRef = doc(db, "users", originalId);
   const directUserSnap = await getDoc(directUserRef);
 
@@ -194,7 +193,6 @@ async function resolveUserId(rawId) {
     return originalId;
   }
 
-  // UIDでなければ、IDとして小文字化して handles から探す
   const handle = normalizeHandle(originalId);
   const handleRef = doc(db, "handles", handle);
   const handleSnap = await getDoc(handleRef);
@@ -241,6 +239,7 @@ async function getPublicUsers() {
   users.sort((a, b) => {
     const aTime = a.data.updatedAt?.seconds || a.data.createdAt?.seconds || 0;
     const bTime = b.data.updatedAt?.seconds || b.data.createdAt?.seconds || 0;
+
     return bTime - aTime;
   });
 
@@ -250,14 +249,14 @@ async function getPublicUsers() {
 async function getPublicCharacters(targetUserId) {
   if (!targetUserId) return [];
 
-  const q = query(
+  const charactersQuery = query(
     collection(db, "v2Characters"),
     where("userId", "==", targetUserId),
     where("isDeleted", "==", false),
     where("isPublic", "==", true)
   );
 
-  const snap = await getDocs(q);
+  const snap = await getDocs(charactersQuery);
   const characters = [];
 
   snap.forEach((docSnap) => {
@@ -270,6 +269,7 @@ async function getPublicCharacters(targetUserId) {
   characters.sort((a, b) => {
     const aTime = a.data.createdAt?.seconds || 0;
     const bTime = b.data.createdAt?.seconds || 0;
+
     return bTime - aTime;
   });
 
@@ -322,7 +322,9 @@ function renderFavoriteControl(targetUid, isFavorite) {
   if (!currentViewer) {
     return `
       <div class="favorite-area">
-        <p class="mini-info">ログインすると、このユーザーをお気に入りに保存できます。</p>
+        <p class="mini-info">
+          ログインすると、このユーザーをお気に入りに保存できます。
+        </p>
       </div>
     `;
   }
@@ -500,10 +502,18 @@ function renderCharacterCards(characters) {
 
           return `
             <article class="character-card">
-              <a class="character-card-link" href="/characters/file/?id=${encodeURIComponent(id)}">
+              <a
+                class="character-card-link"
+                href="/characters/file/?id=${encodeURIComponent(id)}"
+              >
                 ${
                   image
-                    ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(data.name || "キャラクター画像")}">`
+                    ? `
+                      <img
+                        src="${escapeHtml(image)}"
+                        alt="${escapeHtml(data.name || "キャラクター画像")}"
+                      >
+                    `
                     : `<div class="character-card-noimage">No Image</div>`
                 }
 
@@ -521,10 +531,6 @@ function renderCharacterCards(characters) {
                       ? `<div class="tag-list">${tags}</div>`
                       : ""
                   }
-
-                  <p class="mini-info">
-                    ${data.faOk ? "ファンアート歓迎" : "ファンアート要確認"}
-                  </p>
                 </div>
               </a>
             </article>
@@ -553,7 +559,7 @@ function renderUserPage(user, characters, isFavorite) {
   userPageContent.innerHTML = `
     <section class="page-head user-public-hero">
       <div class="user-profile-main">
-        ${renderUserIcon(data)}
+        ${renderUserIcon(data, "user-page-icon")}
 
         <div>
           <p class="eyebrow">User Page</p>
@@ -598,7 +604,12 @@ function renderUserPage(user, characters, isFavorite) {
         linkUrl && linkUrl.startsWith("https://")
           ? `
             <div class="actions">
-              <a class="text-link" href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener noreferrer">
+              <a
+                class="text-link"
+                href="${escapeHtml(linkUrl)}"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 登録リンクを開く
               </a>
             </div>
