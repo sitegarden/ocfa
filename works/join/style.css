@@ -1,0 +1,125 @@
+/* ---------- works join ---------- */
+
+.works-join-page {
+  padding-top: 30px;
+}
+
+.works-join-hero {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.works-join-hero h1 {
+  margin: 0;
+}
+
+.works-join-hero .lead {
+  margin: 0;
+}
+
+#joinContent {
+  display: grid;
+  gap: 20px;
+}
+
+.works-join-card,
+#joinContent .message-card {
+  display: grid;
+  gap: 16px;
+}
+
+.works-join-card {
+  background:
+    radial-gradient(circle at 92% 14%, rgba(255, 255, 255, 0.88), transparent 24%),
+    linear-gradient(135deg, rgba(255, 250, 242, 0.96), rgba(237, 244, 235, 0.78));
+}
+
+.works-join-card h2,
+#joinContent .message-card h2 {
+  margin: 0;
+}
+
+.works-join-card > p,
+#joinContent .message-card > p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.85;
+}
+
+#joinContent .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--sage-soft);
+  color: var(--sage-dark);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.badge.muted {
+  background: var(--paper-warm);
+  color: var(--muted);
+}
+
+.mini-section {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 253, 248, 0.7);
+}
+
+.mini-section h3,
+.mini-section p {
+  margin: 0;
+}
+
+.mini-section h3 {
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.mini-section p {
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.form-message {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--sage-dark);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+@media (max-width: 560px) {
+  .works-join-page {
+    padding-top: 22px;
+  }
+
+  #joinContent .button-row {
+    flex-direction: column;
+  }
+
+  #joinContent .button-row .primary-btn,
+  #joinContent .button-row .primary-link,
+  #joinContent .button-row .ghost-btn {
+    width: 100%;
+  }
+}
