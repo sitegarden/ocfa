@@ -16,7 +16,7 @@ const homeOcImage = document.getElementById("homeOcImage");
 const homeOcFallback = document.getElementById("homeOcFallback");
 
 function escapeHtml(text) {
-  return String(text)
+  return String(text ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -28,11 +28,15 @@ function nl2br(text) {
   return escapeHtml(text).replaceAll("\n", "<br>");
 }
 
-function showHomeCharacterImage(imageData, name) {
+function getCharacterImage(data) {
+  return data?.imageUrl || data?.imageData || "";
+}
+
+function showHomeCharacterImage(imageUrl, name) {
   if (!homeOcImage) return;
 
-  homeOcImage.src = imageData;
-  homeOcImage.alt = `${name || "キャラクター"} のイラスト`;
+  homeOcImage.src = imageUrl;
+  homeOcImage.alt = `${name || "キャラクター"}のイラスト`;
   homeOcImage.hidden = false;
 
   if (homeOcFallback) {
@@ -52,7 +56,7 @@ function showHomeCharacterFallback() {
 }
 
 function pickRandom(items) {
-  if (!items.length) return null;
+  if (items.length === 0) return null;
 
   const index = Math.floor(Math.random() * items.length);
   return items[index];
@@ -64,24 +68,25 @@ async function loadMyRandomCharacter(user) {
     return;
   }
 
-  const q = query(
+  const charactersQuery = query(
     collection(db, "v2Characters"),
     where("userId", "==", user.uid),
     where("isDeleted", "==", false)
   );
 
-  const snap = await getDocs(q);
-
+  const snap = await getDocs(charactersQuery);
   const characters = [];
 
   snap.forEach((docSnap) => {
     const data = docSnap.data();
+    const image = getCharacterImage(data);
 
-    if (!data.imageData) return;
+    if (!image) return;
 
     characters.push({
       id: docSnap.id,
-      data
+      data,
+      image
     });
   });
 
@@ -93,7 +98,7 @@ async function loadMyRandomCharacter(user) {
   const randomCharacter = pickRandom(characters);
 
   showHomeCharacterImage(
-    randomCharacter.data.imageData,
+    randomCharacter.image,
     randomCharacter.data.name
   );
 }
@@ -102,13 +107,13 @@ async function loadHomeNotices() {
   if (!homeNoticeList) return;
 
   try {
-    const q = query(
+    const noticesQuery = query(
       collection(db, "v2Notices"),
       where("isDeleted", "==", false),
       where("isPublic", "==", true)
     );
 
-    const snap = await getDocs(q);
+    const snap = await getDocs(noticesQuery);
 
     if (snap.empty) {
       homeNoticeList.innerHTML = `
@@ -131,13 +136,14 @@ async function loadHomeNotices() {
     notices.sort((a, b) => {
       const aTime = a.data.createdAt?.seconds || 0;
       const bTime = b.data.createdAt?.seconds || 0;
+
       return bTime - aTime;
     });
 
     const latestNotices = notices.slice(0, 3);
 
     homeNoticeList.innerHTML = latestNotices
-      .map(({ id, data }) => {
+      .map(({ data }) => {
         const body = data.body || "";
         const shortBody =
           body.length > 80
@@ -146,10 +152,14 @@ async function loadHomeNotices() {
 
         return `
           <article class="home-notice-card">
-            <a href="/news/" class="home-notice-link">
+            <a href="/notices/" class="home-notice-link">
               <div class="home-notice-body">
-                <p class="mini-info">${data.isImportant ? "重要" : "お知らせ"}</p>
+                <p class="mini-info">
+                  ${data.isImportant ? "重要" : "お知らせ"}
+                </p>
+
                 <h3>${escapeHtml(data.title || "無題")}</h3>
+
                 <p>${nl2br(shortBody)}</p>
               </div>
             </a>
@@ -158,7 +168,7 @@ async function loadHomeNotices() {
       })
       .join("");
   } catch (error) {
-    console.error(error);
+    console.error("トップお知らせ読み込みエラー:", error);
 
     homeNoticeList.innerHTML = `
       <div class="panel-soft">
