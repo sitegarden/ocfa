@@ -15,7 +15,7 @@ import {
 const noticeNewContent = document.getElementById("noticeNewContent");
 
 function escapeHtml(text) {
-  return String(text)
+  return String(text ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -48,7 +48,7 @@ function renderNoPermission() {
       <p>このページは管理者のみ利用できます。</p>
 
       <div class="actions">
-        <a class="ghost-btn" href="/news/">お知らせ一覧へ</a>
+        <a class="ghost-btn" href="/notices/">お知らせ一覧へ</a>
       </div>
     </section>
   `;
@@ -57,7 +57,6 @@ function renderNoPermission() {
 function renderForm(user, userData) {
   const writerName =
     userData?.displayName ||
-    user.displayName ||
     user.email ||
     "管理者";
 
@@ -97,8 +96,17 @@ function renderForm(user, userData) {
           公開する
         </label>
 
-        <button class="primary-btn" type="submit">お知らせを投稿</button>
-        <p id="noticeMessage" class="message"></p>
+        <div class="actions">
+          <button class="primary-btn" type="submit">
+            お知らせを投稿
+          </button>
+
+          <a class="ghost-btn" href="/notices/">
+            一覧へ戻る
+          </a>
+        </div>
+
+        <p id="noticeMessage" class="form-message"></p>
       </section>
 
       <section class="panel">
@@ -119,8 +127,8 @@ function renderForm(user, userData) {
   const form = document.getElementById("noticeForm");
   const message = document.getElementById("noticeMessage");
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
     const title = document.getElementById("noticeTitle").value.trim();
     const body = document.getElementById("noticeBody").value.trim();
@@ -150,10 +158,11 @@ function renderForm(user, userData) {
       message.textContent = "お知らせを投稿しました。";
 
       setTimeout(() => {
-        location.href = "/news/";
+        location.href = "/notices/";
       }, 700);
     } catch (error) {
       console.error(error);
+
       message.textContent =
         "お知らせの投稿に失敗しました。少し時間を置いて、もう一度お試しください。";
     }
