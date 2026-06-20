@@ -42,7 +42,9 @@ async function getCharacter() {
   const characterRef = doc(db, "v2Characters", characterId);
   const snap = await getDoc(characterRef);
 
-  if (!snap.exists()) return null;
+  if (!snap.exists()) {
+    return null;
+  }
 
   return {
     id: snap.id,
@@ -92,9 +94,11 @@ function renderOwnerLink(ownerInfo) {
       ${
         ownerInfo.photoURL
           ? `<img class="cf-owner-icon" src="${escapeHtml(ownerInfo.photoURL)}" alt="">`
-          : `<span class="cf-owner-icon cf-owner-placeholder">
+          : `
+            <span class="cf-owner-icon cf-owner-placeholder">
               ${escapeHtml(ownerInfo.displayName.slice(0, 1) || "？")}
-            </span>`
+            </span>
+          `
       }
       <span>${escapeHtml(ownerInfo.displayName)}</span>
     </a>
@@ -106,12 +110,16 @@ function getCharacterImageSrc(data) {
 }
 
 async function getWork(workId) {
-  if (!workId) return null;
+  if (!workId) {
+    return null;
+  }
 
   const workRef = doc(db, "works", workId);
   const snap = await getDoc(workRef);
 
-  if (!snap.exists()) return null;
+  if (!snap.exists()) {
+    return null;
+  }
 
   return {
     id: snap.id,
@@ -120,13 +128,22 @@ async function getWork(workId) {
 }
 
 function getWorkTypeLabel(type) {
-  if (type === "shared") return "共有作品";
+  if (type === "shared") {
+    return "共有作品";
+  }
+
   return "自分専用";
 }
 
 function getJoinTypeLabel(type) {
-  if (type === "free") return "自由参加";
-  if (type === "approval") return "承認制";
+  if (type === "free") {
+    return "自由参加";
+  }
+
+  if (type === "approval") {
+    return "承認制";
+  }
+
   return "募集なし";
 }
 
@@ -145,7 +162,9 @@ function getFanartImageSrc(data) {
 }
 
 function formatDate(value) {
-  if (!value?.toDate) return "";
+  if (!value?.toDate) {
+    return "";
+  }
 
   const date = value.toDate();
 
@@ -155,7 +174,9 @@ function formatDate(value) {
 async function loadCharacterFanarts() {
   const fanartList = document.getElementById("characterFanartList");
 
-  if (!fanartList || !characterId) return;
+  if (!fanartList || !characterId) {
+    return;
+  }
 
   try {
     const fanartsQuery = query(
@@ -174,7 +195,6 @@ async function loadCharacterFanarts() {
           まだこの子へのファンアートはありません。
         </div>
       `;
-
       return;
     }
 
@@ -190,6 +210,7 @@ async function loadCharacterFanarts() {
     fanarts.sort((a, b) => {
       const aTime = a.data.createdAt?.toMillis?.() || 0;
       const bTime = b.data.createdAt?.toMillis?.() || 0;
+
       return bTime - aTime;
     });
 
@@ -206,7 +227,13 @@ async function loadCharacterFanarts() {
         <div class="character-thumb">
           ${
             imageSrc
-              ? `<img class="character-img" src="${escapeHtml(imageSrc)}" alt="${escapeHtml(data.characterName || "ファンアート")}">`
+              ? `
+                <img
+                  class="character-img"
+                  src="${escapeHtml(imageSrc)}"
+                  alt="${escapeHtml(data.characterName || "ファンアート")}"
+                >
+              `
               : `<div class="no-image">No Image</div>`
           }
         </div>
@@ -219,7 +246,12 @@ async function loadCharacterFanarts() {
           </p>
 
           <div class="character-tags">
-            <span>${data.imageSource === "upload" ? "画像投稿" : "お絵描き"}</span>
+            <span>
+              ${data.imageSource === "upload"
+                ? "画像投稿"
+                : "過去のお絵描き投稿"}
+            </span>
+
             ${
               data.createdAt
                 ? `<span>${escapeHtml(formatDate(data.createdAt))}</span>`
@@ -302,12 +334,21 @@ async function renderCharacter(character) {
   const themeStyle = getThemeStyle(theme);
 
   characterFile.innerHTML = `
-    <div class="cf-page cf-pattern-${escapeHtml(theme.pattern)}" style="${themeStyle}">
+    <div
+      class="cf-page cf-pattern-${escapeHtml(theme.pattern)}"
+      style="${themeStyle}"
+    >
       <section class="cf-profile-card">
         <div class="cf-image-wrap">
           ${
             imageSrc
-              ? `<img class="cf-main-image" src="${escapeHtml(imageSrc)}" alt="${escapeHtml(data.name || "キャラクター画像")}">`
+              ? `
+                <img
+                  class="cf-main-image"
+                  src="${escapeHtml(imageSrc)}"
+                  alt="${escapeHtml(data.name || "キャラクター画像")}"
+                >
+              `
               : `<div class="cf-no-image">画像がありません</div>`
           }
         </div>
@@ -324,9 +365,12 @@ async function renderCharacter(character) {
           }
 
           <div class="cf-badges">
-            <span>${data.faOk ? "FA歓迎" : "FA要確認"}</span>
             ${data.isPublic === false ? `<span>非公開</span>` : ""}
-            <span>${data.imageSource === "upload" ? "アップロード画像" : "お絵描き画像"}</span>
+            <span>
+              ${data.imageSource === "upload"
+                ? "アップロード画像"
+                : "過去のお絵描き画像"}
+            </span>
           </div>
 
           ${
@@ -336,9 +380,22 @@ async function renderCharacter(character) {
           }
 
           <div class="cf-actions">
-            ${isOwner ? `<a class="primary-btn" href="/characters/edit/?id=${encodeURIComponent(character.id)}">編集する</a>` : ""}
-            <a class="ghost-btn" href="/characters/">一覧へ戻る</a>
-            <a class="ghost-btn" href="/draw/?characterId=${encodeURIComponent(character.id)}">絵を描く</a>
+            ${
+              isOwner
+                ? `
+                  <a
+                    class="primary-btn"
+                    href="/characters/edit/?id=${encodeURIComponent(character.id)}"
+                  >
+                    編集する
+                  </a>
+                `
+                : ""
+            }
+
+            <a class="ghost-btn" href="/characters/">
+              一覧へ戻る
+            </a>
           </div>
         </div>
       </section>
@@ -346,6 +403,7 @@ async function renderCharacter(character) {
       <section class="cf-link-list">
         <article class="cf-link-card">
           <h2>プロフィール</h2>
+
           ${
             data.profile
               ? `<p>${nl2br(data.profile)}</p>`
@@ -355,6 +413,7 @@ async function renderCharacter(character) {
 
         <article class="cf-link-card">
           <h2>NG・注意事項</h2>
+
           ${
             data.ngText
               ? `<p>${nl2br(data.ngText)}</p>`
@@ -369,10 +428,12 @@ async function renderCharacter(character) {
 
         <article class="cf-link-card">
           <h2>所属作品</h2>
+
           ${
             work
               ? `
                 <h3>${escapeHtml(work.data.title || "作品名未設定")}</h3>
+
                 <p>
                   ${escapeHtml(getWorkTypeLabel(work.data.workType))}
                   ${
@@ -381,8 +442,19 @@ async function renderCharacter(character) {
                       : ""
                   }
                 </p>
-                <p>${escapeHtml(work.data.description || "作品説明はまだありません。")}</p>
-                <a class="cf-mini-link" href="/works/file/?id=${encodeURIComponent(work.id)}">作品を見る</a>
+
+                <p>
+                  ${escapeHtml(
+                    work.data.description || "作品説明はまだありません。"
+                  )}
+                </p>
+
+                <a
+                  class="cf-mini-link"
+                  href="/works/file/?id=${encodeURIComponent(work.id)}"
+                >
+                  作品を見る
+                </a>
               `
               : `<p>まだ作品には所属していません。</p>`
           }
@@ -390,15 +462,25 @@ async function renderCharacter(character) {
 
         <article class="cf-link-card">
           <h2>ファンアート</h2>
-          <p>このキャラクターに向けて、イベントとは別に自由なファンアートを投稿できます。</p>
+
+          <p>
+            このキャラクターに向けて、イベントとは別に自由なファンアートを投稿できます。
+          </p>
 
           <div class="cf-actions">
-            ${
-              data.faOk
-                ? `<a class="primary-btn" href="/fanarts/new/?characterId=${encodeURIComponent(character.id)}">この子のFAを描く</a>`
-                : `<span class="ghost-label">ファンアートは要確認</span>`
-            }
-            <a class="ghost-btn" href="/fanarts/?characterId=${encodeURIComponent(character.id)}">FA一覧を見る</a>
+            <a
+              class="primary-btn"
+              href="/fanarts/new/?characterId=${encodeURIComponent(character.id)}"
+            >
+              この子のFAを投稿する
+            </a>
+
+            <a
+              class="ghost-btn"
+              href="/fanarts/?characterId=${encodeURIComponent(character.id)}"
+            >
+              FA一覧を見る
+            </a>
           </div>
 
           <div id="characterFanartList" class="cf-fanart-grid">
