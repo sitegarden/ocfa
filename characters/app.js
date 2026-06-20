@@ -80,12 +80,12 @@ async function loadCharacters() {
 
   if (snap.empty) {
     characterList.innerHTML = `
-      <div class="characters-empty">
-        <h2>まだキャラが登録されていません</h2>
-        <p>まずは絵を描いて、気に入った下書きをキャラとして登録してみてください。</p>
-        <a class="primary-btn" href="/draw/">絵を描く</a>
-      </div>
-    `;
+  <div class="characters-empty">
+    <h2>まだキャラが登録されていません</h2>
+    <p>承認されたクリエイターのキャラクターが、ここに追加されます。</p>
+    <a class="primary-btn" href="/characters/new/">キャラ登録について見る</a>
+  </div>
+`;
     return;
   }
 
