@@ -6,8 +6,6 @@ import {
   getDoc,
   getDocs,
   query,
-  serverTimestamp,
-  setDoc,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -74,7 +72,6 @@ async function getMyCharacters(user) {
   );
 
   const snap = await getDocs(charactersQuery);
-
   const characters = [];
 
   snap.forEach((docSnap) => {
@@ -94,34 +91,10 @@ async function getMyCharacters(user) {
   return characters;
 }
 
-async function setMyIconCharacter(character) {
-  if (!currentUser || !character) return;
-
-  const imageUrl = getCharacterImage(character.data);
-
-  if (!imageUrl) {
-    throw new Error("character image is empty");
-  }
-
-  const userRef = doc(db, "users", currentUser.uid);
-
-  await setDoc(
-    userRef,
-    {
-      iconCharacterId: character.id,
-      iconCharacterName: character.data.name || "名前未設定",
-      iconImageUrl: imageUrl,
-      updatedAt: serverTimestamp()
-    },
-    { merge: true }
-  );
-}
-
 function getMypageIconHtml(user, userData, displayName) {
   const iconImage =
-    userData?.iconImageUrl ||
-    userData?.iconImageData ||
     userData?.photoURL ||
+    userData?.googlePhotoURL ||
     user?.photoURL ||
     "";
 
@@ -142,7 +115,7 @@ function getMypageIconHtml(user, userData, displayName) {
   `;
 }
 
-function renderCharacterCards(characters, userData) {
+function renderCharacterCards(characters) {
   if (characters.length === 0) {
     return `
       <div class="panel-soft">
@@ -157,8 +130,6 @@ function renderCharacterCards(characters, userData) {
     `;
   }
 
-  const iconCharacterId = userData?.iconCharacterId || "";
-
   return `
     <div class="mypage-character-list">
       ${characters
@@ -170,8 +141,6 @@ function renderCharacterCards(characters, userData) {
                 .map((tag) => `<span>${escapeHtml(tag)}</span>`)
                 .join("")
             : "";
-
-          const isCurrentIcon = iconCharacterId === id;
 
           return `
             <article class="mypage-character-card">
@@ -220,76 +189,12 @@ function renderCharacterCards(characters, userData) {
                   }
                 </div>
               </a>
-
-              <div class="mypage-character-actions">
-                <button
-                  class="ghost-btn icon-character-btn"
-                  type="button"
-                  data-character-id="${escapeHtml(id)}"
-                  ${!image ? "disabled" : ""}
-                >
-                  ${isCurrentIcon ? "現在のアイコン" : "アイコンにする"}
-                </button>
-              </div>
             </article>
           `;
         })
         .join("")}
     </div>
   `;
-}
-
-function setupIconButtons() {
-  const buttons = document.querySelectorAll(".icon-character-btn");
-
-  buttons.forEach((button) => {
-    button.addEventListener("click", async () => {
-      const characterId = button.dataset.characterId;
-
-      const character = currentCharacters.find((item) => {
-        return item.id === characterId;
-      });
-
-      if (!character) {
-        alert("キャラクターが見つかりませんでした。");
-        return;
-      }
-
-      if (!getCharacterImage(character.data)) {
-        alert("このキャラには画像がありません。");
-        return;
-      }
-
-      const characterName = character.data.name || "このキャラ";
-
-      const ok = confirm(
-        `${characterName}をアイコンに設定しますか？`
-      );
-
-      if (!ok) return;
-
-      const oldText = button.textContent;
-
-      button.disabled = true;
-      button.textContent = "設定中...";
-
-      try {
-        await setMyIconCharacter(character);
-
-        const latestUserData = await getOcfaUserData(currentUser);
-        currentUserData = latestUserData || currentUserData;
-
-        renderMypage(currentUser, currentUserData, currentCharacters);
-      } catch (error) {
-        console.error(error);
-
-        alert("アイコン設定に失敗しました。");
-
-        button.disabled = false;
-        button.textContent = oldText;
-      }
-    });
-  });
 }
 
 function renderMypage(user, userData, characters) {
@@ -329,20 +234,6 @@ function renderMypage(user, userData, characters) {
           </p>
         </div>
       </div>
-
-      ${
-        userData?.iconCharacterName
-          ? `
-            <p class="mini-info">
-              現在のアイコン：${escapeHtml(userData.iconCharacterName)}
-            </p>
-          `
-          : `
-            <p class="mini-info">
-              登録した自分のキャラをアイコンに設定できます。
-            </p>
-          `
-      }
 
       <div class="mypage-profile-text">
         ${
@@ -420,7 +311,7 @@ function renderMypage(user, userData, characters) {
         </a>
       </div>
 
-      ${renderCharacterCards(characters, userData)}
+      ${renderCharacterCards(characters)}
     </section>
 
     <section class="panel">
@@ -445,8 +336,6 @@ function renderMypage(user, userData, characters) {
       </div>
     </section>
   `;
-
-  setupIconButtons();
 }
 
 function renderLoginRequired() {
