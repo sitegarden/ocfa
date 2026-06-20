@@ -1,170 +1,138 @@
-* {
-  box-sizing: border-box;
+/* ---------- tutorial page ---------- */
+
+.tutorial-page {
+  padding-top: 30px;
 }
 
-html {
-  scroll-behavior: smooth;
+.tutorial-hero {
+  margin-bottom: 28px;
 }
 
-body {
-  margin: 0;
-  font-family:
-    "Hiragino Maru Gothic ProN",
-    "Yu Gothic",
-    system-ui,
-    sans-serif;
-  background:
-    radial-gradient(circle at top left, rgba(255, 221, 160, 0.45), transparent 32%),
-    radial-gradient(circle at top right, rgba(176, 220, 255, 0.55), transparent 34%),
-    #fffaf1;
-  color: #2e2a25;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.site-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 32px;
-  align-items: flex-start;
-  padding: 40px;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 246, 226, 0.92));
-  border-bottom: 1px solid rgba(84, 65, 35, 0.12);
-}
-
-.site-label,
-.section-kicker {
-  margin: 0 0 8px;
-  color: #9a6a24;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-h1,
-h2,
-h3,
-p {
-  margin-top: 0;
-}
-
-h1 {
-  margin-bottom: 16px;
-  font-size: clamp(32px, 6vw, 58px);
-  line-height: 1.05;
-  letter-spacing: 0.03em;
-}
-
-.lead {
+.tutorial-hero .lead {
   max-width: 720px;
-  margin-bottom: 0;
-  color: #5d5348;
-  font-size: 17px;
-  line-height: 1.9;
 }
 
 .header-nav {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  justify-content: flex-end;
-  min-width: 260px;
+  margin-top: 24px;
 }
 
 .header-nav a {
   padding: 10px 14px;
-  border: 1px solid rgba(84, 65, 35, 0.16);
+  border: 1px solid var(--line-strong);
   border-radius: 999px;
-  background: #ffffff;
-  color: #5a4730;
+  background: rgba(255, 253, 248, 0.88);
+  color: var(--ink);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   box-shadow: 0 8px 20px rgba(63, 47, 25, 0.06);
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
 }
 
-main {
-  width: min(1120px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 32px 0 56px;
+.header-nav a:hover {
+  border-color: rgba(217, 120, 93, 0.38);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  transform: translateY(-1px);
 }
 
-.intro-card,
-.section {
+.tutorial-page .intro-card,
+.tutorial-page .section {
   margin-bottom: 32px;
   padding: 28px;
-  border: 1px solid rgba(84, 65, 35, 0.12);
+  border: 1px solid var(--line);
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 18px 40px rgba(69, 50, 22, 0.07);
+  background: rgba(255, 253, 248, 0.84);
+  box-shadow: var(--shadow-sm);
 }
 
-.intro-card h2,
-.section-heading h2 {
+.tutorial-page .section {
+  margin-top: 0;
+}
+
+.section-kicker {
+  margin: 0 0 8px;
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.tutorial-page h2,
+.tutorial-page h3,
+.tutorial-page p {
+  margin-top: 0;
+}
+
+.tutorial-page .intro-card h2,
+.tutorial-page .section-heading h2 {
   margin-bottom: 12px;
   font-size: clamp(24px, 4vw, 34px);
 }
 
-.intro-card p,
-.section-heading p,
-.word-card p,
-.room-card p {
-  color: #5f564d;
+.tutorial-page .intro-card p,
+.tutorial-page .section-heading p,
+.tutorial-page .word-card p,
+.tutorial-page .room-card p {
+  color: var(--muted);
   line-height: 1.85;
 }
 
 .word-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 
 .word-card {
   padding: 24px;
+  border: 1px solid rgba(217, 120, 93, 0.2);
   border-radius: 22px;
-  background: #fff7e5;
-  border: 1px solid rgba(154, 106, 36, 0.16);
+  background: var(--paper-warm);
 }
 
 .word-card h3 {
   margin-bottom: 10px;
-  color: #7c5119;
+  color: var(--accent-dark);
   font-size: 28px;
 }
 
 .steps {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
 .step-card {
   min-height: 132px;
   padding: 20px;
+  border: 1px solid var(--line);
   border-radius: 22px;
-  background: #ffffff;
-  border: 1px solid rgba(84, 65, 35, 0.12);
+  background: rgba(255, 253, 248, 0.9);
 }
 
 .step-card span {
   display: grid;
-  place-items: center;
   width: 38px;
   height: 38px;
   margin-bottom: 14px;
   border-radius: 50%;
-  background: #f2b84b;
+  background: var(--yellow);
   color: #fff;
   font-weight: 900;
+  place-items: center;
 }
 
 .step-card p {
   margin-bottom: 0;
-  color: #453c33;
+  color: var(--ink);
   font-weight: 700;
   line-height: 1.65;
 }
@@ -178,32 +146,53 @@ main {
 
 .filter-btn {
   padding: 10px 15px;
-  border: 1px solid rgba(84, 65, 35, 0.16);
+  border: 1px solid var(--line-strong);
   border-radius: 999px;
-  background: #ffffff;
-  color: #5b4b39;
+  background: rgba(255, 253, 248, 0.9);
+  color: var(--ink);
   font-weight: 800;
-  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.filter-btn:hover {
+  border-color: #a7c3af;
+  background: var(--sage-soft);
+  color: var(--sage-dark);
+  transform: translateY(-1px);
 }
 
 .filter-btn.active {
-  background: #2f7d70;
-  color: #ffffff;
-  border-color: #2f7d70;
+  border-color: var(--sage-dark);
+  background: var(--sage-dark);
+  color: #fff;
 }
 
 .room-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 
 .room-card {
   padding: 22px;
+  border: 1px solid var(--line);
   border-radius: 24px;
-  background: #ffffff;
-  border: 1px solid rgba(84, 65, 35, 0.12);
+  background: rgba(255, 253, 248, 0.94);
   box-shadow: 0 12px 28px rgba(69, 50, 22, 0.06);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.room-card:hover {
+  border-color: #c5d9cb;
+  box-shadow: 0 16px 30px rgba(69, 50, 22, 0.1);
+  transform: translateY(-3px);
 }
 
 .room-card.is-hidden {
@@ -212,7 +201,7 @@ main {
 
 .room-card h3 {
   margin-bottom: 10px;
-  color: #2f7d70;
+  color: var(--sage-dark);
   font-size: 20px;
   line-height: 1.45;
 }
@@ -227,46 +216,15 @@ main {
   margin-top: 14px;
   padding: 5px 10px;
   border-radius: 999px;
-  background: #fff1cc;
+  background: var(--yellow-soft);
   color: #795214;
   font-size: 12px;
   font-weight: 800;
 }
 
-.site-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 24px 40px;
-  background: #302a23;
-  color: #fff8eb;
-}
-
-.site-footer p {
-  margin-bottom: 0;
-  font-weight: 800;
-}
-
-.site-footer a {
-  color: #ffe1a3;
-  font-weight: 800;
-}
-
 @media (max-width: 900px) {
-  .site-header {
-    display: block;
-    padding: 28px 20px;
-  }
-
-  .header-nav {
-    justify-content: flex-start;
-    min-width: 0;
-    margin-top: 24px;
-  }
-
-  main {
-    width: min(100% - 24px, 1120px);
-    padding-top: 20px;
+  .tutorial-page {
+    padding-top: 22px;
   }
 
   .word-grid,
@@ -275,18 +233,21 @@ main {
     grid-template-columns: 1fr;
   }
 
-  .intro-card,
-  .section {
+  .tutorial-page .intro-card,
+  .tutorial-page .section {
     padding: 22px;
     border-radius: 22px;
   }
+}
 
-  .site-footer {
-    display: block;
-    padding: 22px;
+@media (max-width: 560px) {
+  .header-nav {
+    gap: 8px;
   }
 
-  .site-footer p {
-    margin-bottom: 8px;
+  .header-nav a {
+    flex: 1;
+    min-width: calc(50% - 8px);
+    text-align: center;
   }
 }
