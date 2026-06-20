@@ -1,0 +1,386 @@
+/* ---------- users page ---------- */
+
+.users-page {
+  padding-top: 30px;
+}
+
+.user-public-hero {
+  margin-bottom: 24px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 92% 16%, rgba(255, 255, 255, 0.82), transparent 25%),
+    linear-gradient(135deg, rgba(255, 250, 242, 0.96), rgba(237, 244, 235, 0.82));
+  box-shadow: var(--shadow-sm);
+}
+
+.user-public-hero h1 {
+  margin: 0 0 10px;
+}
+
+.user-public-hero > p:not(.eyebrow) {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+/* ---------- list ---------- */
+
+.user-list-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.user-list-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.user-list-card:hover {
+  border-color: #c4d8cb;
+  box-shadow: var(--shadow);
+  transform: translateY(-3px);
+}
+
+.user-list-card-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-height: 100%;
+  padding: 18px;
+}
+
+/* ぺちゃんこ防止 */
+.user-list-icon,
+.user-page-icon {
+  display: grid;
+  flex: 0 0 auto;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: 2px solid rgba(255, 253, 248, 0.96);
+  border-radius: 50%;
+  background: var(--sage-soft);
+  box-shadow: 0 5px 12px rgba(92, 69, 50, 0.12);
+  color: var(--sage-dark);
+  font-weight: 950;
+  object-fit: cover;
+  place-items: center;
+}
+
+.user-list-icon {
+  width: 76px;
+  height: 76px;
+}
+
+.user-page-icon {
+  width: 112px;
+  height: 112px;
+}
+
+.user-icon-placeholder {
+  font-size: 30px;
+}
+
+.user-list-body {
+  display: grid;
+  flex: 1;
+  gap: 7px;
+  min-width: 0;
+}
+
+.user-list-body h2 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 19px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-list-body .mini-info {
+  margin: 0;
+}
+
+.user-list-profile {
+  display: -webkit-box;
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.user-list-more {
+  align-self: start;
+  min-height: 34px;
+  margin-top: 3px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+/* ---------- badges ---------- */
+
+.user-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.user-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.user-badge-official {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.user-badge-sample {
+  background: var(--lavender-soft);
+  color: #746394;
+}
+
+.user-badge-upload {
+  background: var(--sage-soft);
+  color: var(--sage-dark);
+}
+
+/* ---------- profile ---------- */
+
+.user-profile-main {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.user-profile-main > div:last-child {
+  min-width: 0;
+}
+
+.user-profile-main h1 {
+  overflow-wrap: anywhere;
+}
+
+.user-profile-main .mini-info {
+  margin: 6px 0 0;
+}
+
+.user-profile-box {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 30px;
+}
+
+.user-profile-box > h2 {
+  margin: 0;
+}
+
+.user-profile-box > p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.85;
+}
+
+.panel-soft {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 247, 232, 0.68);
+}
+
+.panel-soft h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.panel-soft p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.favorite-area {
+  margin-top: 14px;
+}
+
+.favorite-area .mini-info {
+  margin: 0;
+}
+
+.favorite-user-btn.is-active {
+  border-color: #dba15d;
+  background: var(--yellow-soft);
+  color: #80591d;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.user-characters-head {
+  margin: 0 0 16px;
+}
+
+.user-characters-head h2 {
+  margin: 0;
+}
+
+/* ---------- character cards ---------- */
+
+.character-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.character-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.character-card:hover {
+  border-color: #d9b09d;
+  box-shadow: var(--shadow);
+  transform: translateY(-3px);
+}
+
+.character-card-link {
+  display: block;
+}
+
+.character-card-link > img,
+.character-card-noimage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.character-card-link > img {
+  background: var(--paper-warm);
+}
+
+.character-card-noimage {
+  display: grid;
+  background: var(--paper-warm);
+  color: var(--muted);
+  font-size: 13px;
+  place-items: center;
+}
+
+.character-body {
+  display: grid;
+  gap: 9px;
+  padding: 15px;
+}
+
+.character-body h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.character-body .mini-info {
+  margin: 0;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-list span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--sage-soft);
+  color: var(--sage-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* ---------- mobile ---------- */
+
+@media (max-width: 800px) {
+  .user-list-grid,
+  .character-list {
+    grid-template-columns: 1fr;
+  }
+
+  .user-public-hero {
+    padding: 23px 20px;
+  }
+
+  .user-page-icon {
+    width: 88px;
+    height: 88px;
+  }
+}
+
+@media (max-width: 560px) {
+  .users-page {
+    padding-top: 22px;
+  }
+
+  .user-list-card-link {
+    gap: 13px;
+    padding: 15px;
+  }
+
+  .user-list-icon {
+    width: 62px;
+    height: 62px;
+  }
+
+  .user-page-icon {
+    width: 72px;
+    height: 72px;
+  }
+
+  .user-icon-placeholder {
+    font-size: 23px;
+  }
+
+  .user-profile-main {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .user-profile-main h1 {
+    font-size: 25px;
+  }
+
+  .user-list-more {
+    width: auto;
+  }
+}
