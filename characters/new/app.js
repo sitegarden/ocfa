@@ -249,9 +249,7 @@ form?.addEventListener("submit", async (event) => {
       kana,
       profile,
       tags,
-
-      // FAは基本OK。描いてほしくない内容は注意事項で個別に書く。
-      faOk: true,
+      
       ngText: ngText.value.trim(),
 
       imageSource: "upload",
