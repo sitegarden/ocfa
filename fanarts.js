@@ -58,7 +58,7 @@ function createFanartCard(item) {
 
     <div class="fanart-body">
       <div class="fanart-meta">
-        <span>${data.imageSource === "upload" ? "画像投稿" : "お絵描き"}</span>
+        <span>${data.imageSource === "upload" ? "画像投稿" : "過去のお絵描き投稿"}</span>
         ${
           data.createdAt
             ? `<span>${escapeHtml(formatDate(data.createdAt))}</span>`
