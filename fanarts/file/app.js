@@ -254,7 +254,7 @@ function renderFanart(fanart) {
         <h1>${escapeHtml(data.characterName || "キャラ名未設定")}へのFA</h1>
 
         <div class="badge-row">
-          <span class="badge">${data.imageSource === "upload" ? "画像投稿" : "お絵描き"}</span>
+          <span class="badge">${data.imageSource === "upload" ? "画像投稿" : "過去のお絵描き投稿"}</span>
           ${
             data.createdAt
               ? `<span class="badge muted">${escapeHtml(formatDate(data.createdAt))}</span>`
