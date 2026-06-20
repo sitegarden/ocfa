@@ -250,3 +250,23 @@
     justify-content: center;
   }
 }
+
+/* キャラ作者のアイコン：ぺちゃんこ・巨大化防止 */
+.cf-page img[alt$="のアイコン"] {
+  display: block;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #fff;
+  object-fit: cover;
+  box-shadow: 0 4px 10px rgba(80, 55, 80, 0.12);
+}
+
+.cf-page img[alt$="のアイコン"] {
+  width: 44px;
+  height: 44px;
+}
