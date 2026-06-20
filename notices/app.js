@@ -16,13 +16,8 @@ import {
 const noticeList = document.getElementById("noticeList");
 const noticeAdminActions = document.getElementById("noticeAdminActions");
 
-if (noticeAdminActions) {
-  noticeAdminActions.hidden = true;
-  noticeAdminActions.style.display = "none";
-}
-
 function escapeHtml(text) {
-  return String(text || "")
+  return String(text ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -46,6 +41,13 @@ function formatDate(timestamp) {
   });
 }
 
+function setAdminActionsVisible(isVisible) {
+  if (!noticeAdminActions) return;
+
+  noticeAdminActions.hidden = !isVisible;
+  noticeAdminActions.style.display = isVisible ? "" : "none";
+}
+
 async function isAdminUser(user) {
   if (!user) return false;
 
@@ -60,7 +62,7 @@ async function isAdminUser(user) {
 async function getNewsList(isAdmin) {
   const newsRef = collection(db, "v2Notices");
 
-  const q = isAdmin
+  const noticesQuery = isAdmin
     ? query(
         newsRef,
         where("isDeleted", "==", false)
@@ -71,8 +73,7 @@ async function getNewsList(isAdmin) {
         where("isPublic", "==", true)
       );
 
-  const snap = await getDocs(q);
-
+  const snap = await getDocs(noticesQuery);
   const newsList = [];
 
   snap.forEach((docSnap) => {
@@ -85,10 +86,21 @@ async function getNewsList(isAdmin) {
   newsList.sort((a, b) => {
     const aTime = a.data.createdAt?.seconds || 0;
     const bTime = b.data.createdAt?.seconds || 0;
+
     return bTime - aTime;
   });
 
   return newsList;
+}
+
+function renderLoading() {
+  if (!noticeList) return;
+
+  noticeList.innerHTML = `
+    <div class="panel">
+      <p>お知らせを読み込み中...</p>
+    </div>
+  `;
 }
 
 function renderEmpty() {
@@ -98,6 +110,17 @@ function renderEmpty() {
     <div class="panel">
       <h2>お知らせはまだありません</h2>
       <p>更新情報やイベント案内があると、ここに表示されます。</p>
+    </div>
+  `;
+}
+
+function renderError() {
+  if (!noticeList) return;
+
+  noticeList.innerHTML = `
+    <div class="panel">
+      <h2>読み込みに失敗しました</h2>
+      <p>ページを再読み込みしてみてください。</p>
     </div>
   `;
 }
@@ -116,13 +139,15 @@ function renderNews(newsList) {
         .map(({ data }) => {
           const title = data.title || "無題のお知らせ";
           const body = data.body || "";
+          const isImportant = data.isImportant === true;
+          const isPrivate = data.isPublic === false;
 
           return `
             <article class="notice-card panel">
               <div class="notice-card-head">
                 <div>
                   <p class="eyebrow">
-                    ${data.isImportant ? "Important" : "News"}
+                    ${isImportant ? "Important" : "News"}
                   </p>
 
                   <h2>${escapeHtml(title)}</h2>
@@ -130,13 +155,17 @@ function renderNews(newsList) {
 
                 ${
                   data.createdAt
-                    ? `<p class="notice-date">${formatDate(data.createdAt)}</p>`
+                    ? `
+                      <p class="notice-date">
+                        ${escapeHtml(formatDate(data.createdAt))}
+                      </p>
+                    `
                     : ""
                 }
               </div>
 
               ${
-                data.isImportant
+                isImportant
                   ? `<p class="status-pill">大切なお知らせ</p>`
                   : ""
               }
@@ -150,7 +179,7 @@ function renderNews(newsList) {
               </div>
 
               ${
-                data.isPublic === false
+                isPrivate
                   ? `<p class="mini-info">非公開のお知らせ</p>`
                   : ""
               }
@@ -163,45 +192,23 @@ function renderNews(newsList) {
 }
 
 onAuthStateChanged(auth, async (user) => {
+  if (!noticeList) return;
+
   try {
-    if (!noticeList) return;
-
-    if (noticeAdminActions) {
-      noticeAdminActions.hidden = true;
-      noticeAdminActions.style.display = "none";
-    }
-
-    noticeList.innerHTML = `
-      <div class="panel">
-        <p>お知らせを読み込み中...</p>
-      </div>
-    `;
+    setAdminActionsVisible(false);
+    renderLoading();
 
     const isAdmin = await isAdminUser(user);
 
-    if (noticeAdminActions && isAdmin) {
-      noticeAdminActions.hidden = false;
-      noticeAdminActions.style.display = "";
-    }
+    setAdminActionsVisible(isAdmin);
 
     const newsList = await getNewsList(isAdmin);
 
     renderNews(newsList);
   } catch (error) {
-    console.error(error);
+    console.error("お知らせ読み込みエラー:", error);
 
-    if (noticeAdminActions) {
-      noticeAdminActions.hidden = true;
-      noticeAdminActions.style.display = "none";
-    }
-
-    if (!noticeList) return;
-
-    noticeList.innerHTML = `
-      <div class="panel">
-        <h2>読み込みに失敗しました</h2>
-        <p>ページを再読み込みしてみてください。</p>
-      </div>
-    `;
+    setAdminActionsVisible(false);
+    renderError();
   }
 });
