@@ -177,7 +177,7 @@ function renderJoinPage() {
         `
           <a
             class="primary-link"
-            href="/works/add-character/?id=${encodeURIComponent(currentWork.id)}"
+            href="/works/add/?id=${encodeURIComponent(currentWork.id)}"
           >
             キャラを追加する
           </a>
@@ -333,7 +333,7 @@ async function joinWork() {
 
       setTimeout(() => {
         location.href =
-          `/works/add-character/?id=${encodeURIComponent(workId)}`;
+          `/works/add/?id=${encodeURIComponent(workId)}`;
       }, 700);
 
       return;
