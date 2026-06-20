@@ -26,7 +26,7 @@ let currentUser = null;
 let currentWork = null;
 
 function escapeHtml(text) {
-  return String(text)
+  return String(text ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -69,6 +69,10 @@ function getJoinDescription(type) {
   return "この作品は現在、参加募集をしていません。";
 }
 
+function getCharacterImageSrc(data) {
+  return data?.imageUrl || data?.imageData || "";
+}
+
 function renderNotFound() {
   workFile.innerHTML = `
     <section class="card message-card">
@@ -93,10 +97,6 @@ async function getWork() {
   };
 }
 
-function getCharacterImageSrc(data) {
-  return data.imageUrl || data.imageData || "";
-}
-
 async function loadWorkCharacters() {
   const characterList = document.getElementById("workCharacterList");
 
@@ -110,16 +110,6 @@ async function loadWorkCharacters() {
     );
 
     const snap = await getDocs(charactersQuery);
-
-    if (snap.empty) {
-      characterList.innerHTML = `
-        <div class="empty-preview">
-          まだこの作品にキャラクターはいません。
-        </div>
-      `;
-      return;
-    }
-
     const characters = [];
 
     snap.forEach((docSnap) => {
@@ -146,66 +136,81 @@ async function loadWorkCharacters() {
     characters.sort((a, b) => {
       const aName = a.data.kana || a.data.name || "";
       const bName = b.data.kana || b.data.name || "";
+
       return aName.localeCompare(bName, "ja");
     });
 
-    characterList.innerHTML = "";
+    const isOwner =
+      currentUser &&
+      currentWork &&
+      currentWork.data.userId === currentUser.uid;
 
-    characters.forEach((item) => {
-      const data = item.data;
-      const imageSrc = getCharacterImageSrc(data);
+    characterList.innerHTML = characters
+      .map(({ id, data }) => {
+        const imageSrc = getCharacterImageSrc(data);
 
-      const card = document.createElement("article");
-      card.className = "character-card";
+        return `
+          <article class="character-card">
+            <a
+              class="character-link"
+              href="/characters/file/?id=${encodeURIComponent(id)}"
+            >
+              <div class="character-thumb">
+                ${
+                  imageSrc
+                    ? `
+                      <img
+                        class="character-img"
+                        src="${escapeHtml(imageSrc)}"
+                        alt="${escapeHtml(data.name || "キャラクター画像")}"
+                      >
+                    `
+                    : `<div class="no-image">No Image</div>`
+                }
+              </div>
 
-      card.innerHTML = `
-        <a class="character-link" href="/characters/file/?id=${item.id}">
-          <div class="character-thumb">
+              <div class="character-body">
+                <h2>${escapeHtml(data.name || "名前未設定")}</h2>
+
+                ${
+                  data.kana
+                    ? `<p class="character-kana">${escapeHtml(data.kana)}</p>`
+                    : ""
+                }
+
+                <p class="character-profile">
+                  ${escapeHtml(data.profile || "プロフィールはまだありません。")}
+                </p>
+              </div>
+            </a>
+
             ${
-              imageSrc
-                ? `<img class="character-img" src="${imageSrc}" alt="${escapeHtml(data.name || "キャラクター画像")}">`
-                : `<div class="no-image">No Image</div>`
-            }
-          </div>
-
-          <div class="character-body">
-            <h2>${escapeHtml(data.name || "名前未設定")}</h2>
-
-            ${
-              data.kana
-                ? `<p class="character-kana">${escapeHtml(data.kana)}</p>`
+              isOwner
+                ? `
+                  <div class="work-character-actions">
+                    <button
+                      type="button"
+                      class="ghost-btn remove-work-character-btn"
+                      data-character-id="${escapeHtml(id)}"
+                    >
+                      作品から外す
+                    </button>
+                  </div>
+                `
                 : ""
             }
+          </article>
+        `;
+      })
+      .join("");
 
-            <p class="character-profile">
-              ${escapeHtml(data.profile || "プロフィールはまだありません。")}
-            </p>
-
-            <div class="character-tags">
-  <span>${data.faOk ? "FA歓迎" : "FA要確認"}</span>
-</div>
-
-<div class="button-row">
-  ${
-    currentUser && currentWork && currentWork.data.userId === currentUser.uid
-      ? `<button type="button" class="primary-link remove-work-character-btn" data-character-id="${item.id}">作品から外す</button>`
-      : ""
-  }
-</div>
-          </div>
-        </a>
-      `;
-
-      
-
-      characterList.appendChild(card);
-    });
-
-    document.querySelectorAll(".remove-work-character-btn").forEach((button) => {
-  button.addEventListener("click", () => {
-    removeCharacterFromWork(button.dataset.characterId);
-  });
-});
+    document
+      .querySelectorAll(".remove-work-character-btn")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          removeCharacterFromWork(button.dataset.characterId);
+        });
+      });
   } catch (error) {
     console.error("作品キャラ読み込みエラー:", error);
 
@@ -224,23 +229,13 @@ async function loadWorkMembers() {
   if (!memberList || !workId) return;
 
   try {
-    const memberQuery = query(
+    const membersQuery = query(
       collection(db, "workMembers"),
       where("workId", "==", workId),
       limit(100)
     );
 
-    const snap = await getDocs(memberQuery);
-
-    if (snap.empty) {
-      memberList.innerHTML = `
-        <div class="empty-preview">
-          まだ参加者はいません。
-        </div>
-      `;
-      return;
-    }
-
+    const snap = await getDocs(membersQuery);
     const members = [];
 
     snap.forEach((docSnap) => {
@@ -267,38 +262,42 @@ async function loadWorkMembers() {
     members.sort((a, b) => {
       const aName = a.data.userName || "";
       const bName = b.data.userName || "";
+
       return aName.localeCompare(bName, "ja");
     });
 
-    memberList.innerHTML = "";
+    memberList.innerHTML = members
+      .map(({ data }) => {
+        const userName = data.userName || "名前未設定";
 
-    members.forEach((item) => {
-      const data = item.data;
+        return `
+          <article class="member-card compact-member-card">
+            <div class="member-main">
+              <div class="member-avatar">
+                ${
+                  data.userPhotoURL
+                    ? `
+                      <img
+                        src="${escapeHtml(data.userPhotoURL)}"
+                        alt="${escapeHtml(userName)}のアイコン"
+                      >
+                    `
+                    : `<span>${escapeHtml(userName.slice(0, 1) || "?")}</span>`
+                }
+              </div>
 
-      const card = document.createElement("article");
-      card.className = "member-card compact-member-card";
+              <div class="member-info">
+                <h3>${escapeHtml(userName)}</h3>
 
-      card.innerHTML = `
-        <div class="member-main">
-          <div class="member-avatar">
-            ${
-              data.userPhotoURL
-                ? `<img src="${escapeHtml(data.userPhotoURL)}" alt="${escapeHtml(data.userName || "参加者")}">`
-                : `<span>${escapeHtml((data.userName || "?").slice(0, 1))}</span>`
-            }
-          </div>
-
-          <div class="member-info">
-            <h3>${escapeHtml(data.userName || "名前未設定")}</h3>
-            <div class="badge-row">
-              <span class="badge muted">参加中</span>
+                <div class="badge-row">
+                  <span class="badge muted">参加中</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      `;
-
-      memberList.appendChild(card);
-    });
+          </article>
+        `;
+      })
+      .join("");
   } catch (error) {
     console.error("作品参加者読み込みエラー:", error);
 
@@ -322,9 +321,9 @@ async function removeCharacterFromWork(characterId) {
     return;
   }
 
-  if (!confirm("このキャラクターを作品から外しますか？")) {
-    return;
-  }
+  const ok = confirm("このキャラクターを作品から外しますか？");
+
+  if (!ok) return;
 
   try {
     const characterRef = doc(db, "v2Characters", characterId);
@@ -360,6 +359,7 @@ async function removeCharacterFromWork(characterId) {
     await loadWorkCharacters();
   } catch (error) {
     console.error("作品からキャラを外すエラー:", error);
+
     alert(`キャラクターを外せませんでした。${error.message || ""}`);
   }
 }
@@ -373,7 +373,9 @@ function renderWork(work) {
     return;
   }
 
-  const isOwner = currentUser && currentUser.uid === data.userId;
+  const isOwner =
+    currentUser &&
+    currentUser.uid === data.userId;
 
   if (data.isPublic !== true && !isOwner) {
     workFile.innerHTML = `
@@ -403,12 +405,20 @@ function renderWork(work) {
           </div>
 
           <div class="badge-row">
-            <span class="badge">${escapeHtml(getWorkTypeLabel(data.workType))}</span>
+            <span class="badge">
+              ${escapeHtml(getWorkTypeLabel(data.workType))}
+            </span>
+
             ${
               isShared
-                ? `<span class="badge muted">${escapeHtml(getJoinTypeLabel(data.joinType))}</span>`
+                ? `
+                  <span class="badge muted">
+                    ${escapeHtml(getJoinTypeLabel(data.joinType))}
+                  </span>
+                `
                 : ""
             }
+
             ${
               data.isPublic === false
                 ? `<span class="badge muted">非公開</span>`
@@ -420,6 +430,7 @@ function renderWork(work) {
         <div class="work-stats work-file-stats">
           <span>キャラ ${Number(data.characterCount || 0)}</span>
           <span>FA ${Number(data.fanartCount || 0)}</span>
+
           ${
             data.createdAt
               ? `<span>${escapeHtml(formatDate(data.createdAt))}</span>`
@@ -430,16 +441,26 @@ function renderWork(work) {
         <div class="button-row">
           ${
             isOwner
-              ? `<a class="primary-link" href="/works/edit/?id=${work.id}">編集する</a>`
+              ? `
+                <a
+                  class="primary-link"
+                  href="/works/edit/?id=${encodeURIComponent(work.id)}"
+                >
+                  編集する
+                </a>
+              `
               : ""
           }
 
-          <a class="primary-link" href="/works/">作品一覧へ</a>
+          <a class="ghost-btn" href="/works/">
+            作品一覧へ
+          </a>
         </div>
       </section>
 
       <section class="card">
         <h2>作品説明</h2>
+
         ${
           data.description
             ? `<p>${nl2br(data.description)}</p>`
@@ -454,7 +475,9 @@ function renderWork(work) {
               <h2>参加設定</h2>
 
               <div class="badge-row">
-                <span class="badge">${escapeHtml(getJoinTypeLabel(data.joinType))}</span>
+                <span class="badge">
+                  ${escapeHtml(getJoinTypeLabel(data.joinType))}
+                </span>
               </div>
 
               <p>${escapeHtml(getJoinDescription(data.joinType))}</p>
@@ -463,7 +486,10 @@ function renderWork(work) {
                 data.joinType === "free"
                   ? `
                     <div class="button-row">
-                      <a class="primary-link" href="/works/join/?id=${work.id}">
+                      <a
+                        class="primary-link"
+                        href="/works/join/?id=${encodeURIComponent(work.id)}"
+                      >
                         この作品に参加する
                       </a>
                     </div>
@@ -475,7 +501,10 @@ function renderWork(work) {
                 data.joinType === "approval"
                   ? `
                     <div class="button-row">
-                      <a class="primary-link" href="/works/join/?id=${work.id}">
+                      <a
+                        class="primary-link"
+                        href="/works/join/?id=${encodeURIComponent(work.id)}"
+                      >
                         参加申請する
                       </a>
                     </div>
@@ -484,20 +513,24 @@ function renderWork(work) {
               }
 
               ${
-  isOwner
-    ? `
-      <div class="button-row">
-        <a class="primary-link" href="/works/members/?id=${work.id}">
-          参加申請を管理する
-        </a>
-      </div>
-    `
-    : ""
-}
+                isOwner
+                  ? `
+                    <div class="button-row">
+                      <a
+                        class="ghost-btn"
+                        href="/works/members/?id=${encodeURIComponent(work.id)}"
+                      >
+                        参加申請を管理する
+                      </a>
+                    </div>
+                  `
+                  : ""
+              }
             </section>
 
             <section class="card">
               <h2>ルール・注意事項</h2>
+
               ${
                 data.rulesText
                   ? `<p>${nl2br(data.rulesText)}</p>`
@@ -506,43 +539,57 @@ function renderWork(work) {
             </section>
 
             <section class="card">
-  <h2>参加者</h2>
+              <h2>参加者</h2>
 
-  <div class="button-row">
-    ${
-      isOwner
-        ? `<a class="primary-link" href="/works/members/?id=${work.id}">参加申請を管理する</a>`
-        : ""
-    }
-  </div>
+              ${
+                isOwner
+                  ? `
+                    <div class="button-row">
+                      <a
+                        class="ghost-btn"
+                        href="/works/members/?id=${encodeURIComponent(work.id)}"
+                      >
+                        参加申請を管理する
+                      </a>
+                    </div>
+                  `
+                  : ""
+              }
 
-  <div id="workMemberList" class="member-list">
-    <p>参加者を読み込み中...</p>
-  </div>
-</section>
+              <div id="workMemberList" class="member-list">
+                <p>参加者を読み込み中...</p>
+              </div>
+            </section>
           `
           : ""
       }
 
       <section class="card">
-  <h2>この作品のキャラクター</h2>
+        <h2>この作品のキャラクター</h2>
 
-  <div class="button-row">
-    ${
-      isOwner
-        ? `<a class="primary-link" href="/works/add-character/?id=${work.id}">キャラを追加する</a>`
-        : ""
-    }
+        <div class="button-row">
+          ${
+            isOwner
+              ? `
+                <a
+                  class="primary-link"
+                  href="/works/add-character/?id=${encodeURIComponent(work.id)}"
+                >
+                  キャラを追加する
+                </a>
+              `
+              : ""
+          }
 
-    <a class="primary-link" href="/characters/">
-      キャラ一覧を見る
-    </a>
-  </div>
+          <a class="ghost-btn" href="/characters/">
+            キャラ一覧を見る
+          </a>
+        </div>
 
-  <div id="workCharacterList" class="character-grid">
-    <p>キャラクターを読み込み中...</p>
-  </div>
-</section>
+        <div id="workCharacterList" class="character-grid">
+          <p>キャラクターを読み込み中...</p>
+        </div>
+      </section>
 
       <section class="card">
         <h2>この作品のファンアート</h2>
@@ -552,7 +599,7 @@ function renderWork(work) {
         </p>
 
         <div class="button-row">
-          <a class="primary-link" href="/fanarts/">
+          <a class="ghost-btn" href="/fanarts/">
             FA一覧を見る
           </a>
         </div>
@@ -563,11 +610,8 @@ function renderWork(work) {
   loadWorkCharacters();
 
   if (isShared) {
-
     loadWorkMembers();
-
   }
-  
 }
 
 async function init() {
