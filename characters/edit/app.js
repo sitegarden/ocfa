@@ -1,4 +1,4 @@
-import { auth, db } from "/firebase.js";
+import { auth, db, storage } from "/firebase.js";
 
 import {
   doc,
@@ -8,6 +8,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytes
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+
+import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
@@ -15,6 +22,8 @@ const characterEditContent = document.getElementById("characterEditContent");
 
 const params = new URLSearchParams(location.search);
 const characterId = params.get("id");
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
 let currentUser = null;
 let currentCharacter = null;
@@ -96,7 +105,7 @@ const THEME_PRESETS = {
 };
 
 function escapeHtml(text) {
-  return String(text)
+  return String(text ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -106,6 +115,7 @@ function escapeHtml(text) {
 
 function tagsToText(tags) {
   if (!Array.isArray(tags)) return "";
+
   return tags.join(", ");
 }
 
@@ -122,6 +132,10 @@ function getTheme(data) {
     ...DEFAULT_THEME,
     ...(data.customTheme || {})
   };
+}
+
+function getCharacterImageSrc(data) {
+  return data?.imageUrl || data?.imageData || "";
 }
 
 function getThemeFromForm() {
@@ -168,6 +182,73 @@ function updateThemePreview() {
 
   if (radiusText) {
     radiusText.textContent = `${theme.radius}px`;
+  }
+}
+
+function getImageExtension(file) {
+  const fromName = file.name
+    .split(".")
+    .pop()
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+  if (fromName) return fromName;
+
+  if (file.type === "image/png") return "png";
+  if (file.type === "image/gif") return "gif";
+  if (file.type === "image/webp") return "webp";
+
+  return "jpg";
+}
+
+function validateImageFile(file) {
+  if (!file) return "";
+
+  if (!file.type.startsWith("image/")) {
+    return "画像ファイルを選んでください。";
+  }
+
+  if (file.size > MAX_IMAGE_SIZE) {
+    return "画像は5MB以下にしてください。";
+  }
+
+  return "";
+}
+
+async function uploadCharacterImage(file, character) {
+  const extension = getImageExtension(file);
+
+  const imagePath =
+    `characterUploads/${currentUser.uid}/` +
+    `${character.id}_${Date.now()}.${extension}`;
+
+  const imageRef = ref(storage, imagePath);
+
+  await uploadBytes(imageRef, file);
+
+  const imageUrl = await getDownloadURL(imageRef);
+
+  return {
+    imagePath,
+    imageUrl
+  };
+}
+
+async function deleteOldCharacterImage(data) {
+  const oldImagePath = data?.imagePath || "";
+
+  if (!oldImagePath) return;
+
+  const ownFolder = `characterUploads/${currentUser.uid}/`;
+
+  if (!oldImagePath.startsWith(ownFolder)) {
+    return;
+  }
+
+  try {
+    await deleteObject(ref(storage, oldImagePath));
+  } catch (error) {
+    console.warn("古いキャラ画像を削除できませんでした:", error);
   }
 }
 
@@ -248,6 +329,7 @@ function renderEditForm(character) {
   const ngText = data.ngText || "";
   const isPublic = data.isPublic !== false;
   const theme = getTheme(data);
+  const imageSrc = getCharacterImageSrc(data);
 
   characterEditContent.innerHTML = `
     <section class="panel">
@@ -416,15 +498,59 @@ function renderEditForm(character) {
       </form>
     </section>
 
-    <section class="panel">
+    <section class="panel character-image-edit-panel">
       <h2>登録画像</h2>
-      <p>今回は画像の差し替えはできません。</p>
+
+      <p class="help-text">
+        新しい画像を選んで保存すると、現在のイラストと差し替わります。
+        画像は5MB以下にしてください。
+      </p>
+
+      <div class="character-image-edit-layout">
+        <div class="character-image-current">
+          ${
+            imageSrc
+              ? `
+                <img
+                  id="characterImagePreview"
+                  src="${escapeHtml(imageSrc)}"
+                  alt="${escapeHtml(name || "キャラクター")}の現在のイラスト"
+                >
+              `
+              : `
+                <div id="characterImagePreviewEmpty" class="no-image">
+                  No Image
+                </div>
+              `
+          }
+        </div>
+
+        <div class="character-image-controls">
+          <label class="image-file-label">
+            新しい画像を選ぶ
+            <input
+              id="characterImageFile"
+              type="file"
+              accept="image/png,image/jpeg,image/gif,image/webp"
+            >
+          </label>
+
+          <p id="imageFileName" class="help-text">
+            まだ画像は選ばれていません。
+          </p>
+        </div>
+      </div>
     </section>
   `;
 
   const form = document.getElementById("characterEditForm");
   const message = document.getElementById("editMessage");
   const themePreset = document.getElementById("themePreset");
+  const imageFileInput = document.getElementById("characterImageFile");
+  const imageFileName = document.getElementById("imageFileName");
+
+  let selectedImageFile = null;
+  let previewObjectUrl = "";
 
   const themeInputIds = [
     "themeBgColor",
@@ -446,11 +572,53 @@ function renderEditForm(character) {
   themePreset.addEventListener("change", () => {
     const preset = THEME_PRESETS[themePreset.value];
 
-    if (!preset) {
+    if (!preset) return;
+
+    setThemeToForm(preset);
+  });
+
+  imageFileInput?.addEventListener("change", () => {
+    const file = imageFileInput.files?.[0] || null;
+    const errorMessage = validateImageFile(file);
+
+    if (previewObjectUrl) {
+      URL.revokeObjectURL(previewObjectUrl);
+      previewObjectUrl = "";
+    }
+
+    selectedImageFile = null;
+
+    if (!file) {
+      imageFileName.textContent = "まだ画像は選ばれていません。";
       return;
     }
 
-    setThemeToForm(preset);
+    if (errorMessage) {
+      imageFileInput.value = "";
+      imageFileName.textContent = errorMessage;
+      return;
+    }
+
+    selectedImageFile = file;
+    previewObjectUrl = URL.createObjectURL(file);
+
+    const currentPreview = document.getElementById("characterImagePreview");
+    const emptyPreview = document.getElementById("characterImagePreviewEmpty");
+
+    if (currentPreview) {
+      currentPreview.src = previewObjectUrl;
+      currentPreview.alt = `${name || "キャラクター"}の新しいイラスト`;
+    } else if (emptyPreview) {
+      emptyPreview.outerHTML = `
+        <img
+          id="characterImagePreview"
+          src="${previewObjectUrl}"
+          alt="${escapeHtml(name || "キャラクター")}の新しいイラスト"
+        >
+      `;
+    }
+
+    imageFileName.textContent = `選択中：${file.name}`;
   });
 
   updateThemePreview();
@@ -472,9 +640,20 @@ function renderEditForm(character) {
     }
 
     try {
+      let uploadedImage = null;
+
+      if (selectedImageFile) {
+        message.textContent = "新しい画像をアップロードしています...";
+
+        uploadedImage = await uploadCharacterImage(
+          selectedImageFile,
+          character
+        );
+      }
+
       message.textContent = "保存しています...";
 
-      await updateDoc(doc(db, "v2Characters", character.id), {
+      const updateData = {
         name: nextName,
         kana: nextKana,
         profile: nextProfile,
@@ -483,15 +662,34 @@ function renderEditForm(character) {
         ngText: nextNgText,
         customTheme: nextTheme,
         updatedAt: serverTimestamp()
-      });
+      };
 
-      message.textContent = "キャラ情報を保存しました。";
+      if (uploadedImage) {
+        updateData.imageUrl = uploadedImage.imageUrl;
+        updateData.imagePath = uploadedImage.imagePath;
+        updateData.imageSource = "upload";
+      }
+
+      await updateDoc(
+        doc(db, "v2Characters", character.id),
+        updateData
+      );
+
+      if (uploadedImage) {
+        await deleteOldCharacterImage(data);
+      }
+
+      message.textContent = uploadedImage
+        ? "キャラ情報と登録画像を保存しました。"
+        : "キャラ情報を保存しました。";
 
       setTimeout(() => {
-        location.href = `/characters/file/?id=${encodeURIComponent(character.id)}`;
+        location.href =
+          `/characters/file/?id=${encodeURIComponent(character.id)}`;
       }, 700);
     } catch (error) {
       console.error(error);
+
       message.textContent =
         "保存に失敗しました。少し時間を置いて、もう一度お試しください。";
     }
