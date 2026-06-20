@@ -11,28 +11,31 @@
   />
 
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
   <header id="siteHeader"></header>
 
-  <main class="page">
-    <section class="panel">
+  <main class="page works-members-page">
+    <section class="panel works-members-hero">
       <p class="eyebrow">Works</p>
       <h1>参加申請管理</h1>
-      <p>
+      <p class="lead">
         共有作品への参加申請を確認できます。
       </p>
     </section>
 
-    <section id="memberManageContent" class="panel">
-      <p>参加申請を読み込み中...</p>
+    <section id="memberManageContent">
+      <div class="panel">
+        <p>参加申請を読み込み中...</p>
+      </div>
     </section>
   </main>
 
   <footer id="siteFooter"></footer>
 
   <script type="module" src="/app.js"></script>
-  <script type="module" src="/work-members.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
