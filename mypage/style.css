@@ -1,0 +1,199 @@
+/* ---------- mypage ---------- */
+.mypage-page {
+  padding-top: 30px;
+}
+.mypage-profile-panel {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+.mypage-profile-head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.mypage-icon-wrap {
+  flex: 0 0 auto;
+}
+/* アイコンぺちゃんこ防止 */
+.mypage-icon {
+  display: grid;
+  width: 112px;
+  height: 112px;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: 2px solid rgba(255, 253, 248, 0.96);
+  border-radius: 50%;
+  background: var(--sage-soft);
+  box-shadow: 0 6px 14px rgba(92, 69, 50, 0.13);
+  color: var(--sage-dark);
+  font-size: 34px;
+  font-weight: 950;
+  object-fit: cover;
+  place-items: center;
+}
+img.mypage-icon {
+  display: block;
+  object-fit: cover;
+}
+.mypage-profile-main {
+  min-width: 0;
+}
+.mypage-profile-main h1 {
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+.mypage-profile-main .mini-info {
+  margin: 5px 0 0;
+}
+.mypage-profile-text {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 247, 232, 0.58);
+}
+.mypage-profile-text p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.section-head h2 {
+  margin: 0;
+}
+.mypage-character-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.mypage-character-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: var(--shadow-sm);
+}
+.mypage-character-link {
+  display: block;
+}
+.mypage-character-image,
+.mypage-character-image img,
+.mypage-character-noimage {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+.mypage-character-image {
+  overflow: hidden;
+  background: var(--paper-warm);
+}
+.mypage-character-image img {
+  display: block;
+  object-fit: cover;
+}
+.mypage-character-noimage {
+  display: grid;
+  color: var(--muted);
+  font-size: 13px;
+  place-items: center;
+}
+.mypage-character-info {
+  display: grid;
+  gap: 8px;
+  padding: 15px;
+}
+.mypage-character-info h3,
+.mypage-character-info p {
+  margin: 0;
+}
+.mypage-character-info h3 {
+  font-size: 18px;
+}
+.character-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.character-tags span {
+  display: inline-flex;
+  min-height: 25px;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--sage-soft);
+  color: var(--sage-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+.mypage-character-actions {
+  padding: 0 15px 15px;
+}
+.mypage-character-actions .ghost-btn {
+  width: 100%;
+}
+.mypage-link-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.mypage-link-grid .panel-soft {
+  display: grid;
+  gap: 7px;
+  color: var(--ink);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+.mypage-link-grid .panel-soft:hover {
+  border-color: #c4d8cb;
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+.mypage-link-grid strong {
+  color: var(--sage-dark);
+}
+.mypage-link-grid span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.disabled-link {
+  cursor: default;
+  opacity: 0.58;
+}
+@media (max-width: 800px) {
+  .mypage-character-list,
+  .mypage-link-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .mypage-page {
+    padding-top: 22px;
+  }
+  .mypage-profile-head {
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .mypage-icon {
+    width: 76px;
+    height: 76px;
+    font-size: 24px;
+  }
+  .mypage-profile-main h1 {
+    font-size: 26px;
+  }
+  .section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .section-head .ghost-btn {
+    width: auto;
+  }
+}
