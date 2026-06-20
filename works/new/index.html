@@ -11,22 +11,23 @@
   />
 
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
   <header id="siteHeader"></header>
 
-  <main class="page">
-    <section class="panel">
+  <main class="page work-new-page">
+    <section class="panel work-new-hero">
       <p class="eyebrow">Works</p>
       <h1>作品を作る</h1>
-      <p>
+      <p class="lead">
         世界観やシリーズを作品としてまとめられます。
         自分専用の作品も、共有作品も作れます。
       </p>
     </section>
 
-    <form id="workForm" class="panel">
+    <form id="workForm" class="panel work-form">
       <section class="card">
         <h2>作品名</h2>
         <input
@@ -123,13 +124,13 @@
         </a>
       </div>
 
-      <p id="message"></p>
+      <p id="message" class="form-message"></p>
     </form>
   </main>
 
   <footer id="siteFooter"></footer>
 
   <script type="module" src="/app.js"></script>
-  <script type="module" src="/work-new.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
