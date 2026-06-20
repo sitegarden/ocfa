@@ -12,7 +12,6 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
@@ -58,7 +57,7 @@ async function getOcfaUserData(user) {
   const initialData = {
   uid: user.uid,
   email: user.email || "",
-  displayName: user.displayName || emailName || "",
+  displayName: "",
   photoURL: "",
   googlePhotoURL: user.photoURL || "",
   role: "user",
@@ -111,41 +110,42 @@ function renderHeader() {
         </nav>
 
         <div class="auth-box">
-          <span id="userName">確認中...</span>
-          <button id="loginBtn" type="button">ログイン</button>
-          <button id="logoutBtn" type="button" hidden>ログアウト</button>
+  <a id="userName" class="header-account-link" href="/mypage/" hidden>
+    マイページ
+  </a>
 
-          <div id="loginPanel" class="login-panel" hidden>
-            <button id="googleLoginBtn" class="google-login-btn" type="button">
-              Googleでログイン
-            </button>
+  <button id="loginBtn" class="header-login-btn" type="button">
+    ログイン
+  </button>
 
-            <div class="login-divider">または</div>
+  <div id="loginPanel" class="login-panel" hidden>
+    <button id="googleLoginBtn" class="google-login-btn" type="button">
+      Googleでログイン
+    </button>
 
-            <label>
-              メールアドレス
-              <input id="emailInput" type="email" autocomplete="email">
-            </label>
+    <div class="login-divider">または</div>
 
-            <label>
-              パスワード
-              <input id="passwordInput" type="password" autocomplete="current-password">
-            </label>
+    <label>
+      メールアドレス
+      <input id="emailInput" type="email" autocomplete="email">
+    </label>
 
-            <div class="login-actions">
-              <button id="emailLoginBtn" type="button">ログイン</button>
-              <button id="emailRegisterBtn" type="button">新規登録</button>
-            </div>
+    <label>
+      パスワード
+      <input id="passwordInput" type="password" autocomplete="current-password">
+    </label>
 
-            <p id="loginMessage" class="login-message"></p>
-          </div>
-        </div>
-      </div>
+    <div class="login-actions">
+      <button id="emailLoginBtn" type="button">ログイン</button>
+      <button id="emailRegisterBtn" type="button">新規登録</button>
     </div>
+
+    <p id="loginMessage" class="login-message"></p>
+  </div>
+</div>
   `;
 
   const loginBtn = document.getElementById("loginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
   const googleLoginBtn = document.getElementById("googleLoginBtn");
   const emailLoginBtn = document.getElementById("emailLoginBtn");
   const emailRegisterBtn = document.getElementById("emailRegisterBtn");
@@ -242,14 +242,6 @@ function renderHeader() {
     }
   });
 
-  logoutBtn?.addEventListener("click", async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error(error);
-      alert("ログアウトに失敗しました。");
-    }
-  });
 }
 
 function renderFooter() {
@@ -279,25 +271,29 @@ renderFooter();
 onAuthStateChanged(auth, async (user) => {
   const userName = document.getElementById("userName");
   const loginBtn = document.getElementById("loginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
   const loginPanel = document.getElementById("loginPanel");
 
-  if (!userName || !loginBtn || !logoutBtn) return;
+  if (!userName || !loginBtn) {
+    return;
+  }
 
   if (!user) {
-    userName.textContent = "未ログイン";
+    userName.hidden = true;
     loginBtn.hidden = false;
-    logoutBtn.hidden = true;
+
+    if (loginPanel) {
+      loginPanel.hidden = true;
+    }
+
     return;
   }
 
   try {
-    const userData = await getOcfaUserData(user);
-    const displayName = userData.displayName || user.displayName || "ログイン中";
+    await getOcfaUserData(user);
 
-    userName.textContent = escapeHtml(displayName);
+    userName.hidden = false;
+    userName.textContent = "マイページ";
     loginBtn.hidden = true;
-    logoutBtn.hidden = false;
 
     if (loginPanel) {
       loginPanel.hidden = true;
@@ -305,9 +301,9 @@ onAuthStateChanged(auth, async (user) => {
   } catch (error) {
     console.error(error);
 
-    userName.textContent = user.displayName || user.email || "ログイン中";
+    userName.hidden = false;
+    userName.textContent = "マイページ";
     loginBtn.hidden = true;
-    logoutBtn.hidden = false;
 
     if (loginPanel) {
       loginPanel.hidden = true;
