@@ -3,6 +3,8 @@ import { auth, db } from "/firebase.js";
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   getDocs,
   query,
   serverTimestamp,
@@ -21,7 +23,10 @@ const rulesText = document.getElementById("rulesText");
 const isPublic = document.getElementById("isPublic");
 const message = document.getElementById("message");
 
+const NORMAL_WORK_LIMIT = 3;
+
 let currentUser = null;
+let currentUserData = null;
 
 function getSelectedValue(name) {
   return document.querySelector(`input[name="${name}"]:checked`)?.value || "";
@@ -33,9 +38,20 @@ function updateSharedSettings() {
   sharedSettings.hidden = workType !== "shared";
 }
 
-document.querySelectorAll('input[name="workType"]').forEach((input) => {
-  input.addEventListener("change", updateSharedSettings);
-});
+function isOfficialUser(userData) {
+  return userData?.officialLevel === "official";
+}
+
+async function getUserData(user) {
+  if (!user) return null;
+
+  const userRef = doc(db, "users", user.uid);
+  const snap = await getDoc(userRef);
+
+  if (!snap.exists()) return null;
+
+  return snap.data();
+}
 
 async function getMyWorkCount(user) {
   const worksQuery = query(
@@ -49,8 +65,21 @@ async function getMyWorkCount(user) {
   return snap.size;
 }
 
-async function createWork(e) {
-  e.preventDefault();
+function renderLoginRequired() {
+  workForm.innerHTML = `
+    <section class="card message-card">
+      <h1>ログインが必要です</h1>
+      <p>作品を作るにはログインしてください。</p>
+
+      <a class="primary-link" href="/works/">
+        作品一覧へ
+      </a>
+    </section>
+  `;
+}
+
+async function createWork(event) {
+  event.preventDefault();
 
   if (!currentUser) {
     message.textContent = "作品を作るにはログインしてください。";
@@ -60,9 +89,11 @@ async function createWork(e) {
   const title = workTitle.value.trim();
   const description = workDescription.value.trim();
   const workType = getSelectedValue("workType");
+
   const joinType = workType === "shared"
     ? getSelectedValue("joinType")
     : "closed";
+
   const rules = workType === "shared"
     ? rulesText.value.trim()
     : "";
@@ -88,20 +119,29 @@ async function createWork(e) {
   }
 
   try {
-    message.textContent = "作品数を確認しています...";
+    const isOfficial = isOfficialUser(currentUserData);
 
-    const count = await getMyWorkCount(currentUser);
+    if (!isOfficial) {
+      message.textContent = "作品数を確認しています...";
 
-    if (count >= 3) {
-      message.textContent = "作品を作れる数は、今のところ1人3つまでです。";
-      return;
+      const count = await getMyWorkCount(currentUser);
+
+      if (count >= NORMAL_WORK_LIMIT) {
+        message.textContent =
+          `作品を作れる数は、今のところ1人${NORMAL_WORK_LIMIT}つまでです。`;
+        return;
+      }
     }
 
     message.textContent = "作品を作成しています...";
 
+    const ownerName =
+      currentUserData?.displayName ||
+      "作者名未設定";
+
     const docRef = await addDoc(collection(db, "works"), {
       userId: currentUser.uid,
-      ownerName: currentUser.displayName || "作者名未設定",
+      ownerName,
 
       title,
       description,
@@ -123,27 +163,36 @@ async function createWork(e) {
     message.textContent = "作品を作成しました。";
 
     setTimeout(() => {
-      location.href = `/works/file/?id=${docRef.id}`;
+      location.href = `/works/file/?id=${encodeURIComponent(docRef.id)}`;
     }, 700);
   } catch (error) {
     console.error(error);
-    message.textContent = "作品の作成に失敗しました。時間を置いてもう一度お試しください。";
+
+    message.textContent =
+      "作品の作成に失敗しました。時間を置いてもう一度お試しください。";
   }
 }
 
+document.querySelectorAll('input[name="workType"]').forEach((input) => {
+  input.addEventListener("change", updateSharedSettings);
+});
+
 workForm.addEventListener("submit", createWork);
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   currentUser = user;
 
   if (!user) {
-    workForm.innerHTML = `
-      <section class="card message-card">
-        <h1>ログインが必要です</h1>
-        <p>作品を作るにはログインしてください。</p>
-        <a class="primary-link" href="/works/">作品一覧へ</a>
-      </section>
-    `;
+    renderLoginRequired();
+    return;
+  }
+
+  try {
+    currentUserData = await getUserData(user);
+  } catch (error) {
+    console.error(error);
+
+    currentUserData = null;
   }
 });
 
