@@ -5,9 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>イベント - OCFA</title>
-  <meta name="description" content="OCFAのイベント一覧ページです。">
+  <meta
+    name="description"
+    content="OCFAで開催中・開催予定のイベントを確認できるページです。"
+  >
 
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="./style.css">
 
   <link rel="icon" type="image/png" href="/assets/favicon.png">
   <link rel="apple-touch-icon" href="/assets/favicon.png">
@@ -16,22 +20,25 @@
 <body>
   <header id="siteHeader"></header>
 
-  <main class="page">
-    <section class="page-head">
+  <main class="page events-page">
+    <section class="page-head events-hero">
       <p class="eyebrow">Events</p>
       <h1>イベント</h1>
       <p>
-        オリジナルキャラクターを通して、ゆるく描き合うためのイベントです。
+        OCFAで開催する企画のお知らせページです。
+        受付中のイベントには、自分のキャラクターでエントリーできます。
       </p>
 
       <div id="eventAdminActions" class="actions" hidden>
-        <a class="primary-btn" href="/events/new/">イベントを作る</a>
+        <a class="primary-btn" href="/events/new/">
+          イベントを作る
+        </a>
       </div>
     </section>
 
     <section id="eventList" class="event-list">
       <div class="panel">
-        <p>読み込み中...</p>
+        <p>イベントを読み込み中...</p>
       </div>
     </section>
   </main>
@@ -39,6 +46,6 @@
   <footer id="siteFooter"></footer>
 
   <script type="module" src="/app.js"></script>
-  <script type="module" src="/events.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
