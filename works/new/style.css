@@ -1,0 +1,117 @@
+/* ---------- work new ---------- */
+
+.work-new-page {
+  padding-top: 30px;
+}
+
+.work-new-hero {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.work-new-hero h1 {
+  margin: 0;
+}
+
+.work-new-hero .lead {
+  margin: 0;
+}
+
+.work-form {
+  display: grid;
+  gap: 18px;
+}
+
+.work-form .card {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 253, 248, 0.72);
+}
+
+.work-form .card h2,
+.work-form .card h3 {
+  margin: 0;
+}
+
+.radio-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 253, 248, 0.88);
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.radio-card:hover {
+  border-color: #c7d8ce;
+  background: var(--sage-soft);
+  transform: translateY(-1px);
+}
+
+.radio-card input {
+  flex: 0 0 auto;
+  width: 18px;
+  min-height: 18px;
+  margin-top: 2px;
+}
+
+.radio-card span {
+  display: grid;
+  gap: 4px;
+}
+
+.radio-card strong {
+  color: var(--ink);
+}
+
+.radio-card small {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.check-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.check-line input {
+  flex: 0 0 auto;
+  width: 18px;
+  min-height: 18px;
+}
+
+.work-form .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 560px) {
+  .work-new-page {
+    padding-top: 22px;
+  }
+
+  .work-form .card {
+    padding: 16px;
+  }
+
+  .work-form .button-row {
+    flex-direction: column;
+  }
+
+  .work-form .button-row .primary-btn,
+  .work-form .button-row .ghost-btn {
+    width: 100%;
+  }
+}
