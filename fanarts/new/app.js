@@ -271,17 +271,6 @@ async function init(user) {
     return;
   }
 
-  if (characterData.faOk !== true) {
-    showGuide(`
-      <h2>このキャラには投稿できません</h2>
-      <p>ファンアート受付が停止されているキャラクターです。</p>
-      <a class="primary-link" href="/characters/file/?id=${character.id}">
-        キャラ詳細を見る
-      </a>
-    `);
-    return;
-  }
-
   renderCharacterPreview(character);
   showForm();
 }
