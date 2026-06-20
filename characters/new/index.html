@@ -7,6 +7,7 @@
   <title>キャラ登録 - OCFA</title>
 
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
@@ -17,7 +18,7 @@
       <p class="eyebrow">Character Register</p>
       <h1 id="pageTitle">キャラ登録</h1>
       <p id="pageLead">
-        保存した下書き、または許可された画像アップロードからキャラクターを登録します。
+        承認されたクリエイターは、オリジナルキャラクターを登録できます。
       </p>
     </section>
 
@@ -54,11 +55,6 @@
           />
         </label>
 
-        <label class="check-label">
-          <input id="faOk" type="checkbox" checked />
-          ファンアート歓迎
-        </label>
-
         <label>
           NG・注意事項
           <textarea
@@ -76,28 +72,23 @@
       <aside class="card preview-card">
         <h2 id="previewTitle">キャラ画像</h2>
 
-        <div id="selectedDrawing">
-          読み込み中...
-        </div>
-
-        <div id="uploadPanel" class="upload-panel" hidden>
+        <div id="uploadPanel" class="upload-panel">
           <label class="upload-box">
             <span>画像を選ぶ</span>
             <small>PNG / JPG / WEBP / GIF、5MB未満</small>
-            <input id="uploadInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+            <input
+              id="uploadInput"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+            />
           </label>
 
           <div id="uploadPreview" class="upload-preview">
             まだ画像が選ばれていません。
           </div>
-
-          <p class="note">
-            アップロード機能は、運営が許可したユーザーだけ使えます。
-          </p>
         </div>
 
         <div class="preview-actions">
-          <a href="/draw/">別の絵を描く</a>
           <a href="/characters/">キャラ一覧へ</a>
         </div>
       </aside>
@@ -107,6 +98,6 @@
   <footer id="siteFooter"></footer>
 
   <script type="module" src="/app.js"></script>
-  <script type="module" src="/character-new.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
