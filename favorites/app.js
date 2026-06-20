@@ -4,9 +4,7 @@ import {
   collection,
   doc,
   getDoc,
-  getDocs,
-  orderBy,
-  query
+  getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 import {
@@ -101,32 +99,28 @@ function renderError(error) {
 
 function renderUserIcon(userData, className = "user-list-icon") {
   const displayName = getDisplayName(userData);
-  const iconImage = userData.iconImageData || userData.photoURL || "";
+  const iconImage = userData.photoURL || "";
 
   if (iconImage) {
     return `
-      <div class="${className}">
-        <img src="${escapeHtml(iconImage)}" alt="${escapeHtml(displayName)}">
-      </div>
+      <img
+        class="${escapeHtml(className)}"
+        src="${escapeHtml(iconImage)}"
+        alt="${escapeHtml(displayName)}のアイコン"
+      >
     `;
   }
 
   return `
-    <div class="${className}">
-      <span>${escapeHtml(displayName.slice(0, 1) || "？")}</span>
+    <div class="${escapeHtml(className)} user-icon-placeholder">
+      ${escapeHtml(displayName.slice(0, 1) || "？")}
     </div>
   `;
 }
 
 async function getFavoriteDocs(user) {
   const favoritesRef = collection(db, "users", user.uid, "favorites");
-
-  const q = query(
-    favoritesRef,
-    orderBy("createdAt", "desc")
-  );
-
-  const snap = await getDocs(q);
+  const snap = await getDocs(favoritesRef);
 
   const favorites = [];
 
@@ -142,7 +136,6 @@ async function getFavoriteDocs(user) {
 
 async function getFavoriteUsers(user) {
   const favorites = await getFavoriteDocs(user);
-
   const users = [];
 
   await Promise.all(
@@ -170,6 +163,7 @@ async function getFavoriteUsers(user) {
   users.sort((a, b) => {
     const aTime = a.favoriteData.createdAt?.seconds || 0;
     const bTime = b.favoriteData.createdAt?.seconds || 0;
+
     return bTime - aTime;
   });
 
@@ -245,7 +239,6 @@ onAuthStateChanged(auth, async (user) => {
     renderLoading("お気に入りユーザーを読み込んでいます...");
 
     const users = await getFavoriteUsers(user);
-
     renderFavoriteUsers(users);
   } catch (error) {
     renderError(error);
