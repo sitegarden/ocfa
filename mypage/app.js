@@ -34,6 +34,27 @@ function nl2br(text) {
   return escapeHtml(text).replaceAll("\n", "<br>");
 }
 
+function normalizeHandle(handle) {
+  return String(handle || "")
+    .trim()
+    .replace(/^@+/, "")
+    .toLowerCase();
+}
+
+function getCharacterImage(data) {
+  return data?.imageUrl || data?.imageData || "";
+}
+
+function getPublicUserUrl(user, userData) {
+  const handle = normalizeHandle(userData?.handle || "");
+
+  if (handle) {
+    return `/users/?id=${encodeURIComponent(handle)}`;
+  }
+
+  return `/users/?id=${encodeURIComponent(user.uid)}`;
+}
+
 async function getOcfaUserData(user) {
   if (!user) return null;
 
@@ -46,13 +67,13 @@ async function getOcfaUserData(user) {
 }
 
 async function getMyCharacters(user) {
-  const q = query(
+  const charactersQuery = query(
     collection(db, "v2Characters"),
     where("userId", "==", user.uid),
     where("isDeleted", "==", false)
   );
 
-  const snap = await getDocs(q);
+  const snap = await getDocs(charactersQuery);
 
   const characters = [];
 
@@ -76,40 +97,33 @@ async function getMyCharacters(user) {
 async function setMyIconCharacter(character) {
   if (!currentUser || !character) return;
 
-  const imageData = character.data.imageData || "";
+  const imageUrl = getCharacterImage(character.data);
 
-  if (!imageData) {
-    throw new Error("character imageData is empty");
+  if (!imageUrl) {
+    throw new Error("character image is empty");
   }
 
   const userRef = doc(db, "users", currentUser.uid);
 
-  await setDoc(userRef, {
-    iconCharacterId: character.id,
-    iconCharacterName: character.data.name || "名前未設定",
-    iconImageData: imageData,
-    updatedAt: serverTimestamp()
-  }, { merge: true });
-}
-
-async function setMyProfilePublic(isPublic) {
-  if (!currentUser) return;
-
-  const userRef = doc(db, "users", currentUser.uid);
-
-  await setDoc(userRef, {
-    isPublic,
-    updatedAt: serverTimestamp()
-  }, { merge: true });
-
-  currentUserData = {
-    ...(currentUserData || {}),
-    isPublic
-  };
+  await setDoc(
+    userRef,
+    {
+      iconCharacterId: character.id,
+      iconCharacterName: character.data.name || "名前未設定",
+      iconImageUrl: imageUrl,
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
 }
 
 function getMypageIconHtml(user, userData, displayName) {
-  const iconImage = userData?.photoURL || userData?.iconImageData || user.photoURL || "";
+  const iconImage =
+    userData?.iconImageUrl ||
+    userData?.iconImageData ||
+    userData?.photoURL ||
+    user?.photoURL ||
+    "";
 
   if (iconImage) {
     return `
@@ -117,38 +131,13 @@ function getMypageIconHtml(user, userData, displayName) {
         class="mypage-icon"
         src="${escapeHtml(iconImage)}"
         alt="${escapeHtml(displayName)}のアイコン"
-      />
+      >
     `;
   }
 
   return `
     <div class="mypage-icon mypage-icon-placeholder">
       ${escapeHtml(displayName.slice(0, 1) || "？")}
-    </div>
-  `;
-}
-
-function renderPublicSetting(userData) {
-  const isPublic = userData?.isPublic !== false;
-
-  return `
-    <div class="panel-soft mypage-public-setting">
-      <p class="mini-info">
-        公開設定：
-        <strong>${isPublic ? "公開中" : "非公開"}</strong>
-      </p>
-
-      <button
-        id="togglePublicProfileBtn"
-        class="${isPublic ? "ghost-btn" : "primary-btn"}"
-        type="button"
-      >
-        ${isPublic ? "非公開にする" : "公開にする"}
-      </button>
-
-      <p class="mini-info">
-        非公開にすると、ユーザー一覧と公開ユーザーページに表示されません。
-      </p>
     </div>
   `;
 }
@@ -160,8 +149,8 @@ function renderCharacterCards(characters, userData) {
         <p>まだキャラクターが登録されていません。</p>
 
         <div class="actions">
-          <a class="primary-btn" href="/draw/">
-            キャラを描く
+          <a class="primary-btn" href="/characters/new/">
+            キャラを登録する
           </a>
         </div>
       </div>
@@ -174,6 +163,8 @@ function renderCharacterCards(characters, userData) {
     <div class="mypage-character-list">
       ${characters
         .map(({ id, data }) => {
+          const image = getCharacterImage(data);
+
           const tags = Array.isArray(data.tags)
             ? data.tags
                 .map((tag) => `<span>${escapeHtml(tag)}</span>`)
@@ -184,13 +175,16 @@ function renderCharacterCards(characters, userData) {
 
           return `
             <article class="mypage-character-card">
-              <a class="mypage-character-link" href="/characters/detail/?id=${encodeURIComponent(id)}">
+              <a
+                class="mypage-character-link"
+                href="/characters/file/?id=${encodeURIComponent(id)}"
+              >
                 <div class="mypage-character-image">
                   ${
-                    data.imageData
+                    image
                       ? `
                         <img
-                          src="${data.imageData}"
+                          src="${escapeHtml(image)}"
                           alt="${escapeHtml(data.name || "キャラクター")}"
                         >
                       `
@@ -212,9 +206,7 @@ function renderCharacterCards(characters, userData) {
                   }
 
                   <p class="mini-info">
-                    ${data.isPublic === false ? "非公開" : "公開中"}
-                    /
-                    ${data.faOk ? "ファンアート歓迎" : "ファンアート要確認"}
+                    ${data.isPublic === false ? "非公開キャラ" : "公開中"}
                   </p>
 
                   ${
@@ -234,7 +226,7 @@ function renderCharacterCards(characters, userData) {
                   class="ghost-btn icon-character-btn"
                   type="button"
                   data-character-id="${escapeHtml(id)}"
-                  ${!data.imageData ? "disabled" : ""}
+                  ${!image ? "disabled" : ""}
                 >
                   ${isCurrentIcon ? "現在のアイコン" : "アイコンにする"}
                 </button>
@@ -263,13 +255,15 @@ function setupIconButtons() {
         return;
       }
 
-      if (!character.data.imageData) {
+      if (!getCharacterImage(character.data)) {
         alert("このキャラには画像がありません。");
         return;
       }
 
+      const characterName = character.data.name || "このキャラ";
+
       const ok = confirm(
-        `${character.data.name || "このキャラ"}をアイコンに設定しますか？`
+        `${characterName}をアイコンに設定しますか？`
       );
 
       if (!ok) return;
@@ -283,7 +277,7 @@ function setupIconButtons() {
         await setMyIconCharacter(character);
 
         const latestUserData = await getOcfaUserData(currentUser);
-        currentUserData = latestUserData;
+        currentUserData = latestUserData || currentUserData;
 
         renderMypage(currentUser, currentUserData, currentCharacters);
       } catch (error) {
@@ -298,50 +292,16 @@ function setupIconButtons() {
   });
 }
 
-function setupPublicProfileButton() {
-  const button = document.getElementById("togglePublicProfileBtn");
-
-  if (!button) return;
-
-  button.addEventListener("click", async () => {
-    const isNowPublic = currentUserData?.isPublic !== false;
-    const nextIsPublic = !isNowPublic;
-
-    const ok = confirm(
-      nextIsPublic
-        ? "プロフィールを公開しますか？"
-        : "プロフィールを非公開にしますか？\nユーザー一覧と公開ページに表示されなくなります。"
-    );
-
-    if (!ok) return;
-
-    const oldText = button.textContent;
-
-    button.disabled = true;
-    button.textContent = "変更中...";
-
-    try {
-      await setMyProfilePublic(nextIsPublic);
-
-      renderMypage(currentUser, currentUserData, currentCharacters);
-    } catch (error) {
-      console.error(error);
-
-      alert("公開設定の変更に失敗しました。");
-
-      button.disabled = false;
-      button.textContent = oldText;
-    }
-  });
-}
-
 function renderMypage(user, userData, characters) {
+  const displayName =
+    userData?.displayName ||
+    user.displayName ||
+    "名前未設定";
 
-  const displayName = userData?.displayName || user.displayName || "名前未設定";
-const profileText = userData?.profileText || "";
-const genreText = userData?.genreText || "";
-const linkUrl = userData?.linkUrl || "";
-const photoURL = userData?.photoURL || user.photoURL || "";
+  const profileText = userData?.profileText || "";
+  const genreText = userData?.genreText || "";
+  const linkUrl = userData?.linkUrl || "";
+  const isPublic = userData?.isPublic !== false;
 
   const publicCharacters = characters.filter((character) => {
     return character.data.isPublic !== false;
@@ -350,13 +310,19 @@ const photoURL = userData?.photoURL || user.photoURL || "";
   mypageContent.innerHTML = `
     <section class="panel mypage-profile-panel">
       <div class="mypage-profile-head">
-        <div class="mypage-icon">
+        <div class="mypage-icon-wrap">
           ${getMypageIconHtml(user, userData, displayName)}
         </div>
 
-        <div>
+        <div class="mypage-profile-main">
           <p class="eyebrow">My Page</p>
           <h1>${escapeHtml(displayName)}</h1>
+
+          ${
+            userData?.handle
+              ? `<p class="mini-info">@${escapeHtml(userData.handle)}</p>`
+              : ""
+          }
 
           <p class="mini-info">
             登録キャラ ${characters.length}体 / 公開キャラ ${publicCharacters.length}体
@@ -368,40 +334,31 @@ const photoURL = userData?.photoURL || user.photoURL || "";
         userData?.iconCharacterName
           ? `
             <p class="mini-info">
-              現在のアイコン：
-              ${escapeHtml(userData.iconCharacterName)}
+              現在のアイコン：${escapeHtml(userData.iconCharacterName)}
             </p>
           `
           : `
             <p class="mini-info">
-              自分のキャラをアイコンに設定できます。
+              登録した自分のキャラをアイコンに設定できます。
             </p>
           `
       }
 
-      ${renderPublicSetting(userData)}
-
-      ${
-        profileText
-          ? `
-            <div class="mypage-profile-text">
-              <p>${nl2br(profileText)}</p>
-            </div>
-          `
-          : `
-            <div class="mypage-profile-text">
-              <p>プロフィールはまだ設定されていません。</p>
-            </div>
-          `
-      }
+      <div class="mypage-profile-text">
+        ${
+          profileText
+            ? `<p>${nl2br(profileText)}</p>`
+            : `<p>プロフィールはまだ設定されていません。</p>`
+        }
+      </div>
 
       ${
         genreText
           ? `
-            <p class="mini-info">
-              好きなジャンル：
-              ${escapeHtml(genreText)}
-            </p>
+            <div class="panel-soft">
+              <h3>好きな創作ジャンル</h3>
+              <p>${nl2br(genreText)}</p>
+            </div>
           `
           : ""
       }
@@ -410,7 +367,12 @@ const photoURL = userData?.photoURL || user.photoURL || "";
         linkUrl && linkUrl.startsWith("https://")
           ? `
             <div class="actions">
-              <a class="ghost-btn" href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener">
+              <a
+                class="ghost-btn"
+                href="${escapeHtml(linkUrl)}"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 登録リンクを開く
               </a>
             </div>
@@ -419,25 +381,28 @@ const photoURL = userData?.photoURL || user.photoURL || "";
       }
 
       <div class="actions">
-        <a class="primary-btn" href="/draw/">
-          新しく描く
+        <a class="primary-btn" href="/characters/new/">
+          キャラを登録
         </a>
 
         <a class="ghost-btn" href="/settings/">
-          プロフィール設定
+          プロフィール・設定
         </a>
 
         ${
-          userData?.isPublic === false
+          isPublic
             ? `
+              <a
+                class="ghost-btn"
+                href="${getPublicUserUrl(user, userData)}"
+              >
+                公開ページを見る
+              </a>
+            `
+            : `
               <span class="ghost-btn disabled-link">
                 公開ページは非公開中
               </span>
-            `
-            : `
-              <a class="secondary-btn" href="/users/?id=${encodeURIComponent(user.uid)}">
-  公開ページを見る
-</a>
             `
         }
       </div>
@@ -459,18 +424,18 @@ const photoURL = userData?.photoURL || user.photoURL || "";
     </section>
 
     <section class="panel">
-      <p class="eyebrow">Draft</p>
-      <h2>下書き・作成</h2>
+      <p class="eyebrow">Create</p>
+      <h2>登録・参加</h2>
 
       <div class="mypage-link-grid">
-        <a class="panel-soft" href="/draw/">
-          <strong>描く</strong>
-          <span>サイト内キャンバスで新しい絵を描きます。</span>
-        </a>
-
         <a class="panel-soft" href="/characters/new/">
           <strong>キャラ登録</strong>
-          <span>保存した下書きからキャラクターを登録します。</span>
+          <span>画像をアップロードしてキャラクターを登録します。</span>
+        </a>
+
+        <a class="panel-soft" href="/fanarts/">
+          <strong>ファンアートを見る</strong>
+          <span>みんなが投稿したファンアートを見られます。</span>
         </a>
 
         <a class="panel-soft" href="/events/">
@@ -482,7 +447,6 @@ const photoURL = userData?.photoURL || user.photoURL || "";
   `;
 
   setupIconButtons();
-  setupPublicProfileButton();
 }
 
 function renderLoginRequired() {
@@ -543,7 +507,7 @@ onAuthStateChanged(auth, async (user) => {
 
     currentCharacters = characters;
 
-    renderMypage(user, currentUserData, characters);
+    renderMypage(user, currentUserData, currentCharacters);
   } catch (error) {
     renderError(error);
   }
