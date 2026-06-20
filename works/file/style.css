@@ -1,20 +1,23 @@
 /* ---------- works file ---------- */
 
 .works-file-page {
-  padding-top: 30px;
+  padding-top: 24px;
 }
 
 .work-file-card {
   display: grid;
-  gap: 20px;
+  gap: 16px;
 }
 
 .work-file-card > .card {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .work-file-hero {
+  padding: 24px;
+  min-height: 0;
+  align-content: start;
   background:
     radial-gradient(circle at 92% 14%, rgba(255, 255, 255, 0.88), transparent 24%),
     linear-gradient(135deg, rgba(255, 250, 242, 0.96), rgba(237, 244, 235, 0.78));
@@ -24,17 +27,18 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 18px;
+  gap: 14px;
 }
 
 .work-file-head h1 {
   margin: 0;
-  font-size: clamp(30px, 5vw, 46px);
-  line-height: 1.2;
+  font-size: clamp(32px, 7vw, 44px);
+  line-height: 1.15;
+  letter-spacing: 0.01em;
 }
 
 .work-file-head .work-owner {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   color: var(--sage-dark);
   font-size: 14px;
   font-weight: 800;
@@ -43,14 +47,14 @@
 .work-file-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 7px;
 }
 
 .work-file-stats span {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
-  padding: 5px 10px;
+  min-height: 27px;
+  padding: 4px 9px;
   border-radius: 999px;
   background: var(--paper-warm);
   color: var(--muted);
@@ -62,19 +66,20 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  margin-top: 2px;
 }
 
 .work-file-card .badge-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 7px;
 }
 
 .work-file-card .badge {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
-  padding: 5px 10px;
+  min-height: 27px;
+  padding: 4px 9px;
   border-radius: 999px;
   background: var(--sage-soft);
   color: var(--sage-dark);
@@ -89,12 +94,14 @@
 
 .work-file-card > .card > h2 {
   margin: 0;
+  font-size: 24px;
+  line-height: 1.35;
 }
 
 .work-file-card > .card > p {
   margin: 0;
   color: var(--muted);
-  line-height: 1.85;
+  line-height: 1.8;
 }
 
 /* ---------- characters ---------- */
@@ -271,24 +278,19 @@
 
 @media (max-width: 560px) {
   .works-file-page {
-    padding-top: 22px;
+    padding-top: 18px;
+  }
+
+  .work-file-hero {
+    padding: 20px;
   }
 
   .work-file-head {
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
 
-  .character-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .work-file-card .button-row {
-    flex-direction: column;
-  }
-
-  .work-file-card .button-row .primary-link,
-  .work-file-card .button-row .ghost-btn {
-    width: 100%;
+  .work-file-head h1 {
+    font-size: 34px;
   }
 }
