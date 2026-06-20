@@ -573,7 +573,7 @@ function renderWork(work) {
               ? `
                 <a
                   class="primary-link"
-                  href="/works/add-character/?id=${encodeURIComponent(work.id)}"
+                  href="/works/add/?id=${encodeURIComponent(work.id)}"
                 >
                   キャラを追加する
                 </a>
