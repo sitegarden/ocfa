@@ -8,6 +8,7 @@
   <meta name="description" content="OCFAのお知らせ作成ページです。">
 
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="./style.css">
 
   <link rel="icon" type="image/png" href="/assets/favicon.png">
   <link rel="apple-touch-icon" href="/assets/favicon.png">
@@ -16,12 +17,12 @@
 <body>
   <header id="siteHeader"></header>
 
-  <main class="page">
-    <section class="page-head">
+  <main class="page notice-new-page">
+    <section class="page-head notice-new-hero">
       <p class="eyebrow">New Notice</p>
       <h1>お知らせ作成</h1>
-      <p>
-        OCFAに表示するお知らせを書きます。
+      <p class="lead">
+        OCFAに表示する更新情報やイベント案内を書きます。
       </p>
     </section>
 
@@ -32,7 +33,9 @@
     </section>
   </main>
 
+  <footer id="siteFooter"></footer>
+
   <script type="module" src="/app.js"></script>
-  <script type="module" src="/notice-new.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
