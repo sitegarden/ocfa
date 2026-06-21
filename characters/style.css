@@ -68,48 +68,229 @@
   margin-top: 0;
 }
 
+/* ---------- character card ---------- */
+
 .character-list-card {
+  --card-bg: #fff7fb;
+  --card-main: rgba(255, 122, 182, 0.2);
+  --card-sub: rgba(139, 198, 255, 0.24);
+  --card-main-solid: #ff7ab6;
+  --card-text: #3a2d35;
+  --card-inner: #ffffff;
+  --card-radius: 24px;
+
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   min-height: 100%;
-  border: 2px solid rgba(255, 255, 255, 0.92);
-  border-radius: 28px;
-  background:
-    radial-gradient(circle at top left, var(--card-main), transparent 34%),
-    radial-gradient(circle at bottom right, var(--card-sub), transparent 36%),
-    var(--card-bg);
-  box-shadow: 0 14px 30px rgba(80, 55, 80, 0.12);
+  border-radius: var(--card-radius);
   transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .character-list-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 38px rgba(80, 55, 80, 0.18);
+  transform: translateY(-5px) rotate(-0.4deg);
+}
+
+/* 初期テーマ：控えめで白ベース */
+
+.character-list-card.is-default-theme {
+  border: 2px solid #f3d7e6;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(80, 55, 80, 0.1);
+}
+
+.character-list-card.is-default-theme:hover {
+  box-shadow: 0 18px 34px rgba(255, 122, 182, 0.2);
+}
+
+.character-list-card.is-default-theme::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(255, 194, 220, 0.55),
+      transparent 31%
+    ),
+    radial-gradient(
+      circle at 0% 100%,
+      rgba(191, 222, 255, 0.4),
+      transparent 28%
+    );
+}
+
+/* カスタムテーマ：テーマ感を強く出す */
+
+.character-list-card.has-custom-theme {
+  padding: 3px;
+  background:
+    linear-gradient(
+      135deg,
+      var(--card-main-solid),
+      var(--card-sub),
+      var(--card-main-solid)
+    );
+  box-shadow:
+    0 15px 30px color-mix(
+      in srgb,
+      var(--card-main-solid) 26%,
+      rgba(80, 55, 80, 0.12)
+    );
+}
+
+.character-list-card.has-custom-theme:hover {
+  box-shadow:
+    0 22px 42px color-mix(
+      in srgb,
+      var(--card-main-solid) 38%,
+      rgba(80, 55, 80, 0.15)
+    );
+}
+
+.character-list-card.has-custom-theme::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  z-index: -1;
+  border-radius: calc(var(--card-radius) - 3px);
+  opacity: 0.92;
+}
+
+/* ドット柄 */
+
+.character-list-card.has-custom-theme.character-pattern-dot::before {
+  background:
+    radial-gradient(
+      circle at top left,
+      var(--card-main),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      var(--card-sub),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle,
+      color-mix(in srgb, var(--card-main-solid) 30%, white) 1.5px,
+      transparent 1.5px
+    ),
+    var(--card-bg);
+  background-size: auto, auto, 14px 14px, auto;
+}
+
+/* ストライプ柄 */
+
+.character-list-card.has-custom-theme.character-pattern-stripe::before {
+  background:
+    radial-gradient(
+      circle at top left,
+      var(--card-main),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      var(--card-sub),
+      transparent 42%
+    ),
+    repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--card-main-solid) 14%, transparent) 0 8px,
+      transparent 8px 17px
+    ),
+    var(--card-bg);
+}
+
+/* 柄なし */
+
+.character-list-card.has-custom-theme.character-pattern-none::before {
+  background:
+    radial-gradient(
+      circle at top left,
+      var(--card-main),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      var(--card-sub),
+      transparent 44%
+    ),
+    var(--card-bg);
 }
 
 .character-list-link {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 12px;
   height: 100%;
+  min-height: 100%;
   padding: 14px;
+  border-radius: calc(var(--card-radius) - 2px);
   color: inherit;
   text-decoration: none;
 }
+
+.character-list-card.is-default-theme .character-list-link {
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.character-list-card.has-custom-theme .character-list-link {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--card-inner) 74%, transparent),
+      color-mix(in srgb, var(--card-inner) 90%, transparent)
+    );
+  backdrop-filter: blur(4px);
+}
+
+/* ---------- image ---------- */
 
 .character-list-image-wrap {
   position: relative;
   overflow: hidden;
   width: 100%;
   aspect-ratio: 1 / 1;
-  border: 4px solid #fff;
-  border-radius: 22px;
+  border-radius: calc(var(--card-radius) - 5px);
   background: #fff;
-  box-shadow: 0 10px 22px rgba(80, 55, 80, 0.13);
+}
+
+.character-list-card.is-default-theme .character-list-image-wrap {
+  border: 4px solid #fff;
+  box-shadow: 0 8px 18px rgba(80, 55, 80, 0.12);
+}
+
+.character-list-card.has-custom-theme .character-list-image-wrap {
+  border: 3px solid color-mix(
+    in srgb,
+    var(--card-main-solid) 45%,
+    white
+  );
+  box-shadow:
+    0 8px 0 color-mix(
+      in srgb,
+      var(--card-sub) 45%,
+      transparent
+    ),
+    0 14px 24px rgba(80, 55, 80, 0.16);
+}
+
+.character-list-card.has-custom-theme .character-list-image-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: inherit;
 }
 
 .character-list-image {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -117,12 +298,14 @@
 
 .character-list-no-image {
   display: grid;
-  place-items: center;
   width: 100%;
   height: 100%;
-  color: #a48b9a;
+  place-items: center;
+  color: color-mix(in srgb, var(--card-text) 60%, white);
   font-weight: 900;
 }
+
+/* ---------- text ---------- */
 
 .character-list-body {
   padding: 4px 4px 8px;
@@ -139,21 +322,38 @@
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.08em;
+  box-shadow: 0 3px 0 color-mix(
+    in srgb,
+    var(--card-main-solid) 48%,
+    #000
+  );
+}
+
+.character-list-card.is-default-theme .character-list-label {
+  box-shadow: none;
 }
 
 .character-list-name {
   margin: 0;
+  overflow: hidden;
   color: var(--card-text);
   font-size: 22px;
   line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .character-list-kana {
   margin: 5px 0 0;
+  overflow: hidden;
   color: color-mix(in srgb, var(--card-text) 68%, white);
   font-size: 13px;
   font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+/* ---------- owner ---------- */
 
 .character-list-owner {
   display: grid;
@@ -183,10 +383,23 @@
   overflow: hidden;
   border: 2px solid #fff;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--card-main-solid) 18%, white);
+  background: color-mix(
+    in srgb,
+    var(--card-main-solid) 18%,
+    white
+  );
   box-shadow: 0 3px 8px rgba(80, 55, 80, 0.12);
   object-fit: cover;
   place-items: center;
+}
+
+.character-list-card.has-custom-theme .character-list-owner-icon,
+.character-list-card.has-custom-theme .character-list-owner-placeholder {
+  border-color: color-mix(
+    in srgb,
+    var(--card-main-solid) 42%,
+    white
+  );
 }
 
 .character-list-owner-placeholder {
@@ -204,44 +417,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 640px) {
-  .characters-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .character-list-link {
-    padding: 10px;
-  }
-
-  .character-list-image-wrap {
-    border-radius: 18px;
-  }
-
-  .character-list-name {
-    font-size: 18px;
-  }
-
-  .character-list-kana,
-  .character-list-owner {
-    font-size: 12px;
-  }
-
-   .character-list-owner-icon,
-.character-list-owner-placeholder {
-  flex-basis: 24px;
-  width: 24px;
-  height: 24px;
-}
-
-.character-list-owner-name {
-  font-size: 12px;
-}
-}
-
-
-
-
+/* ---------- load more ---------- */
 
 .character-load-more-area {
   display: flex;
@@ -257,4 +433,42 @@
   margin: 0;
   color: var(--muted);
   text-align: center;
+}
+
+/* ---------- mobile ---------- */
+
+@media (max-width: 640px) {
+  .characters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .character-list-link {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .character-list-image-wrap {
+    border-radius: max(16px, calc(var(--card-radius) - 7px));
+  }
+
+  .character-list-name {
+    font-size: 18px;
+  }
+
+  .character-list-kana,
+  .character-list-owner {
+    font-size: 12px;
+  }
+
+  .character-list-owner-icon,
+  .character-list-owner-placeholder {
+    flex-basis: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .character-list-owner-name {
+    font-size: 12px;
+  }
 }
