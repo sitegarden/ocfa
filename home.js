@@ -12,8 +12,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 const homeNoticeList = document.getElementById("homeNoticeList");
+const homeCharacterList = document.getElementById("homeCharacterList");
+
 const homeOcImage = document.getElementById("homeOcImage");
 const homeOcFallback = document.getElementById("homeOcFallback");
+
+const HOME_CHARACTER_COUNT = 6;
 
 function escapeHtml(text) {
   return String(text ?? "")
@@ -59,6 +63,7 @@ function pickRandom(items) {
   if (items.length === 0) return null;
 
   const index = Math.floor(Math.random() * items.length);
+
   return items[index];
 }
 
@@ -145,6 +150,7 @@ async function loadHomeNotices() {
     homeNoticeList.innerHTML = latestNotices
       .map(({ data }) => {
         const body = data.body || "";
+
         const shortBody =
           body.length > 80
             ? `${body.slice(0, 80)}...`
@@ -167,6 +173,7 @@ async function loadHomeNotices() {
         `;
       })
       .join("");
+
   } catch (error) {
     console.error("トップお知らせ読み込みエラー:", error);
 
@@ -178,7 +185,111 @@ async function loadHomeNotices() {
   }
 }
 
+async function loadLatestCharacters() {
+  if (!homeCharacterList) return;
+
+  try {
+    const charactersQuery = query(
+      collection(db, "v2Characters"),
+      where("isDeleted", "==", false),
+      where("isPublic", "==", true)
+    );
+
+    const snap = await getDocs(charactersQuery);
+
+    if (snap.empty) {
+      homeCharacterList.innerHTML = `
+        <div class="panel-soft">
+          <p>まだ公開キャラクターはいません。</p>
+        </div>
+      `;
+      return;
+    }
+
+    const characters = [];
+
+    snap.forEach((docSnap) => {
+      characters.push({
+        id: docSnap.id,
+        data: docSnap.data()
+      });
+    });
+
+    characters.sort((a, b) => {
+      const aTime = a.data.createdAt?.seconds || 0;
+      const bTime = b.data.createdAt?.seconds || 0;
+
+      return bTime - aTime;
+    });
+
+    const latestCharacters = characters.slice(0, HOME_CHARACTER_COUNT);
+
+    homeCharacterList.innerHTML = latestCharacters
+      .map(({ id, data }) => {
+        const name = data.name || "名前未設定";
+        const kana = data.kana || "";
+        const imageUrl = getCharacterImage(data);
+
+        return `
+          <article class="home-character-card">
+            <a
+              class="home-character-link"
+              href="/characters/file/?id=${encodeURIComponent(id)}"
+            >
+              <div class="home-character-image-wrap">
+                <span class="home-character-new">NEW</span>
+
+                ${
+                  imageUrl
+                    ? `
+                      <img
+                        class="home-character-image"
+                        src="${escapeHtml(imageUrl)}"
+                        alt="${escapeHtml(name)}"
+                      >
+                    `
+                    : `
+                      <div class="home-character-no-image">
+                        No Image
+                      </div>
+                    `
+                }
+              </div>
+
+              <div>
+                <h3 class="home-character-name">
+                  ${escapeHtml(name)}
+                </h3>
+
+                ${
+                  kana
+                    ? `
+                      <p class="home-character-kana">
+                        ${escapeHtml(kana)}
+                      </p>
+                    `
+                    : ""
+                }
+              </div>
+            </a>
+          </article>
+        `;
+      })
+      .join("");
+
+  } catch (error) {
+    console.error("トップ最新キャラ読み込みエラー:", error);
+
+    homeCharacterList.innerHTML = `
+      <div class="panel-soft">
+        <p>キャラクターの読み込みに失敗しました。</p>
+      </div>
+    `;
+  }
+}
+
 loadHomeNotices();
+loadLatestCharacters();
 
 onAuthStateChanged(auth, (user) => {
   loadMyRandomCharacter(user);
