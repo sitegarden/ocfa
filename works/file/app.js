@@ -5,7 +5,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  increment,
   limit,
   query,
   serverTimestamp,
@@ -106,6 +105,7 @@ async function loadWorkCharacters() {
     const charactersQuery = query(
       collection(db, "v2Characters"),
       where("workId", "==", workId),
+      where("isPublic", "==", true),
       limit(80)
     );
 
@@ -116,7 +116,6 @@ async function loadWorkCharacters() {
       const data = docSnap.data();
 
       if (data.isDeleted === true) return;
-      if (data.isPublic !== true && data.userId !== currentUser?.uid) return;
 
       characters.push({
         id: docSnap.id,
@@ -211,6 +210,7 @@ async function loadWorkCharacters() {
           removeCharacterFromWork(button.dataset.characterId);
         });
       });
+
   } catch (error) {
     console.error("作品キャラ読み込みエラー:", error);
 
@@ -298,6 +298,7 @@ async function loadWorkMembers() {
         `;
       })
       .join("");
+
   } catch (error) {
     console.error("作品参加者読み込みエラー:", error);
 
@@ -349,14 +350,8 @@ async function removeCharacterFromWork(characterId) {
       updatedAt: serverTimestamp()
     });
 
-    const workRef = doc(db, "works", workId);
-
-    await updateDoc(workRef, {
-      characterCount: increment(-1),
-      updatedAt: serverTimestamp()
-    });
-
     await loadWorkCharacters();
+
   } catch (error) {
     console.error("作品からキャラを外すエラー:", error);
 
