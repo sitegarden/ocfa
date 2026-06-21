@@ -11,6 +11,8 @@ import {
 
 const characterList = document.getElementById("characterList");
 
+const PAGE_SIZE = 30;
+
 const DEFAULT_THEME = {
   bgColor: "#fff7fb",
   mainColor: "#ff7ab6",
@@ -18,6 +20,11 @@ const DEFAULT_THEME = {
   textColor: "#3a2d35",
   cardColor: "#ffffff"
 };
+
+let allCharacters = [];
+let displayedCount = 0;
+
+const ownerNameCache = new Map();
 
 function escapeHtml(text) {
   return String(text ?? "")
@@ -47,26 +54,174 @@ function getImageSrc(character) {
   return "";
 }
 
+function getLoadMoreArea() {
+  let area = document.getElementById("characterLoadMoreArea");
+
+  if (area) return area;
+
+  area = document.createElement("div");
+  area.id = "characterLoadMoreArea";
+  area.className = "character-load-more-area";
+
+  characterList.insertAdjacentElement("afterend", area);
+
+  return area;
+}
+
+function renderLoadMoreButton() {
+  const area = getLoadMoreArea();
+  const hasMore = displayedCount < allCharacters.length;
+
+  if (!hasMore) {
+    area.innerHTML = "";
+    return;
+  }
+
+  const remaining = allCharacters.length - displayedCount;
+  const nextCount = Math.min(PAGE_SIZE, remaining);
+
+  area.innerHTML = `
+    <button
+      id="loadMoreCharactersBtn"
+      class="ghost-btn character-load-more-btn"
+      type="button"
+    >
+      もっと見る（あと${nextCount}件）
+    </button>
+  `;
+
+  document
+    .getElementById("loadMoreCharactersBtn")
+    ?.addEventListener("click", () => {
+      renderNextCharacters();
+    });
+}
+
 async function getOwnerName(userId) {
   if (!userId) return "作者不明";
+
+  if (ownerNameCache.has(userId)) {
+    return ownerNameCache.get(userId);
+  }
 
   try {
     const userSnap = await getDoc(doc(db, "users", userId));
 
-    if (!userSnap.exists()) return "作者不明";
+    if (!userSnap.exists()) {
+      ownerNameCache.set(userId, "作者不明");
+      return "作者不明";
+    }
 
     const userData = userSnap.data();
 
-    return (
+    const ownerName =
       userData.displayName ||
       userData.name ||
       userData.nickname ||
-      "作者不明"
-    );
+      "作者不明";
+
+    ownerNameCache.set(userId, ownerName);
+
+    return ownerName;
   } catch (error) {
     console.error(error);
+
+    ownerNameCache.set(userId, "作者不明");
+
     return "作者不明";
   }
+}
+
+function createCharacterCard(characterId, character, ownerName) {
+  const name = character.name || "名前未設定";
+  const kana = character.kana || "";
+  const imageSrc = getImageSrc(character);
+  const theme = getTheme(character);
+
+  const card = document.createElement("article");
+  card.className = "character-list-card";
+
+  card.style.setProperty("--card-bg", theme.bgColor);
+  card.style.setProperty("--card-main", `${theme.mainColor}33`);
+  card.style.setProperty("--card-sub", `${theme.subColor}3d`);
+  card.style.setProperty("--card-main-solid", theme.mainColor);
+  card.style.setProperty("--card-text", theme.textColor);
+  card.style.setProperty("--card-inner", theme.cardColor);
+
+  card.innerHTML = `
+    <a
+      class="character-list-link"
+      href="/characters/file/?id=${encodeURIComponent(characterId)}"
+    >
+      <div class="character-list-image-wrap">
+        ${
+          imageSrc
+            ? `
+              <img
+                class="character-list-image"
+                src="${escapeHtml(imageSrc)}"
+                alt="${escapeHtml(name)}"
+              >
+            `
+            : `<div class="character-list-no-image">No Image</div>`
+        }
+      </div>
+
+      <div class="character-list-body">
+        <span class="character-list-label">Character</span>
+
+        <h2 class="character-list-name">${escapeHtml(name)}</h2>
+
+        ${
+          kana
+            ? `<p class="character-list-kana">${escapeHtml(kana)}</p>`
+            : `<p class="character-list-kana">ふりがな未設定</p>`
+        }
+
+        <p class="character-list-owner">
+          作者：<span>${escapeHtml(ownerName)}</span>
+        </p>
+      </div>
+    </a>
+  `;
+
+  return card;
+}
+
+async function renderNextCharacters() {
+  const nextCharacters = allCharacters.slice(
+    displayedCount,
+    displayedCount + PAGE_SIZE
+  );
+
+  if (nextCharacters.length === 0) {
+    renderLoadMoreButton();
+    return;
+  }
+
+  const area = getLoadMoreArea();
+
+  area.innerHTML = `
+    <p class="character-load-status">読み込み中...</p>
+  `;
+
+  const ownerNames = await Promise.all(
+    nextCharacters.map((item) => getOwnerName(item.data.userId))
+  );
+
+  nextCharacters.forEach((item, index) => {
+    const card = createCharacterCard(
+      item.id,
+      item.data,
+      ownerNames[index]
+    );
+
+    characterList.appendChild(card);
+  });
+
+  displayedCount += nextCharacters.length;
+
+  renderLoadMoreButton();
 }
 
 async function loadCharacters() {
@@ -80,82 +235,33 @@ async function loadCharacters() {
 
   if (snap.empty) {
     characterList.innerHTML = `
-  <div class="characters-empty">
-    <h2>まだキャラが登録されていません</h2>
-    <p>承認されたクリエイターのキャラクターが、ここに追加されます。</p>
-    <a class="primary-btn" href="/characters/new/">キャラ登録について見る</a>
-  </div>
-`;
+      <div class="characters-empty">
+        <h2>まだキャラが登録されていません</h2>
+        <p>承認されたクリエイターのキャラクターが、ここに追加されます。</p>
+        <a class="primary-btn" href="/characters/new/">キャラ登録について見る</a>
+      </div>
+    `;
+
+    getLoadMoreArea().innerHTML = "";
     return;
   }
 
-  const characters = [];
+  allCharacters = snap.docs.map((docSnap) => ({
+    id: docSnap.id,
+    data: docSnap.data()
+  }));
 
-  snap.forEach((docSnap) => {
-    characters.push({
-      id: docSnap.id,
-      data: docSnap.data()
-    });
-  });
-
-  characters.sort((a, b) => {
+  allCharacters.sort((a, b) => {
     const aTime = a.data.createdAt?.seconds || 0;
     const bTime = b.data.createdAt?.seconds || 0;
+
     return bTime - aTime;
   });
 
+  displayedCount = 0;
   characterList.innerHTML = "";
 
-  for (const item of characters) {
-    const character = item.data;
-    const characterId = item.id;
-
-    const name = character.name || "名前未設定";
-    const kana = character.kana || "";
-    const imageSrc = getImageSrc(character);
-    const ownerName = await getOwnerName(character.userId);
-    const theme = getTheme(character);
-
-    const card = document.createElement("article");
-    card.className = "character-list-card";
-
-    card.style.setProperty("--card-bg", theme.bgColor);
-    card.style.setProperty("--card-main", `${theme.mainColor}33`);
-    card.style.setProperty("--card-sub", `${theme.subColor}3d`);
-    card.style.setProperty("--card-main-solid", theme.mainColor);
-    card.style.setProperty("--card-text", theme.textColor);
-    card.style.setProperty("--card-inner", theme.cardColor);
-
-    card.innerHTML = `
-      <a class="character-list-link" href="/characters/file/?id=${encodeURIComponent(characterId)}">
-        <div class="character-list-image-wrap">
-          ${
-            imageSrc
-              ? `<img class="character-list-image" src="${escapeHtml(imageSrc)}" alt="${escapeHtml(name)}">`
-              : `<div class="character-list-no-image">No Image</div>`
-          }
-        </div>
-
-        <div class="character-list-body">
-          <span class="character-list-label">Character</span>
-
-          <h2 class="character-list-name">${escapeHtml(name)}</h2>
-
-          ${
-            kana
-              ? `<p class="character-list-kana">${escapeHtml(kana)}</p>`
-              : `<p class="character-list-kana">ふりがな未設定</p>`
-          }
-
-          <p class="character-list-owner">
-            作者：<span>${escapeHtml(ownerName)}</span>
-          </p>
-        </div>
-      </a>
-    `;
-
-    characterList.appendChild(card);
-  }
+  await renderNextCharacters();
 }
 
 loadCharacters().catch((error) => {
@@ -165,7 +271,7 @@ loadCharacters().catch((error) => {
     <div class="characters-error">
       <h2>読み込みに失敗しました</h2>
       <p>ページを再読み込みしてみてください。</p>
-      <p>${escapeHtml(error.message)}</p>
+      <p>${escapeHtml(error.message || "")}</p>
     </div>
   `;
 });
