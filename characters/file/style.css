@@ -251,22 +251,59 @@
   }
 }
 
-/* キャラ作者のアイコン：ぺちゃんこ・巨大化防止 */
-.cf-page img[alt$="のアイコン"] {
-  display: block;
-  flex: 0 0 auto;
-  width: 52px;
-  height: 52px;
-  aspect-ratio: 1 / 1;
+/* ---------- character owner ---------- */
+
+.cf-owner-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  color: var(--cf-text) !important;
+}
+
+.cf-owner-icon {
+  display: grid;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
   overflow: hidden;
   border: 2px solid #fff;
   border-radius: 50%;
-  background: #fff;
+  background: color-mix(in srgb, var(--cf-main) 18%, white);
   object-fit: cover;
-  box-shadow: 0 4px 10px rgba(80, 55, 80, 0.12);
+  box-shadow: 0 3px 8px rgba(80, 55, 80, 0.12);
+  place-items: center;
 }
 
-.cf-page img[alt$="のアイコン"] {
-  width: 44px;
-  height: 44px;
+.cf-owner-placeholder {
+  color: var(--cf-text);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.cf-owner-link > span:last-child {
+  overflow: hidden;
+  color: var(--cf-text);
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- fanart buttons ---------- */
+
+.cf-page .cf-actions .primary-btn {
+  border: 1px solid color-mix(in srgb, var(--cf-main) 78%, #000);
+  background: var(--cf-main);
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.cf-page .cf-actions .primary-btn:hover {
+  filter: brightness(0.94);
+}
+
+.cf-page .cf-actions .ghost-btn {
+  border-color: color-mix(in srgb, var(--cf-main) 42%, white);
+  background: color-mix(in srgb, var(--cf-card) 88%, white);
+  color: var(--cf-text) !important;
 }
