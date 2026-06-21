@@ -156,15 +156,52 @@
 }
 
 .character-list-owner {
+  display: grid;
+  gap: 5px;
   margin: 10px 0 0;
-  color: color-mix(in srgb, var(--card-text) 78%, white);
-  font-size: 13px;
+}
+
+.character-list-owner-label {
+  color: color-mix(in srgb, var(--card-text) 72%, white);
+  font-size: 11px;
   font-weight: 800;
 }
 
-.character-list-owner span {
-  color: var(--card-main-solid);
+.character-list-owner-info {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 7px;
+}
+
+.character-list-owner-icon,
+.character-list-owner-placeholder {
+  display: grid;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--card-main-solid) 18%, white);
+  box-shadow: 0 3px 8px rgba(80, 55, 80, 0.12);
+  object-fit: cover;
+  place-items: center;
+}
+
+.character-list-owner-placeholder {
+  color: var(--card-text);
+  font-size: 12px;
   font-weight: 1000;
+}
+
+.character-list-owner-name {
+  overflow: hidden;
+  color: var(--card-main-solid);
+  font-size: 13px;
+  font-weight: 1000;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (max-width: 640px) {
@@ -189,6 +226,17 @@
   .character-list-owner {
     font-size: 12px;
   }
+
+   .character-list-owner-icon,
+.character-list-owner-placeholder {
+  flex-basis: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.character-list-owner-name {
+  font-size: 12px;
+}
 }
 
 
