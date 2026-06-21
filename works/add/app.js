@@ -5,7 +5,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  increment,
   limit,
   query,
   serverTimestamp,
@@ -119,12 +118,16 @@ function renderWorkInfo(work) {
       </p>
 
       <div class="badge-row">
-        <span class="badge">${data.workType === "shared" ? "共有作品" : "自分専用"}</span>
+        <span class="badge">
+          ${data.workType === "shared" ? "共有作品" : "自分専用"}
+        </span>
+
         ${
           data.workType === "shared"
             ? `<span class="badge muted">${escapeHtml(getJoinTypeLabel(data.joinType))}</span>`
             : ""
         }
+
         ${
           isOwner
             ? `<span class="badge muted">オーナー</span>`
@@ -195,6 +198,7 @@ async function loadMyCharacters() {
   characters.sort((a, b) => {
     const aName = a.data.kana || a.data.name || "";
     const bName = b.data.kana || b.data.name || "";
+
     return aName.localeCompare(bName, "ja");
   });
 
@@ -203,6 +207,7 @@ async function loadMyCharacters() {
   characters.forEach((item) => {
     const data = item.data;
     const imageSrc = getCharacterImageSrc(data);
+
     const alreadyInThisWork = data.workId === workId;
     const alreadyInOtherWork = data.workId && data.workId !== workId;
 
@@ -213,7 +218,13 @@ async function loadMyCharacters() {
       <div class="character-thumb">
         ${
           imageSrc
-            ? `<img class="character-img" src="${imageSrc}" alt="${escapeHtml(data.name || "キャラクター画像")}">`
+            ? `
+              <img
+                class="character-img"
+                src="${imageSrc}"
+                alt="${escapeHtml(data.name || "キャラクター画像")}"
+              >
+            `
             : `<div class="no-image">No Image</div>`
         }
       </div>
@@ -243,7 +254,15 @@ async function loadMyCharacters() {
               ? `<span class="badge muted">追加済み</span>`
               : alreadyInOtherWork
                 ? `<span class="badge muted">所属済み</span>`
-                : `<button type="button" class="primary-link add-character-btn" data-character-id="${item.id}">このキャラを追加</button>`
+                : `
+                  <button
+                    type="button"
+                    class="primary-link add-character-btn"
+                    data-character-id="${item.id}"
+                  >
+                    このキャラを追加
+                  </button>
+                `
           }
 
           <a class="primary-link" href="/characters/file/?id=${item.id}">
@@ -319,25 +338,30 @@ async function addCharacterToWork(characterId) {
       updatedAt: serverTimestamp()
     });
 
-    const workRef = doc(db, "works", workId);
-
-    await updateDoc(workRef, {
-      characterCount: increment(1),
-      updatedAt: serverTimestamp()
-    });
-
     message.textContent = "キャラクターを作品に追加しました。";
 
     await loadMyCharacters();
+
   } catch (error) {
     console.error("キャラ追加エラー:", error);
-    message.textContent = `キャラクターの追加に失敗しました。${error.message || ""}`;
+
+    if (error.code === "permission-denied") {
+      message.textContent =
+        "権限エラーで追加できませんでした。キャラクターのFirestoreルールを確認してください。";
+      return;
+    }
+
+    message.textContent =
+      `キャラクターの追加に失敗しました。${error.message || ""}`;
   }
 }
 
 async function init(user) {
   if (!user) {
-    renderError("ログインが必要です", "作品にキャラクターを追加するにはログインしてください。");
+    renderError(
+      "ログインが必要です",
+      "作品にキャラクターを追加するにはログインしてください。"
+    );
     return;
   }
 
@@ -346,14 +370,20 @@ async function init(user) {
   const work = await getWork();
 
   if (!work) {
-    renderError("作品が見つかりませんでした", "削除されたか、URLが変わっている可能性があります。");
+    renderError(
+      "作品が見つかりませんでした",
+      "削除されたか、URLが変わっている可能性があります。"
+    );
     return;
   }
 
   currentWork = work;
 
   if (work.data.isDeleted === true || work.data.isPublic !== true) {
-    renderError("作品が見つかりませんでした", "削除されたか、非公開の作品です。");
+    renderError(
+      "作品が見つかりませんでした",
+      "削除されたか、非公開の作品です。"
+    );
     return;
   }
 
@@ -369,7 +399,10 @@ async function init(user) {
       return;
     }
 
-    renderError("追加できません", "この作品にキャラクターを追加できません。");
+    renderError(
+      "追加できません",
+      "この作品にキャラクターを追加できません。"
+    );
     return;
   }
 
@@ -380,6 +413,10 @@ async function init(user) {
 onAuthStateChanged(auth, (user) => {
   init(user).catch((error) => {
     console.error(error);
-    renderError("読み込みに失敗しました", "ページを再読み込みしてみてください。");
+
+    renderError(
+      "読み込みに失敗しました",
+      "ページを再読み込みしてみてください。"
+    );
   });
 });
