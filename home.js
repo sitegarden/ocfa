@@ -222,7 +222,27 @@ async function loadLatestCharacters() {
       return bTime - aTime;
     });
 
-    const latestCharacters = characters.slice(0, HOME_CHARACTER_COUNT);
+    const latestCharacters = [];
+const addedUserIds = new Set();
+
+for (const character of characters) {
+  const userId = character.data.userId || "";
+
+  // 作者IDがあるキャラは、ひとり1件だけ表示
+  if (userId && addedUserIds.has(userId)) {
+    continue;
+  }
+
+  latestCharacters.push(character);
+
+  if (userId) {
+    addedUserIds.add(userId);
+  }
+
+  if (latestCharacters.length >= HOME_CHARACTER_COUNT) {
+    break;
+  }
+}
 
     homeCharacterList.innerHTML = latestCharacters
       .map(({ id, data }) => {
