@@ -11,7 +11,7 @@ import {
 const workList = document.getElementById("workList");
 
 function escapeHtml(text) {
-  return String(text)
+  return String(text ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -29,12 +29,14 @@ function formatDate(value) {
 
 function getWorkTypeLabel(type) {
   if (type === "shared") return "共有作品";
+
   return "自分専用";
 }
 
 function getJoinTypeLabel(type) {
   if (type === "free") return "自由参加";
   if (type === "approval") return "承認制";
+
   return "募集なし";
 }
 
@@ -46,7 +48,7 @@ function renderEmpty() {
   `;
 }
 
-function createWorkCard(item) {
+function createWorkCard(item, characterCount) {
   const data = item.data;
   const workUrl = `/works/file/?id=${encodeURIComponent(item.id)}`;
 
@@ -57,6 +59,7 @@ function createWorkCard(item) {
     <a class="work-link" href="${workUrl}">
       <div class="work-card-head">
         <span>${escapeHtml(getWorkTypeLabel(data.workType))}</span>
+
         ${
           data.workType === "shared"
             ? `<span>${escapeHtml(getJoinTypeLabel(data.joinType))}</span>`
@@ -76,8 +79,9 @@ function createWorkCard(item) {
         </p>
 
         <div class="work-stats">
-          <span>キャラ ${Number(data.characterCount || 0)}</span>
+          <span>キャラ ${characterCount}</span>
           <span>FA ${Number(data.fanartCount || 0)}</span>
+
           ${
             data.createdAt
               ? `<span>${escapeHtml(formatDate(data.createdAt))}</span>`
@@ -95,6 +99,31 @@ function createWorkCard(item) {
   return card;
 }
 
+async function getCharacterCountByWork() {
+  const charactersQuery = query(
+    collection(db, "v2Characters"),
+    where("isDeleted", "==", false),
+    where("isPublic", "==", true)
+  );
+
+  const snap = await getDocs(charactersQuery);
+  const countMap = new Map();
+
+  snap.forEach((docSnap) => {
+    const data = docSnap.data();
+    const workId = data.workId || "";
+
+    if (!workId) return;
+
+    countMap.set(
+      workId,
+      (countMap.get(workId) || 0) + 1
+    );
+  });
+
+  return countMap;
+}
+
 async function loadWorks() {
   try {
     const worksQuery = query(
@@ -104,34 +133,40 @@ async function loadWorks() {
       limit(80)
     );
 
-    const snap = await getDocs(worksQuery);
+    const [worksSnap, characterCountByWork] = await Promise.all([
+      getDocs(worksQuery),
+      getCharacterCountByWork()
+    ]);
 
-    if (snap.empty) {
+    if (worksSnap.empty) {
       renderEmpty();
       return;
     }
 
     const works = [];
 
-    snap.forEach((docSnap) => {
-      const data = docSnap.data();
-
+    worksSnap.forEach((docSnap) => {
       works.push({
         id: docSnap.id,
-        data
+        data: docSnap.data()
       });
     });
 
     works.sort((a, b) => {
       const aTime = a.data.createdAt?.toMillis?.() || 0;
       const bTime = b.data.createdAt?.toMillis?.() || 0;
+
       return bTime - aTime;
     });
 
     workList.innerHTML = "";
 
     works.forEach((item) => {
-      workList.appendChild(createWorkCard(item));
+      const characterCount = characterCountByWork.get(item.id) || 0;
+
+      workList.appendChild(
+        createWorkCard(item, characterCount)
+      );
     });
   } catch (error) {
     console.error("作品一覧読み込みエラー:", error);
