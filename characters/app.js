@@ -18,7 +18,9 @@ const DEFAULT_THEME = {
   mainColor: "#ff7ab6",
   subColor: "#8bc6ff",
   textColor: "#3a2d35",
-  cardColor: "#ffffff"
+  cardColor: "#ffffff",
+  radius: "24",
+  pattern: "dot"
 };
 
 let allCharacters = [];
@@ -40,6 +42,24 @@ function getTheme(character) {
     ...DEFAULT_THEME,
     ...(character.customTheme || {})
   };
+}
+
+function hasCustomTheme(character) {
+  const theme = character.customTheme;
+
+  if (!theme || typeof theme !== "object") {
+    return false;
+  }
+
+  return Boolean(
+    theme.bgColor ||
+    theme.mainColor ||
+    theme.subColor ||
+    theme.textColor ||
+    theme.cardColor ||
+    theme.radius ||
+    theme.pattern
+  );
 }
 
 function getImageSrc(character) {
@@ -160,18 +180,26 @@ function createCharacterCard(characterId, character, ownerInfo) {
   const name = character.name || "名前未設定";
   const kana = character.kana || "";
   const imageSrc = getImageSrc(character);
-  const theme = getTheme(character);
 
-  const card = document.createElement("article");
-  card.className = "character-list-card";
+const theme = getTheme(character);
+const isCustomTheme = hasCustomTheme(character);
 
-  card.style.setProperty("--card-bg", theme.bgColor);
-  card.style.setProperty("--card-main", `${theme.mainColor}33`);
-  card.style.setProperty("--card-sub", `${theme.subColor}3d`);
-  card.style.setProperty("--card-main-solid", theme.mainColor);
-  card.style.setProperty("--card-text", theme.textColor);
-  card.style.setProperty("--card-inner", theme.cardColor);
+const card = document.createElement("article");
 
+card.className = [
+  "character-list-card",
+  isCustomTheme ? "has-custom-theme" : "is-default-theme",
+  `character-pattern-${theme.pattern || "dot"}`
+].join(" ");
+
+card.style.setProperty("--card-bg", theme.bgColor);
+card.style.setProperty("--card-main", `${theme.mainColor}33`);
+card.style.setProperty("--card-sub", `${theme.subColor}3d`);
+card.style.setProperty("--card-main-solid", theme.mainColor);
+card.style.setProperty("--card-text", theme.textColor);
+card.style.setProperty("--card-inner", theme.cardColor);
+card.style.setProperty("--card-radius", `${Number(theme.radius) || 24}px`);
+  
   card.innerHTML = `
     <a
       class="character-list-link"
