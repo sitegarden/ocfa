@@ -190,3 +190,23 @@
     font-size: 12px;
   }
 }
+
+
+
+
+
+.character-load-more-area {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 8px;
+}
+
+.character-load-more-btn {
+  min-width: 180px;
+}
+
+.character-load-status {
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+}
