@@ -97,8 +97,13 @@ function renderLoadMoreButton() {
     });
 }
 
-async function getOwnerName(userId) {
-  if (!userId) return "作者不明";
+async function getOwnerInfo(userId) {
+  if (!userId) {
+    return {
+      name: "作者不明",
+      photoURL: ""
+    };
+  }
 
   if (ownerNameCache.has(userId)) {
     return ownerNameCache.get(userId);
@@ -108,31 +113,50 @@ async function getOwnerName(userId) {
     const userSnap = await getDoc(doc(db, "users", userId));
 
     if (!userSnap.exists()) {
-      ownerNameCache.set(userId, "作者不明");
-      return "作者不明";
+      const ownerInfo = {
+        name: "作者不明",
+        photoURL: ""
+      };
+
+      ownerNameCache.set(userId, ownerInfo);
+
+      return ownerInfo;
     }
 
     const userData = userSnap.data();
 
-    const ownerName =
-      userData.displayName ||
-      userData.name ||
-      userData.nickname ||
-      "作者不明";
+    const ownerInfo = {
+      name:
+        userData.displayName ||
+        userData.name ||
+        userData.nickname ||
+        "作者不明",
 
-    ownerNameCache.set(userId, ownerName);
+      photoURL:
+        userData.photoURL ||
+        userData.iconImageData ||
+        ""
+    };
 
-    return ownerName;
+    ownerNameCache.set(userId, ownerInfo);
+
+    return ownerInfo;
+
   } catch (error) {
     console.error(error);
 
-    ownerNameCache.set(userId, "作者不明");
+    const ownerInfo = {
+      name: "作者不明",
+      photoURL: ""
+    };
 
-    return "作者不明";
+    ownerNameCache.set(userId, ownerInfo);
+
+    return ownerInfo;
   }
 }
 
-function createCharacterCard(characterId, character, ownerName) {
+function createCharacterCard(characterId, character, ownerInfo) {
   const name = character.name || "名前未設定";
   const kana = character.kana || "";
   const imageSrc = getImageSrc(character);
@@ -178,9 +202,31 @@ function createCharacterCard(characterId, character, ownerName) {
             : `<p class="character-list-kana">ふりがな未設定</p>`
         }
 
-        <p class="character-list-owner">
-          作者：<span>${escapeHtml(ownerName)}</span>
-        </p>
+        <div class="character-list-owner">
+  <span class="character-list-owner-label">作者</span>
+
+  <span class="character-list-owner-info">
+    ${
+      ownerInfo.photoURL
+        ? `
+          <img
+            class="character-list-owner-icon"
+            src="${escapeHtml(ownerInfo.photoURL)}"
+            alt=""
+          >
+        `
+        : `
+          <span class="character-list-owner-placeholder">
+            ${escapeHtml(ownerInfo.name.slice(0, 1) || "？")}
+          </span>
+        `
+    }
+
+    <span class="character-list-owner-name">
+      ${escapeHtml(ownerInfo.name)}
+    </span>
+  </span>
+</div>
       </div>
     </a>
   `;
@@ -205,16 +251,16 @@ async function renderNextCharacters() {
     <p class="character-load-status">読み込み中...</p>
   `;
 
-  const ownerNames = await Promise.all(
-    nextCharacters.map((item) => getOwnerName(item.data.userId))
-  );
+  const ownerInfos = await Promise.all(
+  nextCharacters.map((item) => getOwnerInfo(item.data.userId))
+);
 
   nextCharacters.forEach((item, index) => {
     const card = createCharacterCard(
-      item.id,
-      item.data,
-      ownerNames[index]
-    );
+  item.id,
+  item.data,
+  ownerInfos[index]
+);
 
     characterList.appendChild(card);
   });
