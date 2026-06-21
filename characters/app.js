@@ -176,7 +176,7 @@ async function getOwnerInfo(userId) {
   }
 }
 
-function createCharacterCard(characterId, character, ownerInfo) {
+function createCharacterCard(characterId, character, ownerInfo, isNewestForOwner) {
   const name = character.name || "名前未設定";
   const kana = character.kana || "";
   const imageSrc = getImageSrc(character);
@@ -206,8 +206,14 @@ card.style.setProperty("--card-radius", `${Number(theme.radius) || 24}px`);
       href="/characters/file/?id=${encodeURIComponent(characterId)}"
     >
       <div class="character-list-image-wrap">
-        ${
-          imageSrc
+  ${
+    isNewestForOwner
+      ? `<span class="character-list-new">NEW</span>`
+      : ""
+  }
+
+  ${
+    imageSrc
             ? `
               <img
                 class="character-list-image"
@@ -279,16 +285,31 @@ async function renderNextCharacters() {
     <p class="character-load-status">読み込み中...</p>
   `;
 
+  const newestCharacterIdsByOwner = new Set();
+  const seenUserIds = new Set();
+
+  for (const item of allCharacters) {
+    const userId = item.data.userId || "";
+
+    if (!userId || seenUserIds.has(userId)) {
+      continue;
+    }
+
+    seenUserIds.add(userId);
+    newestCharacterIdsByOwner.add(item.id);
+  }
+
   const ownerInfos = await Promise.all(
-  nextCharacters.map((item) => getOwnerInfo(item.data.userId))
-);
+    nextCharacters.map((item) => getOwnerInfo(item.data.userId))
+  );
 
   nextCharacters.forEach((item, index) => {
     const card = createCharacterCard(
-  item.id,
-  item.data,
-  ownerInfos[index]
-);
+      item.id,
+      item.data,
+      ownerInfos[index],
+      newestCharacterIdsByOwner.has(item.id)
+    );
 
     characterList.appendChild(card);
   });
