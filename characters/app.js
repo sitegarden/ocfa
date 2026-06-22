@@ -181,6 +181,13 @@ function createCharacterCard(characterId, character, ownerInfo, isNewestForOwner
   const kana = character.kana || "";
   const imageSrc = getImageSrc(character);
 
+  const tags = Array.isArray(character.tags)
+  ? character.tags
+      .map((tag) => String(tag || "").trim())
+      .filter(Boolean)
+      .slice(0, 2)
+  : [];
+
 const theme = getTheme(character);
 const isCustomTheme = hasCustomTheme(character);
 
@@ -235,6 +242,24 @@ card.style.setProperty("--card-radius", `${Number(theme.radius) || 24}px`);
             ? `<p class="character-list-kana">${escapeHtml(kana)}</p>`
             : `<p class="character-list-kana">ふりがな未設定</p>`
         }
+
+        ${
+  tags.length > 0
+    ? `
+      <div class="character-list-tags">
+        ${tags
+          .map(
+            (tag) => `
+              <span class="character-list-tag">
+                #${escapeHtml(tag)}
+              </span>
+            `
+          )
+          .join("")}
+      </div>
+    `
+    : ""
+}
 
         <div class="character-list-owner">
   <span class="character-list-owner-label">作者</span>
